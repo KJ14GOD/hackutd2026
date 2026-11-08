@@ -12,16 +12,24 @@
 //
 // Force a mode with STDB_MODE=native|docker. Docker mode stores its CLI login in
 // .cache/stdb-cli (gitignored). Delete that folder together with the container to start over.
+// STDB_SERVER (default http://localhost:3000) picks the server for publish/sql/logs/call;
+// set it to `maincloud` to use the hosted cloud (native CLI only, after `spacetime login`).
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+try {
+  process.loadEnvFile(resolve(ROOT, '.env'));
+} catch {
+  // no .env: defaults below
+}
 const IMAGE = 'clockworklabs/spacetime:v2.14.1';
 const CONTAINER = 'theseus-stdb';
 const DB = process.env.STDB_DB ?? 'theseus';
-const SERVER = 'http://localhost:3000';
+const LOCAL = 'http://localhost:3000';
+const SERVER = process.env.STDB_SERVER || LOCAL;
 const MODULE_DIR = 'spacetime';
 const BINDINGS_DIR = 'packages/shared/src/module_bindings';
 
@@ -57,6 +65,10 @@ function dockerCli(args) {
 /** Runs a spacetime CLI command. `p(x)` maps a repo-relative path to what the CLI sees. */
 function cli(build) {
   if (mode === 'native') return run('spacetime', build((x) => resolve(ROOT, x)));
+  if (SERVER !== LOCAL) {
+    console.error(`STDB_SERVER=${SERVER} needs the native spacetime CLI (install it, then \`spacetime login\`).`);
+    return 1;
+  }
   if (!existsSync(resolve(CLI_CONFIG_DIR, 'cli.toml'))) {
     mkdirSync(CLI_CONFIG_DIR, { recursive: true });
     const code = dockerCli(['login', '--server-issued-login', SERVER]);
@@ -78,7 +90,7 @@ switch (cmd) {
         : run('docker', [
             'run', '-d', '--name', CONTAINER, '-p', '3000:3000', IMAGE, 'start',
           ]);
-      if (code === 0) console.log(`SpacetimeDB running in container ${CONTAINER} on ${SERVER}`);
+      if (code === 0) console.log(`SpacetimeDB running in container ${CONTAINER} on ${LOCAL}`);
     }
     break;
   case 'stop':
