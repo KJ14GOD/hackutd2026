@@ -9,16 +9,17 @@ check each rewrite. Old behavior is the default truth unless the knowledge base 
 otherwise; when it's unclear, the agent asks an expert on Slack and the answer becomes a
 test. HackUTD 2026 tracks: NVIDIA (Nemotron agent), SpacetimeDB (backend), 8090 (modernization).
 
-**Status:** Milestone 0 (setup, config, draft docs). The segmenter is in progress on
-`feat/segmenter-deps`; the mission-control UI in `web/` runs standalone on mock data plus a
-snapshot of the segmenter's CardDemo graph. Designs in `docs/` marked PROPOSED
-are not decided. Check `docs/DECISIONS.md` before building past one.
+**Status:** Milestone 1 in progress: setup, config and the segmenter (Part 1 static map and pocket
+clustering) are built, and the people, context, reader, rewrite and harness services run end to end on
+CardDemo. The mission-control UI in `web/` runs standalone on mock data, a snapshot of the segmenter's
+CardDemo graph and Nemotron's Part 2 findings, or live with `?source=spacetime`. Designs in `docs/` marked
+PROPOSED are not decided. Check `docs/DECISIONS.md` before building past one.
 
 ## Repo map
 
 | Path | What | Status |
 | --- | --- | --- |
-| `spacetime/` | SpacetimeDB module (tables + reducers, TypeScript) | placeholder: `config` table only |
+| `spacetime/` | SpacetimeDB module: `schema.ts`, `reducers/<area>.ts`, `index.ts` | `config` + segmentation tables |
 | `packages/shared/` | config loader + schema, SpacetimeDB connect helper, generated bindings | built |
 | `scripts/` | `stdb.mjs` (SpacetimeDB native or Docker), `fetch-carddemo.mjs` | built |
 | `theseus.config.json` | the one file for every tunable value | built (some values placeholders) |
@@ -27,7 +28,7 @@ are not decided. Check `docs/DECISIONS.md` before building past one.
 | `target/` | `TargetRuntime` adapter, generated Java, runner | planned |
 | `services/router/` | HTTP proxy: counting, routing, shadow diff | planned |
 | `services/traffic/` | traffic generator + sim-clock controls | planned |
-| `services/segmenter/` | extractors, dependency graph, clustering | in progress (`feat/segmenter-deps`); its output feeds `web/src/data/carddemo.graph.json` |
+| `services/segmenter/` | Part 1 static map (`pnpm part1` -> `out/pass1.json`) and pockets from the dependency graph (`pnpm segment`, `deps.json`, docs/GRAPH_SCHEMA.md); stand-in extractor in `src/extract/` | built; `web/src/data/carddemo.graph.json` is a snapshot of its output |
 | `services/agent/` | workers: capture, rewrite, fix, classify, ask | planned (M2) |
 | `services/slackbot/` | Slack Bolt app, buttons call reducers | planned (M2) |
 | `tools/` | CLI that tails events/state (backend demo until the UI reads SpacetimeDB) | planned |
@@ -45,7 +46,7 @@ GnuCOBOL come in later milestones.
 ```sh
 pnpm install                 # install the workspace
 cp .env.example .env         # then fill in values (never commit .env)
-pnpm legacy:fetch            # AWS CardDemo -> legacy/carddemo (pinned commit)
+pnpm legacy:fetch            # AWS CardDemo -> legacy/carddemo (pinned commit, with history)
 
 pnpm stdb:start              # local SpacetimeDB on :3000 (native, else Docker container theseus-stdb)
 pnpm stdb:publish            # build + publish spacetime/ as database "theseus"
@@ -56,13 +57,17 @@ pnpm stdb:sql "SELECT * FROM config"
 pnpm stdb:logs               # module logs (add -f to follow)
 pnpm stdb:stop               # stop the Docker container
 
+pnpm deps:extract            # CardDemo -> dependency graph out/deps.json (stand-in extractor)
+pnpm segment                 # out/deps.json -> pockets in out/segmentation.json (+ summary)
+pnpm segment --publish       # ... and load them into SpacetimeDB
+
 pnpm test                    # vitest, all packages
 pnpm typecheck               # tsc in every package
 
 cd web && npm install && npm run dev   # mission-control UI on :5173 (mock data, no backend needed)
 ```
 
-First run: `pnpm install && pnpm legacy:fetch && pnpm stdb:start && pnpm stdb:publish && pnpm config:push`.
+First run: `pnpm install && pnpm legacy:fetch && pnpm stdb:start && pnpm stdb:publish && pnpm config:push && pnpm deps:extract && pnpm segment --publish`.
 Service and demo commands get added here when those services exist (see `docs/TASKS.md`).
 
 SpacetimeDB gotchas (verified against v2.14.1):

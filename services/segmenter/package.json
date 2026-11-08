@@ -3,11 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Part 1 static map: reads a legacy codebase and writes pass1.json (docs/SPEC_DEPENDENCY_PASSES.md)",
+  "description": "Part 1 static map (src/cli.ts -> pass1.json, docs/SPEC_DEPENDENCY_PASSES.md) and pocket clustering of the dependency graph (src/segmentCli.ts, deps.json -> segmentation.json)",
   "scripts": {
+    "deps:extract": "tsx src/extract/cli.ts",
+    "segment": "tsx src/segmentCli.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
+  "dependencies": {
+    "@theseus/shared": "workspace:*",
+    "graphology": "0.26.0",
+    "graphology-communities-louvain": "2.0.2",
+    "zod": "^3.25.76"
+  },
   "devDependencies": {
+    "graphology-types": "0.24.8",
     "typescript": "^5.9.3",
     "tsx": "^4.20.6",
     "vitest": "^4.0.8"

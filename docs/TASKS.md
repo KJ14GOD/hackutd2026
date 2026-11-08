@@ -22,13 +22,13 @@ backend dev owns separate reducer files (`spacetime/src/reducers/<area>.ts`), an
 
 | Task | Owner | Dirs |
 | --- | --- | --- |
-| Module tables + reducers per DATA_MODEL (clock, segmentation, traffic + ranking, jobs, shadow, sweep) | Backend A | `spacetime/` |
+| Module tables + reducers per DATA_MODEL (clock, traffic + ranking, jobs, shadow, sweep). Segmentation tables are done (D-025); add new areas as `spacetime/src/reducers/<area>.ts` | Backend A | `spacetime/` |
 | Router: proxy, per-endpoint counting, routing table from SpacetimeDB, shadow diff + Diffy noise filter, mismatch rows | Backend A | `services/router/` |
 | Hand-written Java replacement for one pocket (CBACT04C interest) + runner + `TargetRuntime` | Backend A | `target/` |
 | Tools CLI: `tail`, `state`, `shadow`, `route`, `reset` | Backend A | `tools/` |
 | **Spike Q15:** compile and run CardDemo batch programs under GnuCOBOL (Docker image with Debian `gnucobol`), stubs for `CEE3ABD`/`MVSWAIT`/`COBDATFT`, ASCII data → indexed files | Backend B | `legacy/` |
 | Fixture app (overpay bug, dead-looking rule, never-called transaction) + HTTP shim + stub runtime + `LegacyRuntime` | Backend B | `legacy/fixture/`, `legacy/src/` |
-| Segmenter: COBOL extractor (CALL, CICS XCTL/LINK, COPY, files, CICS FILE, EXEC SQL), graph, Louvain hierarchy, isolation, endpoint map, tests on CardDemo | Backend B | `services/segmenter/` |
+| ✅ Segmenter on the dependency graph (`deps.json`, GRAPH_SCHEMA): projection, Louvain + repair + LOC cap, domains, isolation, endpoints, `loadSegmentation` tables, stand-in extractor (`pnpm deps:extract`), tests on CardDemo (`pnpm segment --publish`). Next: run it on the team extractor's `deps.json`; run it on the fixture once it exists; review D-019–D-026 | Backend B | `services/segmenter/`, `spacetime/src/reducers/segmentation.ts` |
 | Traffic generator (sim-clock-aware rates, scenario) + clock controls | Backend B | `services/traffic/` |
 | UI shell: connect, subscribe, mirror into Zustand; react to `pocket.discovered`. Done on mock data: mission-control screen, CardDemo map from the segmenter snapshot, Systems sidebar, Inspector (PR #7–#9). Left: a SpacetimeDB `RealtimeSource` | Frontend | `web/` |
 | Map CardDemo paths → teammates (`config/owners.json`); write 1–2 expert notes for `knowledge/`; Slack question copy | Research | `config/`, `knowledge/` |

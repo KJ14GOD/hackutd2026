@@ -1,128 +1,16 @@
-// SpacetimeDB module: the shared state the pipeline writes and the UI subscribes to.
-// Tables follow docs/REQUIREMENTS_IMPLEMENTATION.md §3.2-3.3 (people, ownership, approvers, outreach), plus
-// questions with their Phase 4 resolution and the harness job and event feed that make "waiting on Maria ->
-// Maria answered" live. Services only call reducers; the rules for who moves a job forward live here.
+// SpacetimeDB module entry. Tables live in src/schema.ts: config, the segmentation tables, and the
+// people, ownership, approvers, questions, outreach and harness feed (docs/REQUIREMENTS_IMPLEMENTATION.md
+// §3.2-3.3) that make "waiting on Maria -> Maria answered" live. Services only call reducers; the rules for
+// who moves a job forward live here.
 //
-// Reducer names come from the export names. SpacetimeDB converts them to snake_case
-// for the CLI and SQL (setConfig becomes set_config).
-import { schema, table, t, SenderError } from 'spacetimedb/server';
-
-const spacetimedb = schema({
-  /** theseus.config.json as last pushed with `pnpm config:push`. Single row, id 0. */
-  config: table(
-    { public: true },
-    {
-      id: t.u32().primaryKey(),
-      json: t.string(),
-      version: t.u32(),
-    },
-  ),
-
-  // People and ownership (Phase 3, services/people). Rebuilt as a whole by loadOrg.
-  person: table({ public: true }, {
-    id: t.string().primaryKey(),
-    name: t.string(),
-    title: t.string(),
-    team: t.string().index('btree'),
-    active: t.bool(),
-    emailsJson: t.string(),
-    source: t.string(),
-  }),
-  team: table({ public: true }, { id: t.string().primaryKey(), name: t.string(), parentTeamId: t.string() }),
-  reportsTo: table({ public: true }, {
-    id: t.u64().primaryKey().autoInc(),
-    personId: t.string().index('btree'),
-    managerId: t.string().index('btree'),
-    source: t.string(),
-  }),
-  ownership: table({ public: true }, {
-    id: t.u64().primaryKey().autoInc(),
-    personId: t.string().index('btree'),
-    target: t.string().index('btree'),
-    kind: t.string(),
-    signal: t.string(),
-    weight: t.f64(),
-    source: t.string(),
-    evidence: t.string(),
-    observedAt: t.string(),
-  }),
-  /** A possible same-person pair sharing no email: pending until someone merges or rejects it. */
-  identityMatch: table({ public: true }, { id: t.string().primaryKey(), aRef: t.string(), bRef: t.string(), evidence: t.string(), status: t.string() }),
-  approver: table({ public: true }, {
-    id: t.string().primaryKey(),
-    personId: t.string().index('btree'),
-    scope: t.string().index('btree'),
-    category: t.string(),
-    score: t.f64(),
-    evidenceJson: t.string(),
-    signedOffBy: t.string(),
-  }),
-
-  /**
-   * A question from Part 2 (Nemotron's read) with what Phase 4 found. status: answered-by-docs | known-issue |
-   * conflict | needs-person | asking | answered.
-   */
-  question: table({ public: true }, {
-    id: t.string().primaryKey(),
-    program: t.string().index('btree'),
-    text: t.string(),
-    evidenceJson: t.string(),
-    optionsJson: t.string(),
-    blocks: t.string(),
-    status: t.string().index('btree'),
-    verdict: t.string(),
-    answer: t.string(),
-    quotesJson: t.string(),
-    confidence: t.string(),
-    routeTo: t.string().index('btree'),
-    routeName: t.string(),
-    routeWhy: t.string(),
-    answeredBy: t.string(),
-    answerText: t.string(),
-    answeredAtMs: t.u64(),
-  }),
-
-  /** One question sent to one person; questions to the same person and program share a digestKey (one message). */
-  outreach: table({ public: true }, {
-    id: t.u64().primaryKey().autoInc(),
-    questionId: t.string().index('btree'),
-    digestKey: t.string().index('btree'),
-    recipientPersonId: t.string().index('btree'),
-    channel: t.string(),
-    rendering: t.string(),
-    urgency: t.string(),
-    step: t.string(),
-    status: t.string().index('btree'),
-    slackTs: t.string(),
-    slackChannel: t.string(),
-    nextActionAtMs: t.u64(),
-    sentAtMs: t.u64(),
-  }),
-
-  /** One harness run over a program. status: reading | looking-up | asking | waiting | resuming | done | failed. */
-  harnessJob: table({ public: true }, {
-    id: t.string().primaryKey(),
-    program: t.string().index('btree'),
-    status: t.string().index('btree'),
-    /** Question ids the job is paused on. */
-    waitingOnJson: t.string(),
-    /** Whatever the worker needs to pick up where it stopped. */
-    stateJson: t.string(),
-    startedAtMs: t.u64(),
-    updatedAtMs: t.u64(),
-  }),
-  /** The live step feed: what the harness did, who it's waiting on, and who answered. */
-  harnessEvent: table({ public: true }, {
-    id: t.u64().primaryKey().autoInc(),
-    jobId: t.string().index('btree'),
-    atMs: t.u64(),
-    kind: t.string(),
-    message: t.string(),
-    dataJson: t.string(),
-  }),
-});
+// Reducers are the named exports of this file; SpacetimeDB converts the names to
+// snake_case for the CLI and SQL (setConfig becomes set_config). Each area keeps its
+// reducers in src/reducers/<area>.ts and re-exports them here.
+import { SenderError, t } from 'spacetimedb/server';
+import spacetimedb from './schema';
 
 export default spacetimedb;
+export * from './reducers/segmentation';
 
 const now = (ctx: { timestamp: { toMillis(): bigint } }) => ctx.timestamp.toMillis();
 

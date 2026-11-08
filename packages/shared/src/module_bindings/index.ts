@@ -37,6 +37,7 @@ import {
 import AnswerQuestionReducer from "./answer_question_reducer";
 import LoadOrgReducer from "./load_org_reducer";
 import LoadQuestionsReducer from "./load_questions_reducer";
+import LoadSegmentationReducer from "./load_segmentation_reducer";
 import MarkOutreachSentReducer from "./mark_outreach_sent_reducer";
 import QueueOutreachReducer from "./queue_outreach_reducer";
 import RecordEventReducer from "./record_event_reducer";
@@ -49,14 +50,20 @@ import UpsertJobReducer from "./upsert_job_reducer";
 // Import all table schema definitions
 import ApproverRow from "./approver_table";
 import ConfigRow from "./config_table";
+import DepEdgeRow from "./dep_edge_table";
+import EndpointRow from "./endpoint_table";
+import GraphNodeRow from "./graph_node_table";
 import HarnessEventRow from "./harness_event_table";
 import HarnessJobRow from "./harness_job_table";
 import IdentityMatchRow from "./identity_match_table";
 import OutreachRow from "./outreach_table";
 import OwnershipRow from "./ownership_table";
 import PersonRow from "./person_table";
+import PocketRow from "./pocket_table";
+import PocketEdgeRow from "./pocket_edge_table";
 import QuestionRow from "./question_table";
 import ReportsToRow from "./reports_to_table";
+import SegmentationRunRow from "./segmentation_run_table";
 import TeamRow from "./team_table";
 
 /** Type-only namespace exports for generated type groups. */
@@ -91,6 +98,54 @@ const tablesSchema = __schema({
       { name: 'config_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ConfigRow),
+  depEdge: __table({
+    name: 'dep_edge',
+    indexes: [
+      { accessor: 'dst', name: 'dep_edge_dst_idx_btree', algorithm: 'btree', columns: [
+        'dst',
+      ] },
+      { accessor: 'id', name: 'dep_edge_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'src', name: 'dep_edge_src_idx_btree', algorithm: 'btree', columns: [
+        'src',
+      ] },
+    ],
+    constraints: [
+      { name: 'dep_edge_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, DepEdgeRow),
+  endpoint: __table({
+    name: 'endpoint',
+    indexes: [
+      { accessor: 'id', name: 'endpoint_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'pocketId', name: 'endpoint_pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'pocketId',
+      ] },
+    ],
+    constraints: [
+      { name: 'endpoint_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EndpointRow),
+  graphNode: __table({
+    name: 'graph_node',
+    indexes: [
+      { accessor: 'id', name: 'graph_node_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'kind', name: 'graph_node_kind_idx_btree', algorithm: 'btree', columns: [
+        'kind',
+      ] },
+      { accessor: 'pocketId', name: 'graph_node_pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'pocketId',
+      ] },
+    ],
+    constraints: [
+      { name: 'graph_node_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, GraphNodeRow),
   harnessEvent: __table({
     name: 'harness_event',
     indexes: [
@@ -187,6 +242,31 @@ const tablesSchema = __schema({
       { name: 'person_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, PersonRow),
+  pocket: __table({
+    name: 'pocket',
+    indexes: [
+      { accessor: 'id', name: 'pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'parentId', name: 'pocket_parent_id_idx_btree', algorithm: 'btree', columns: [
+        'parentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'pocket_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PocketRow),
+  pocketEdge: __table({
+    name: 'pocket_edge',
+    indexes: [
+      { accessor: 'id', name: 'pocket_edge_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'pocket_edge_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PocketEdgeRow),
   question: __table({
     name: 'question',
     indexes: [
@@ -224,6 +304,17 @@ const tablesSchema = __schema({
       { name: 'reports_to_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ReportsToRow),
+  segmentationRun: __table({
+    name: 'segmentation_run',
+    indexes: [
+      { accessor: 'id', name: 'segmentation_run_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'segmentation_run_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SegmentationRunRow),
   team: __table({
     name: 'team',
     indexes: [
@@ -242,6 +333,7 @@ const reducersSchema = __reducers(
   __reducerSchema("answer_question", AnswerQuestionReducer),
   __reducerSchema("load_org", LoadOrgReducer),
   __reducerSchema("load_questions", LoadQuestionsReducer),
+  __reducerSchema("load_segmentation", LoadSegmentationReducer),
   __reducerSchema("mark_outreach_sent", MarkOutreachSentReducer),
   __reducerSchema("queue_outreach", QueueOutreachReducer),
   __reducerSchema("record_event", RecordEventReducer),

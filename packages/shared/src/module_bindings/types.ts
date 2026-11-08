@@ -28,6 +28,41 @@ export const Config = __t.object("Config", {
 });
 export type Config = __Infer<typeof Config>;
 
+export const DepEdge = __t.object("DepEdge", {
+  id: __t.u32(),
+  src: __t.string(),
+  dst: __t.string(),
+  kind: __t.string(),
+  count: __t.u32(),
+  confidence: __t.string(),
+  detail: __t.string(),
+  evidence: __t.string(),
+});
+export type DepEdge = __Infer<typeof DepEdge>;
+
+export const Endpoint = __t.object("Endpoint", {
+  id: __t.string(),
+  kind: __t.string(),
+  name: __t.string(),
+  description: __t.string(),
+  entryNode: __t.string(),
+  pocketId: __t.string(),
+  servedByJson: __t.string(),
+});
+export type Endpoint = __Infer<typeof Endpoint>;
+
+export const GraphNode = __t.object("GraphNode", {
+  id: __t.string(),
+  kind: __t.string(),
+  name: __t.string(),
+  path: __t.string(),
+  loc: __t.u32(),
+  pocketId: __t.string(),
+  domainId: __t.string(),
+  metaJson: __t.string(),
+});
+export type GraphNode = __Infer<typeof GraphNode>;
+
 export const HarnessEvent = __t.object("HarnessEvent", {
   id: __t.u64(),
   jobId: __t.string(),
@@ -99,6 +134,32 @@ export const Person = __t.object("Person", {
 });
 export type Person = __Infer<typeof Person>;
 
+export const Pocket = __t.object("Pocket", {
+  id: __t.string(),
+  parentId: __t.string(),
+  level: __t.string(),
+  kind: __t.string(),
+  name: __t.string(),
+  anchor: __t.string(),
+  programs: __t.u32(),
+  loc: __t.u32(),
+  cohesion: __t.f64(),
+  coupling: __t.f64(),
+  isolation: __t.f64(),
+  oversized: __t.bool(),
+});
+export type Pocket = __Infer<typeof Pocket>;
+
+export const PocketEdge = __t.object("PocketEdge", {
+  id: __t.u32(),
+  level: __t.string(),
+  src: __t.string(),
+  dst: __t.string(),
+  weight: __t.f64(),
+  kindsJson: __t.string(),
+});
+export type PocketEdge = __Infer<typeof PocketEdge>;
+
 export const Question = __t.object("Question", {
   id: __t.string(),
   program: __t.string(),
@@ -127,6 +188,20 @@ export const ReportsTo = __t.object("ReportsTo", {
   source: __t.string(),
 });
 export type ReportsTo = __Infer<typeof ReportsTo>;
+
+export const SegmentationRun = __t.object("SegmentationRun", {
+  id: __t.u32(),
+  sourceRoot: __t.string(),
+  sourceRef: __t.string(),
+  depsPath: __t.string(),
+  depsHash: __t.string(),
+  configHash: __t.string(),
+  loadedAtMs: __t.f64(),
+  metricsJson: __t.string(),
+  warningsJson: __t.string(),
+  unresolvedJson: __t.string(),
+});
+export type SegmentationRun = __Infer<typeof SegmentationRun>;
 
 export const Team = __t.object("Team", {
   id: __t.string(),

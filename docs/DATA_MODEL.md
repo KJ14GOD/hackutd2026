@@ -29,23 +29,41 @@ Single row. Sim now = `paused ? anchorSimMs : anchorSimMs + (realNow − anchorR
 Every client computes this locally; reducers use `ctx.timestamp` as real now.
 | id u32 PK (0) | anchorRealMs f64 | anchorSimMs f64 | speed f64 | paused bool |
 
-### `codeUnit`: PROPOSED
-One row per legacy program (graph node).
-| id string PK (program name) | path | language | kind (`program`/`dispatcher`) | loc u32 | pocketId (btree) | domainId | resourcesJson `{copybooks,files,tables}` |
+### Segmentation tables: BUILT
+Written only by `loadSegmentation` (whole replace). Produced by `services/segmenter`;
+meaning of every field in [SEGMENTATION.md](SEGMENTATION.md). Node and pocket ids are
+strings (`prog:COACTUPC`, `pkt-cousr00c`) because they are stable across runs. Node ids, kinds
+and edge rels are the dependency graph's ([GRAPH_SCHEMA.md](GRAPH_SCHEMA.md)), unchanged.
 
-### `depEdge`: PROPOSED
-| id u32 PK auto | src (btree) | dst | kind (`call`/`file`/`table`/`copybook`/`cochange`) | weight f64 | detail (resource name) |
+#### `segmentationRun` (single row, id 0)
+| id u32 PK | sourceRoot | sourceRef (git commit) | depsPath (the deps.json segmented) | depsHash | configHash | loadedAtMs f64 (real time, provenance only) | metricsJson | warningsJson | unresolvedJson (deps.json `unresolved`) |
 
-### `pocket`: PROPOSED
-Domains and pockets share the table (`level`).
-| id string PK | parentId (domain id, '' for domains) | level | name | membersJson | cohesion f64 | coupling f64 | isolation f64 (`cohesion/(cohesion+coupling)`) | priority f64 (D-007) | status (`legacy`/`migrating`/`promoted`/`dead`) | trafficShare f64 | lastTrafficSimMs f64 | discoveredSimMs f64 | activeJobId u32 (0 = none) |
+#### `graphNode` (replaces the proposed `codeUnit`: every node kind, not just programs)
+| id string PK (`prefix:NAME`, e.g. `prog:`, `data:`, `cpy:`) | kind (btree: `program`/`utility`/`system-api`/`missing`/`copybook`/`dataset`/`screen`/`ims`/`mq`/`job`/`transaction`/...) | name | path ('' if no file) | loc u32 (total source lines) | pocketId (btree, '' for utility/system-api/missing) | domainId | metaJson (`mode`, `description`, `language`, ...) |
 
-### `pocketEdge`: PROPOSED
-Aggregated weak edges between pockets (and between domains) that the UI draws.
-| id u32 PK auto | level | src | dst | weight f64 | kindsJson (weight per edge kind) |
+#### `depEdge`
+| id u32 PK auto | src (btree) | dst (btree) | kind (the rel: `calls`/`links`/`transfers`/`copies`/`read`/`write`/`runs`/`starts`/`uses-api`/`shows`/..., plus `cochange`) | count u32 (repeats in deps.json) | confidence (`extracted`/`inferred`/`unknown`/`observed`) | detail (`via`) | evidence (`file:line`, `CSD`, `git log`) |
 
-### `endpoint`: PROPOSED
-| id string PK (`GET /accounts/:id/interest`) | method | path | txnCode | entryProgram | pocketId (btree, pocket of the entry program) | servedByJson (all pockets reachable by calls) | totalRequests u32 | lastSeenSimMs f64 |
+#### `pocket`
+Domains and pockets share the table (`level`). Members are not stored: a pocket's members are
+the `graphNode` rows with its `pocketId`; a domain's are the pockets with its `parentId`.
+| id string PK | parentId (btree; domain id, '' for domains) | level (`domain`/`pocket`) | kind (`code`/`shared`) | name | anchor (node id) | programs u32 | loc u32 | cohesion f64 | coupling f64 | isolation f64 | oversized bool |
+
+PROPOSED additions with the traffic and agent work (D-007): priority f64, status
+(`legacy`/`migrating`/`promoted`/`dead`), trafficShare f64, lastTrafficSimMs f64,
+discoveredSimMs f64, activeJobId u32. Adding them needs `pnpm stdb:reset` and a re-run of
+`pnpm segment --publish`.
+
+#### `pocketEdge`
+Aggregated weights between pockets (and between domains) that the UI draws.
+| id u32 PK auto | level | src | dst | weight f64 | kindsJson (weight per source kind) |
+
+#### `endpoint`
+What traffic hits: CICS transactions and batch jobs.
+| id string PK (`CICS CAVW`, `JOB INTCALC`) | kind (`cics`/`batch`) | name | description | entryNode | pocketId (btree, pocket of the entry program) | servedByJson (pockets reachable through calls, entry pocket first) |
+
+PROPOSED additions with the traffic work: totalRequests u32, lastSeenSimMs f64. How
+traffic reaches CICS endpoints that can't run locally is Q16.
 
 ### `trafficBucket`: PROPOSED
 Per endpoint, per sim-minute bucket. Pruned to 2× the traffic window by `sweep`.
@@ -91,7 +109,7 @@ Schedule table driving the `sweep` reducer every 2 real seconds.
 | `setConfig(json)` | BUILT | `pnpm config:push` | stores the config; PROPOSED: first push starts the sim clock at `sim.startIso` |
 | `setSimClock(speed, paused)` | PROPOSED | traffic service / CLI | re-anchors the clock so sim time never jumps |
 | `resetWorld()` | PROPOSED | CLI | clears traffic, jobs, mismatches, events; keeps segmentation |
-| `loadSegmentation(json)` | PROPOSED | segmenter | replaces graph, pockets, endpoints, routes; emits `pocket.discovered` |
+| `loadSegmentation(json)` | BUILT | `pnpm segment --publish` | validates and replaces the segmentation tables, all or nothing. PROPOSED: also reset `route` rows and emit `pocket.discovered` once those tables exist |
 | `recordTraffic(counts[])` | PROPOSED | router | upserts buckets, updates shares + priority, starts eligible jobs by priority (D-007) |
 | `recordShadowBatch(counts[], mismatches[], noise[])` | PROPOSED | router | updates match rate, stores capped mismatches, learns noise fields |
 | `startMigration(pocketId)` | PROPOSED | CLI | manual job start |
@@ -104,7 +122,7 @@ Schedule table driving the `sweep` reducer every 2 real seconds.
 ## Config (`theseus.config.json`)
 
 Validated by `packages/shared/src/config.ts` (zod). Sections: `sim`, `ports`, `traffic`
-(window, threshold, rates, scenario), `ranking` (traffic/isolation weights, min isolation), `segmentation` (edge weights, resolution, seed),
+(window, threshold, rates, scenario), `ranking` (traffic/isolation weights, min isolation), `segmentation` (edge and resource weights, access and confidence factors, omnipresent/hub thresholds, LOC cap, resolution, seed; see SEGMENTATION.md),
 `shadow` (caps, noise), `cutover` (steps, match-rate thresholds), `selfHeal`, `deadCode`,
 `humanLoop` (question caps, escalation timeouts), `llm`. The endpoint rates and account
 ids under `traffic` are placeholders until the CardDemo endpoints are fixed (D-012).
