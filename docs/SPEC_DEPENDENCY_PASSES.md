@@ -14,7 +14,7 @@ Language: TypeScript. Tunable values live in `theseus.config.json`. Output forma
 ```
 repo ─► Part 1 ─► pass1.json ─► Runtime ─► runtime.json
                       └──────────► Part 2 ◄───────┘
-                                     └─► questions ─► Slack ─► decisions ─► tests
+                                     └─► questions
 ```
 
 Each layer reads only the previous layers' files and adds to them. Each can be built and tested alone.
@@ -143,7 +143,7 @@ type Runtime = { version: 1; runs: { id: string; scenario: string; program: stri
 ## 3. Part 2: reader (LLM)
 
 ### 3.1 Input
-`pass1.json`, `runtime.json`, and the clone. Also the decision log, so already-answered questions aren't asked again.
+`pass1.json`, `runtime.json`, and the clone.
 
 ### 3.2 Context pack (built by code, one per program)
 
@@ -155,7 +155,6 @@ type Runtime = { version: 1; runs: { id: string; scenario: string; program: stri
 | `neighbors` | For each dataset/queue/table it touches: the other programs touching it, with read/write |
 | `coverage` | Paragraphs that never ran |
 | `open` | Its unresolved items |
-| `decisions` | Prior human decisions about this program |
 | `task` | Fixed instructions (§3.3) |
 
 If a pack exceeds `part2.maxPackTokens`, split it by paragraph range. `connections` and `layouts` are repeated in every chunk.
@@ -189,27 +188,20 @@ For each dataset, table, or queue touched by more than one program, compare the 
 - **conflicting rules**
 - **outputs nobody reads** and **inputs nobody writes**, which become questions about outside parties
 
-### 3.6 Questions → humans → tests
-- Questions are deduplicated against the decision log, then sent to the Slack bot (Backend B).
-- Each answer is stored as a decision with who, when, and evidence.
-- Each decision generates a test:
-  - **Preserve:** the test checks that the new code matches the old behavior.
-  - **Fix:** the test checks the new behavior, and the shadow difference is marked approved.
-
-### 3.7 LLM settings
+### 3.6 LLM settings
 - Calls go through `packages/llm`: NVIDIA client, mock, and record/replay cache keyed by prompt hash.
 - Temperature 0. Model id, token limits, and retry counts live in `theseus.config.json`.
 - No agent framework. Optional `needMore` round trips only.
 
-### 3.8 Output: `part2.json`
+### 3.7 Output: `part2.json`
 
 ```ts
 type Part2 = { version: 1; results: PackResult[]; crossProgram: Finding[];
-               notVerified: { kind: "unresolved" | "never-fired" | "never-ran" | "unanswered"; ref: string }[];
+               notVerified: { kind: "unresolved" | "never-fired" | "never-ran"; ref: string }[];
                dropped: { program: string; reason: "no-citation" | "bad-citation" | "schema" }[] };
 ```
 
-### 3.9 Acceptance
+### 3.8 Acceptance
 - **Planted programs** with known rules, known defects, a known mismatch between two programs, and a known rare path. Score recall per kind, against a key written first.
 - **Every connection** in each pack gets an explanation. Explanation coverage per pack = 100%.
 - **Zero uncited findings** reach `part2.json`.
@@ -226,7 +218,7 @@ type Part2 = { version: 1; results: PackResult[]; crossProgram: Finding[];
 ## 5. Build order
 1. Part 1: port the existing scanners (programs, layouts, files, db, batch), then add time, identity, and external. Planted cases first for each.
 2. Runtime: batch programs only, with time and file stubs, plus the merge.
-3. Part 2: pack builder, then a single-call reader with the planted key, then the cross-program pass, then questions to Slack.
+3. Part 2: pack builder, then a single-call reader with the planted key, then the cross-program pass.
 4. Later: online/DB/MQ/IMS stubs, the remaining scanners, the scheduler, and `needMore`.
 
 ## 6. Open questions for the team

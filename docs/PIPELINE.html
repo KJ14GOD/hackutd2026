@@ -298,7 +298,7 @@ footer code { font-family: var(--mono); color: var(--muted); }
     <div class="edge" style="--from: var(--s-semantic); --to: var(--s-out)">
       <div class="rail"></div>
       <div class="contract">
-        <div class="io"><span><b>In</b><code>pass1.json</code> + <code>runtime.json</code> + source + prior decisions</span><span><b>Out</b><code>semantic.json</code></span></div>
+        <div class="io"><span><b>In</b><code>pass1.json</code> + <code>runtime.json</code> + source</span><span><b>Out</b><code>semantic.json</code></span></div>
         <div class="schema">
           <div class="schema-bar"><span>semantic.json (validated with zod)</span><button class="copy" type="button" id="copy-4">Copy</button></div>
 <pre><span class="k">type</span> <span class="t">Finding</span> = {
@@ -313,7 +313,7 @@ footer code { font-family: var(--mono); color: var(--muted); }
   version: <span class="t">1</span>
   results:      { program, findings: <span class="t">Finding[]</span>, questions: <span class="t">Question[]</span> }[]
   crossProgram: <span class="t">Finding[]</span>
-  notVerified:  { kind: <span class="s">"unresolved"</span> | <span class="s">"never-fired"</span> | <span class="s">"never-ran"</span> | <span class="s">"unanswered"</span>, ref }[]
+  notVerified:  { kind: <span class="s">"unresolved"</span> | <span class="s">"never-fired"</span> | <span class="s">"never-ran"</span>, ref }[]
   dropped:      { program, reason: <span class="s">"no-citation"</span> | <span class="s">"bad-citation"</span> | <span class="s">"schema"</span> }[]
 }</pre>
         </div>
@@ -325,7 +325,7 @@ footer code { font-family: var(--mono); color: var(--muted); }
         <div class="stage-title"><span class="dot" style="--dc: var(--s-out)"></span><h2>Where it goes next</h2></div>
       </div>
       <ul>
-        <li><span>Questions go to engineers on Slack. Each answer is saved as a decision and becomes a test.</span></li>
+        <li><span>The questions are the output: a list of what the code can't answer on its own.</span></li>
         <li><span>The not-verified list follows the pocket into the production parallel run.</span></li>
       </ul>
     </section>
