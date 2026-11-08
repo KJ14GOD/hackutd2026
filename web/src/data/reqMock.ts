@@ -31,6 +31,8 @@ import {
   personName,
   quorumFor,
 } from './requirements'
+import { onSlackAnswer, postToSlack } from './slackOut'
+import { BUSINESS, questionCard, wordingProblems } from './slackCard'
 
 /* ------------------------------------------------------------------ *
  * The requirements half of MockSource. It keeps its own copy of the world
@@ -79,6 +81,7 @@ export class ReqMock implements ReqActions {
   /** Start the sim clock: one sim minute per real second; escalations fire when due. */
   start() {
     if (this.clock !== null || typeof window === 'undefined') return
+    onSlackAnswer(({ q, o, p }) => this.answerQuestion(q, o, p))
     this.clock = window.setInterval(() => this.tick(MINUTE), 1000)
   }
 
@@ -108,19 +111,21 @@ export class ReqMock implements ReqActions {
 
   private tick(ms: number) {
     this.commit({ type: 'clockTick', nowMs: this.now + ms })
+    // Clock-driven escalations stay in the UI; at one sim minute per second they would flood Slack.
     for (const q of Object.values(this.w.questions)) {
-      for (const s of dueSteps(this.w, q)) this.send(q, s.step as OutreachStep, s.recipients, s.atMs)
+      for (const s of dueSteps(this.w, q)) this.send(q, s.step as OutreachStep, s.recipients, s.atMs, false)
     }
   }
 
-  private send(q: Question, step: OutreachStep, recipients: string[], atMs = this.now) {
+  private send(q: Question, step: OutreachStep, recipients: string[], atMs = this.now, toSlack = true) {
+    if (toSlack) this.toSlack(q, step, recipients)
     for (const r of recipients) {
       const o: Outreach = {
         id: this.id('OR'),
         questionId: q.id,
         recipientPersonId: r,
         channel: 'slack-dm',
-        rendering: ['p-maria', 'p-marcus', 'p-riley', 'p-elena', 'p-tom'].includes(r) ? 'business' : 'engineer',
+        rendering: BUSINESS.includes(r) ? 'business' : 'engineer',
         urgency: q.urgency,
         step,
         status: 'sent',
@@ -128,6 +133,13 @@ export class ReqMock implements ReqActions {
       }
       this.commit({ type: 'outreachUpserted', outreach: o })
     }
+  }
+
+  /** One card per recipient, posted to real Slack in dev; a click answers through onSlackAnswer. */
+  private toSlack(q: Question, step: OutreachStep, recipients: string[]) {
+    const vague = wordingProblems(`${q.text.business} ${q.text.engineer}`)
+    if (vague.length) console.warn(`[slack] ${q.id} wording is vague: ${vague.join(', ')}`)
+    for (const r of recipients) postToSlack(questionCard(this.w, q, step, r))
   }
 
   /** Write a new current version: lint it, raise questions for new gaps, stale the checks. */

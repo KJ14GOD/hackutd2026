@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from './GraphCanvas';
+import { ChipMap } from './map/ChipMap';
 import { buildModel, prettyData, type Marks, type P1Edge, type Pass1 } from './graphModel';
 import type { Runtime } from '../../../services/runtime/src/types';
 import type { PackResult } from '../../../services/reader/src/contract';
@@ -12,6 +13,9 @@ const SYSTEM_LABEL: Record<string, string> = {
   mq: 'MQ queues', 'cics-queue': 'CICS queues', screen: 'Screens', network: 'Network', identity: 'Identity', time: 'Clock',
   batch: 'Run by', scheduler: 'Scheduled', external: 'External code',
 };
+
+/** The chip floorplan has pockets only for CardDemo (a snapshot of the segmenter's clustering); other repos get the plain graph. */
+const isCardDemo = (source: string) => /carddemo/i.test(source);
 
 const label = (id: string) => (id.startsWith('data:') ? prettyData(id) : id.replace(/^[a-z0-9-]+:/, ''));
 
@@ -52,6 +56,8 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
   } : undefined, [runtime]);
   const model = useMemo(() => (load.status === 'ready' ? buildModel(load.pass1, marks) : null), [load, marks]);
   const pass1 = load.status === 'ready' ? load.pass1 : null;
+  const knownIds = useMemo(() => new Set(pass1?.nodes.map((n) => n.id) ?? []), [pass1]);
+  const chip = isCardDemo(source);
 
   return (
     <main className="map-page" key="map">
@@ -68,11 +74,15 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
         )}
         {pass1 && selected && <Details id={selected} pass1={pass1} runtime={runtime} read={reads.find((r) => `prog:${r.program}` === selected)} onClose={() => setSelected(null)} />}
         {pass1 && pass1.inventory.programs.length === 0 && <p className="map-hint">No COBOL programs found in {source.replace(/^gh:/, '')}. Theseus maps COBOL, JCL and CICS today.</p>}
-        {pass1 && !selected && pass1.inventory.programs.length > 0 && <p className="map-hint">Online programs sit on top, batch programs below, and the data they share sits between them. Click anything to see every link and the line of COBOL it came from.</p>}
+        {pass1 && !selected && pass1.inventory.programs.length > 0 && <p className="map-hint">{chip
+          ? 'The codebase as a chip: shared data files run as copper lanes down the middle, and each pocket of programs taps the lanes it uses. Click a pocket to open it, then a program to trace every link and the line of COBOL it came from.'
+          : 'Online programs sit on top, batch programs below, and the data they share sits between them. Click anything to see every link and the line of COBOL it came from.'}</p>}
         {load.status === 'error' && <p className="signin-error">Couldn’t build the map: {load.message}. Run <code>pnpm legacy:fetch</code> from the repo root.</p>}
       </div>
       <div className="map-canvas">
-        {model ? <GraphCanvas model={model} selected={selected} onSelect={setSelected} /> : <div className="graph map-loading">{load.status === 'loading' ? 'Reading the code…' : ''}</div>}
+        {chip && pass1 ? <ChipMap knownIds={knownIds} onSelect={setSelected} />
+          : model ? <GraphCanvas model={model} selected={selected} onSelect={setSelected} />
+          : <div className="graph map-loading">{load.status === 'loading' ? 'Reading the code…' : ''}</div>}
       </div>
     </main>
   );

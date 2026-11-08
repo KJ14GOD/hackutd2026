@@ -1,0 +1,61 @@
+/* The chip-floorplan map (ported from web/, branch dhruv-aadit). Everything is scoped under
+ * .chip-root so the rest of the walkthrough keeps its own look; the map itself is always dark,
+ * like the die it draws. Tokens mirror web/src/index.css. */
+.chip-root {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+  color: var(--color-ink);
+  font-family: 'Geist Sans', system-ui, sans-serif;
+  --color-bg: #000000;
+  --color-bg-2: #0b0b0e;
+  --color-panel: #121216;
+  --color-panel-2: #18181d;
+  --color-line: #222228;
+  --color-line-2: #33333c;
+  --color-ink: #edeef1;
+  --color-muted: #a9afba;
+  --color-faint: #73737e;
+  --color-accent: #7fb2ff;
+  --color-accent-bright: #a9cbff;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.chip-svg { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; }
+
+/* camera controls (bottom right) */
+.chip-controls { position: absolute; bottom: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; transition: right 200ms; }
+.chip-zoombar { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 10px; border: 1px solid var(--color-line); background: var(--color-panel); }
+.chip-iconbtn, .chip-btn { border: 0; border-radius: 8px; background: transparent; color: var(--color-muted); cursor: pointer; transition: background-color 200ms, color 200ms; }
+.chip-iconbtn { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; }
+.chip-btn { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; font: 500 11.5px 'Geist Sans', system-ui, sans-serif; }
+.chip-iconbtn:hover, .chip-btn:hover { background: var(--color-panel-2); color: var(--color-ink); }
+.chip-zoomtext { width: 44px; text-align: center; font: 11px var(--font-mono); color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.chip-divider { margin: 0 2px; width: 1px; height: 16px; background: var(--color-line-2); }
+.chip-minimap { padding: 4px; border-radius: 10px; border: 1px solid var(--color-line); background: var(--color-bg-2); transition: opacity 200ms; }
+.chip-minisvg { display: block; cursor: crosshair; touch-action: none; }
+
+/* lens and view switches (top right), figure caption (top left) */
+.chip-toolbar { position: absolute; top: 14px; right: 14px; z-index: 3; display: flex; gap: 6px; }
+.chip-toolbar .chip-group { display: flex; gap: 2px; padding: 3px; border-radius: 10px; border: 1px solid var(--color-line); background: var(--color-panel); }
+.chip-toolbar button { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--color-muted); font: 500 12px 'Geist Sans', system-ui, sans-serif; cursor: pointer; transition: background-color 200ms, color 200ms; }
+.chip-toolbar button:hover { color: var(--color-ink); }
+.chip-toolbar button[aria-pressed='true'] { background: var(--color-panel-2); color: var(--color-ink); }
+.chip-caption { position: absolute; left: 12px; top: 10px; font: 10px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: #83838d; pointer-events: none; }
+.chip-crumb { position: absolute; left: 12px; bottom: 14px; display: flex; align-items: center; gap: 8px; font: 11.5px var(--font-mono); color: var(--color-muted); }
+.chip-crumb button { border: 0; background: transparent; color: var(--color-muted); font: inherit; cursor: pointer; padding: 0; }
+.chip-crumb button:hover { color: var(--color-ink); text-decoration: underline; }
+.chip-crumb b { color: var(--color-ink); font-weight: 500; }
+
+/* motion used by the scene (class names are the map's own; keyframes are prefixed to stay private) */
+@keyframes chip-trace-flow { to { stroke-dashoffset: -24; } }
+.chip-root .trace-flow { animation: chip-trace-flow 0.9s linear infinite; }
+@keyframes chip-pulse-soft { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.08; } }
+.chip-root .pulse-soft { animation: chip-pulse-soft 2.2s ease-in-out infinite; }
+@keyframes chip-pulse-stroke { 0%, 100% { stroke-opacity: 1; } 50% { stroke-opacity: 0.25; } }
+.chip-root .pulse-stroke { animation: chip-pulse-stroke 2.2s ease-in-out infinite; }
+@keyframes chip-float-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.chip-root .float-in { animation: chip-float-in 0.18s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .chip-root * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}

@@ -118,6 +118,7 @@ export function withFindings(w: ReqWorld): ReqWorld {
         text: { business: q.text, engineer: q.text },
         evidence: { kind: 'none' },
         options: q.options,
+        cites: q.cites,
         routedTo: owner ? [owner] : [],
         routedWhy: owner ? 'Owns this pocket' : '',
         askedAtMs: DRAFTED_AT,

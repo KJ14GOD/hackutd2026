@@ -320,6 +320,8 @@ export interface Question {
     | { kind: 'shadow'; detail: string }
     | { kind: 'none' }
   options: string[] // one-click answers
+  /** COBOL lines the question is about, shown as the snippet in the Slack card */
+  cites?: { ref: string; code: string }[]
   routedTo: string[] // person ids
   routedWhy: string
   askedAtMs: number
