@@ -3,38 +3,38 @@
 import type { Migration } from '@/data/carddemo'
 
 export const C = {
-  bg: '#0B0D10',
-  die: '#0E1115',
-  dieEdge: '#1C2129',
-  grid: '#161B22',
-  plate: '#14181E',
-  slab: '#191E25',
-  slabEdge: '#2B323C',
-  block: '#2A3039',
-  ink: '#E6E8EB',
-  sub: '#9AA3AE',
-  faint: '#6B737E',
-  copper: '#B08D57',
-  copperHi: '#D4AE74',
-  accent: '#4CC9F0',
-  good: '#3FB68B',
-  warn: '#D9A441',
-  bad: '#E0605E',
-  dark: '#0B0D10',
+  bg: '#000000',
+  die: '#000000',
+  dieEdge: '#24242B',
+  grid: '#141418',
+  plate: '#131318',
+  slab: '#1C1C22',
+  slabEdge: '#36363F',
+  block: '#3A414D',
+  ink: '#EDEEF1',
+  sub: '#A9AFBA',
+  faint: '#73737E',
+  copper: '#CB9D5F',
+  copperHi: '#E6C288',
+  accent: '#45C7F5',
+  good: '#37CA95',
+  warn: '#EFB24A',
+  bad: '#EE6D69',
+  dark: '#000000',
 }
 
 export const MIG_COLOR: Record<Migration, string> = {
-  legacy: '#3A424D',
-  shadowing: '#4CC9F0',
-  cutover: '#D9A441',
-  done: '#3FB68B',
+  legacy: '#4C4C57',
+  shadowing: '#45C7F5',
+  cutover: '#EFB24A',
+  done: '#37CA95',
 }
 
 export const TEAM_COLOR: Record<string, string> = {
-  finance: '#6E9BF5',
-  customer: '#C792EA',
-  platform: '#4FB6A8',
-  operations: '#E5A06A',
+  finance: '#7FA8FF',
+  customer: '#D2A2F2',
+  platform: '#5FCCBB',
+  operations: '#EBAC76',
 }
 
 export function isoColor(isolation: number) {

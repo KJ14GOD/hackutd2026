@@ -8,27 +8,27 @@
  * Map colors live in src/components/map/theme.ts; keep them in step.
  * ------------------------------------------------------------------ */
 @theme {
-  --color-bg: #0b0d10;
-  --color-bg-2: #0e1115;
-  --color-panel: #111419;
-  --color-panel-2: #161a20;
-  --color-raise: #1b2028;
-  --color-line: #1e232b;
-  --color-line-2: #2a313b;
-  --color-ink: #e6e8eb;
-  --color-muted: #a0a7b1;
-  --color-sub: #a0a7b1;
-  --color-faint: #6b737e;
+  --color-bg: #000000;
+  --color-bg-2: #0b0b0e;
+  --color-panel: #121216;
+  --color-panel-2: #18181d;
+  --color-raise: #202026;
+  --color-line: #222228;
+  --color-line-2: #33333c;
+  --color-ink: #edeef1;
+  --color-muted: #a9afba;
+  --color-sub: #a9afba;
+  --color-faint: #73737e;
 
-  --color-accent: #4cc9f0;
-  --color-accent-bright: #7dd8f4;
-  --color-accent-dim: rgba(76, 201, 240, 0.14);
-  --color-copper: #b08d57;
+  --color-accent: #45c7f5;
+  --color-accent-bright: #88ddf8;
+  --color-accent-dim: rgba(69, 199, 245, 0.16);
+  --color-copper: #cb9d5f;
 
-  --color-good: #3fb68b;
-  --color-warn: #d9a441;
-  --color-bad: #e0605e;
-  --color-agent: #a99cf5;
+  --color-good: #37ca95;
+  --color-warn: #efb24a;
+  --color-bad: #ee6d69;
+  --color-agent: #b4a8f8;
 
   /* aliases used by the older screens */
   --color-fg: #e6e8eb;
@@ -157,6 +157,21 @@ body {
   to {
     transform: translate3d(-80px, -40px, 0);
   }
+}
+
+/* hovered node label lifting off the surface */
+@keyframes float-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.float-in {
+  animation: float-in 0.18s ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

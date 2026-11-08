@@ -184,7 +184,7 @@ export default function MissionControl() {
   return (
     <div className="flex h-screen flex-col bg-[var(--color-bg)] text-[var(--color-ink)]">
       {/* ---------------- top bar ---------------- */}
-      <header className="z-30 flex h-[52px] shrink-0 items-center gap-4 border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-4">
+      <header className="z-30 flex h-[52px] shrink-0 items-center gap-3 overflow-hidden border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-4">
         <button type="button" onClick={goHome} className="flex items-center gap-2.5" aria-label="Back to the whole system">
           <Logo />
           <span className="text-[14px] font-semibold tracking-[-0.01em]">Shadow Diff</span>
@@ -221,7 +221,7 @@ export default function MissionControl() {
           </span>
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <Search ref={searchRef} onPick={pick} />
           <select
             value={scenarioId}
@@ -231,7 +231,7 @@ export default function MissionControl() {
               goHome()
             }}
             aria-label="Scenario"
-            className="h-8 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2 font-mono text-[11.5px] text-[var(--color-muted)] outline-none hover:border-[var(--color-line-2)]"
+            className="hidden h-8 max-w-[150px] rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2 font-mono text-[11.5px] text-[var(--color-muted)] outline-none hover:border-[var(--color-line-2)] lg:block"
           >
             {controls.scenarios().map((s) => (
               <option key={s.id} value={s.id}>
@@ -239,6 +239,7 @@ export default function MissionControl() {
               </option>
             ))}
           </select>
+          <div className="mx-0.5 h-5 w-px bg-[var(--color-line-2)]" />
           <Btn
             variant="outline"
             aria-pressed={auto}
@@ -309,6 +310,10 @@ export default function MissionControl() {
             onPick={pick}
             onHover={setHover}
             onZoom={onZoom}
+            onOpenMessages={() => {
+              if (PROGRAM[component.id]) pick({ kind: 'program', id: component.id })
+              setTab('people')
+            }}
           />
 
           {/* bottom-left: hover readout */}

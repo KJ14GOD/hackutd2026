@@ -38,7 +38,7 @@ export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void }>(fun
   }
 
   return (
-    <div className="relative w-[280px]">
+    <div className="relative w-[196px] xl:w-[256px]">
       <div className="flex h-8 items-center gap-2 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 focus-within:border-[var(--color-line-2)]">
         <SearchIcon className="size-3.5 text-[var(--color-faint)]" />
         <input

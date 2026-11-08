@@ -40,6 +40,8 @@ interface Props {
   onPick(ref: Ref | null): void
   onHover(ref: Ref | null): void
   onZoom(k: number): void
+  /** click the pending-question pin → open that program's message */
+  onOpenMessages?(): void
 }
 
 const LZ = 400 // px from the data plane up to the program plane
@@ -80,7 +82,7 @@ function focusBox(id: string, frame: string[] = []) {
 }
 
 export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
-  const { lens, view, focus, selection, hover, highlight: hl, mig, live, frame, onPick, onHover, onZoom } = props
+  const { lens, view, focus, selection, hover, highlight: hl, mig, live, frame, onPick, onHover, onZoom, onOpenMessages } = props
   const frameKey = (frame ?? []).join(',')
   const wrapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -286,8 +288,8 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
   const progColor = (id: string): string => {
     const p = PROGRAM[id]
     if (lens === 'migration') return MIG_COLOR[mig[id] ?? 'legacy']
-    if (lens === 'coupling') return mix(C.block, isoColor(POCKET[p.pocket].isolation), 0.45)
-    if (lens === 'owners') return mix(C.block, TEAM_COLOR[POCKET[p.pocket].team], 0.55)
+    if (lens === 'coupling') return mix(C.block, isoColor(POCKET[p.pocket].isolation), 0.62)
+    if (lens === 'owners') return mix(C.block, TEAM_COLOR[POCKET[p.pocket].team], 0.72)
     const role = hl?.programs.get(id)
     if (role === 'source') return C.accent
     if (role === 'hit') return C.warn
@@ -296,12 +298,12 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
 
   const pocketTop = (id: string): string => {
     const p = POCKET[id]
-    if (lens === 'coupling') return mix(C.block, isoColor(p.isolation), 0.42)
-    if (lens === 'owners') return mix(C.block, TEAM_COLOR[p.team], 0.5)
+    if (lens === 'coupling') return mix(C.block, isoColor(p.isolation), 0.58)
+    if (lens === 'owners') return mix(C.block, TEAM_COLOR[p.team], 0.68)
     if (lens === 'blast' && hl) {
       const roles = p.programs.map((x) => hl.programs.get(x))
-      if (roles.includes('source')) return mix(C.block, C.accent, 0.55)
-      if (roles.includes('hit')) return mix(C.block, C.warn, 0.5)
+      if (roles.includes('source')) return mix(C.block, C.accent, 0.66)
+      if (roles.includes('hit')) return mix(C.block, C.warn, 0.6)
     }
     return C.block
   }
@@ -560,6 +562,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
               progDim={(id) => dimFor(progLit(id))}
               toneColor={toneColor}
               hideEntriesInline={Lv > 0.5}
+              onOpenMessages={onOpenMessages}
             />
           ))}
 
@@ -600,6 +603,41 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
               )}
             </g>
           )}
+          {/* label lifts off the surface on hover */}
+          {hover && (hover.kind === 'program' || hover.kind === 'pocket') && (() => {
+            let ax = 0, ay = 0, az = 0, label = '', sub = ''
+            if (hover.kind === 'program') {
+              const prog = PROGRAM[hover.id]
+              const pg = L.pockets[prog.pocket]
+              const o = open(prog.pocket)
+              const g = pg.programs.find((x) => x.id === hover.id)
+              if (!g || o < 0.4) return null
+              ax = g.cx; ay = g.cy; az = pocketZTop(prog.pocket) + g.h * o * ZS
+              label = g.id; sub = PROGRAM[hover.id].title
+            } else {
+              const pg = L.pockets[hover.id]
+              if (!pg) return null
+              ax = (pg.x0 + pg.x1) / 2; ay = (pg.y0 + pg.y1) / 2; az = pocketZTop(hover.id)
+              label = POCKET[hover.id].title; sub = `${POCKET[hover.id].programs.length} programs`
+            }
+            const { X, Y } = proj(ax, ay, az)
+            const text = sub ? `${label}  ·  ${sub}` : label
+            const w = Math.max(54, text.length * 6.4 + 16)
+            const H = 21, RISE = 32
+            return (
+              <g key={`hl:${hover.kind}:${hover.id}`} transform={`translate(${X} ${Y}) scale(${1 / k})`} pointerEvents="none">
+                <g className="float-in">
+                  <line x1={0} y1={0} x2={0} y2={-RISE} stroke={C.accent} strokeWidth={1.1} />
+                  <circle cx={0} cy={0} r={2.2} fill={C.accent} />
+                  <rect x={-w / 2} y={-RISE - H} width={w} height={H} rx={6} fill="#12171f" stroke={C.slabEdge} strokeWidth={1} />
+                  <text x={0} y={-RISE - H / 2 + 0.5} fontFamily={MONO} fontSize={11} fill={C.ink} textAnchor="middle" dominantBaseline="middle">
+                    <tspan fontWeight={600}>{label}</tspan>
+                    {sub && <tspan fill={C.sub} fontWeight={400}>{`  ·  ${sub}`}</tspan>}
+                  </text>
+                </g>
+              </g>
+            )
+          })()}
         </g>
       </svg>
     </div>
@@ -662,6 +700,7 @@ function PocketView(p: {
   progDim: (id: string) => number
   toneColor: string
   hideEntriesInline: boolean
+  onOpenMessages?: () => void
 }) {
   const { pg, o, zBase, zTop, k, lens, mig, hl, selection, hover, live } = p
   const pocket = POCKET[pg.id]
@@ -770,7 +809,7 @@ function PocketView(p: {
                     opacity={0.7}
                   />
                 )}
-                {isLive && live!.pending > 0 && <Pin x={g.cx} y={g.cy} z={z1} n={live!.pending} k={k} />}
+                {isLive && live!.pending > 0 && <Pin x={g.cx} y={g.cy} z={z1} n={live!.pending} k={k} onOpen={p.onOpenMessages} />}
               </g>
             )
           })}
@@ -779,7 +818,7 @@ function PocketView(p: {
       {/* pin on the closed block */}
       {o < 0.5 && live && pocket.programs.includes(live.id) && live.pending > 0 && (() => {
         const g = pg.programs.find((x) => x.id === live.id)!
-        return <Pin x={g.cx} y={g.cy} z={zTop} n={live.pending} k={k} />
+        return <Pin x={g.cx} y={g.cy} z={zTop} n={live.pending} k={k} onOpen={p.onOpenMessages} />
       })()}
     </g>
   )
@@ -887,14 +926,20 @@ function CallRoute(p: {
   )
 }
 
-function Pin({ x, y, z, n, k }: { x: number; y: number; z: number; n: number; k: number }) {
+function Pin({ x, y, z, n, k, onOpen }: { x: number; y: number; z: number; n: number; k: number; onOpen?: () => void }) {
   const base = proj(x, y, z)
   const h = clamp(34 / k, 22, 60)
   const r = clamp(7 / k, 4.5, 12)
   const top = { X: base.X, Y: base.Y - h }
+  const click = onOpen
+    ? { onPointerDown: (e: React.PointerEvent) => e.stopPropagation(), onClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() }, style: { cursor: 'pointer' } }
+    : {}
   return (
-    <g pointerEvents="none">
+    <g pointerEvents={onOpen ? 'auto' : 'none'} {...click}>
+      <title>{n} question{n > 1 ? 's' : ''} waiting · click to open</title>
       <line x1={base.X} y1={base.Y} x2={top.X} y2={top.Y} stroke={C.warn} strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
+      {/* soft hit halo */}
+      {onOpen && <circle cx={top.X} cy={top.Y} r={r * 1.9} fill={C.warn} opacity={0.14} />}
       <polygon points={`${top.X},${top.Y - r} ${top.X + r},${top.Y} ${top.X},${top.Y + r} ${top.X - r},${top.Y}`} fill={C.warn} />
       <text x={top.X} y={top.Y + 0.5} fontFamily={MONO} fontSize={r * 1.15} fontWeight={700} fill={C.dark} textAnchor="middle" dominantBaseline="middle">
         {n}

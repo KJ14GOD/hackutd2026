@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Play, X } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, Code2, Play, X } from 'lucide-react'
 import type { AgentThought, Decision } from '@/types'
 import type { PendingQuestion } from '@/data/source'
 import {
@@ -26,6 +26,7 @@ import {
   migrationCounts,
   migrationProgress,
   sharedStoresOfPocket,
+  sourceUrl,
   storeBlast,
   type Flow,
   type MigrationMap,
@@ -407,6 +408,15 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
             {e.kind === 'job' ? 'job' : 'cics'} {e.id}
           </Chip>
         ))}
+        <a
+          href={sourceUrl(id)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ml-auto inline-flex items-center gap-1 rounded-[6px] border border-[var(--color-line-2)] px-2 py-[2px] text-[11px] font-medium text-[var(--color-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+          title={`Open ${id} source on GitHub (AWS CardDemo)`}
+        >
+          <Code2 className="size-3" /> View source
+        </a>
       </div>
 
       {isLive && (
