@@ -9,7 +9,9 @@ check each rewrite. Old behavior is the default truth unless the knowledge base 
 otherwise; when it's unclear, the agent asks an expert on Slack and the answer becomes a
 test. HackUTD 2026 tracks: NVIDIA (Nemotron agent), SpacetimeDB (backend), 8090 (modernization).
 
-**Status:** Milestone 0 (setup, config, draft docs). Designs in `docs/` marked PROPOSED
+**Status:** Milestone 0 (setup, config, draft docs). The segmenter is in progress on
+`feat/segmenter-deps`; the mission-control UI in `web/` runs standalone on mock data plus a
+snapshot of the segmenter's CardDemo graph. Designs in `docs/` marked PROPOSED
 are not decided. Check `docs/DECISIONS.md` before building past one.
 
 ## Repo map
@@ -25,11 +27,11 @@ are not decided. Check `docs/DECISIONS.md` before building past one.
 | `target/` | `TargetRuntime` adapter, generated Java, runner | planned |
 | `services/router/` | HTTP proxy: counting, routing, shadow diff | planned |
 | `services/traffic/` | traffic generator + sim-clock controls | planned |
-| `services/segmenter/` | extractors, dependency graph, clustering | planned |
+| `services/segmenter/` | extractors, dependency graph, clustering | in progress (`feat/segmenter-deps`); its output feeds `web/src/data/carddemo.graph.json` |
 | `services/agent/` | workers: capture, rewrite, fix, classify, ask | planned (M2) |
 | `services/slackbot/` | Slack Bolt app, buttons call reducers | planned (M2) |
-| `tools/` | CLI that tails events/state (the backend demo until the UI exists) | planned |
-| `web/` | frontend; owned by the frontend teammate | not ours |
+| `tools/` | CLI that tails events/state (backend demo until the UI reads SpacetimeDB) | planned |
+| `web/` | mission-control UI (Vite + React, npm, outside the pnpm workspace): CardDemo map with lenses, flows, Inspector; owned by the frontend teammate, see `web/README.md` | built (mock data, not yet wired to SpacetimeDB) |
 | `docs/` | design docs (below) | draft |
 | `research/` | background research; read-only | final |
 
@@ -56,6 +58,8 @@ pnpm stdb:stop               # stop the Docker container
 
 pnpm test                    # vitest, all packages
 pnpm typecheck               # tsc in every package
+
+cd web && npm install && npm run dev   # mission-control UI on :5173 (mock data, no backend needed)
 ```
 
 First run: `pnpm install && pnpm legacy:fetch && pnpm stdb:start && pnpm stdb:publish && pnpm config:push`.
@@ -94,7 +98,8 @@ SpacetimeDB gotchas (verified against v2.14.1):
   (`LegacyRuntime`, `TargetRuntime`, LLM provider, language extractor).
 - Write tests for pure logic: segmentation, diff and noise filtering, mismatch grouping,
   state transitions. Every LLM call goes through the provider interface.
-- Don't build the UI. The `tools/` CLI is how the backend gets demoed until the UI exists.
+- Don't build the UI in backend work; `web/` belongs to the frontend teammate. The `tools/` CLI
+  is how the backend gets demoed until the UI reads SpacetimeDB (today it runs on `MockSource`).
 - When something is ambiguous, pick the most easily reversible option, log it in
   `docs/DECISIONS.md`, and keep going.
 - Team rule for now: don't commit implementation for a PROPOSED design until the team

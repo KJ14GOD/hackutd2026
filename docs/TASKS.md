@@ -30,7 +30,7 @@ backend dev owns separate reducer files (`spacetime/src/reducers/<area>.ts`), an
 | Fixture app (overpay bug, dead-looking rule, never-called transaction) + HTTP shim + stub runtime + `LegacyRuntime` | Backend B | `legacy/fixture/`, `legacy/src/` |
 | Segmenter: COBOL extractor (CALL, CICS XCTL/LINK, COPY, files, CICS FILE, EXEC SQL), graph, Louvain hierarchy, isolation, endpoint map, tests on CardDemo | Backend B | `services/segmenter/` |
 | Traffic generator (sim-clock-aware rates, scenario) + clock controls | Backend B | `services/traffic/` |
-| UI shell: connect, subscribe, mirror into Zustand; react to `pocket.discovered` | Frontend | `web/` |
+| UI shell: connect, subscribe, mirror into Zustand; react to `pocket.discovered`. Done on mock data: mission-control screen, CardDemo map from the segmenter snapshot, Systems sidebar, Inspector (PR #7–#9). Left: a SpacetimeDB `RealtimeSource` | Frontend | `web/` |
 | Map CardDemo paths → teammates (`config/owners.json`); write 1–2 expert notes for `knowledge/`; Slack question copy | Research | `config/`, `knowledge/` |
 
 ## Milestone 2: LLM loop, resolution, Slack, cutover (proposed split)
@@ -44,5 +44,5 @@ backend dev owns separate reducer files (`spacetime/src/reducers/<area>.ts`), an
 | Knowledge base: `decision`/`question`/`testCase`/`legacyBug` tables + reducers, note import, assumed-old digest | Backend B | `spacetime/src/reducers/human.ts`, `services/agent/src/knowledge/` |
 | Slack bot (Bolt, Socket Mode): post cards, buttons → reducers, escalation timers | Backend B | `services/slackbot/` |
 | Answer → test generator, legacy-bug impact estimate | Backend B | `services/agent/src/answers/` |
-| Graph view (incl. "hot, too coupled"), pocket timeline, match-rate chart, Slack-card mirror | Frontend | `web/` |
+| Graph view (incl. "hot, too coupled"), pocket timeline, match-rate chart, Slack-card mirror. Graph view and Slack questions (People tab) exist on mock data; timeline, chart, mismatch detail and cutover control still to bring into the new screen | Frontend | `web/` |
 | Demo script + recorded LLM cache + rehearsal | Research | `docs/DEMO.md` |

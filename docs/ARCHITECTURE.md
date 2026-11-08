@@ -25,7 +25,7 @@ tables through subscriptions. There is no separate REST API.
 | Agent workers (M2) | `services/agent/` | capture, LLM rewrite/fix, classify, group, compose questions | `migrationJob`, `mismatch`, `decision`, … | `advanceJob`, `recordCapture`, `groupMismatches`, … |
 | Slack bot (M2) | `services/slackbot/` | post questions, receive button clicks | `question` | `markQuestionSent`, `answerQuestion` |
 | Tools CLI | `tools/` | print events/state, demo controls | `event` + everything | control reducers |
-| UI (frontend teammate) | `web/` | rendering | all public tables → Zustand | none planned |
+| UI (frontend teammate) | `web/` | rendering; today runs on `MockSource` + a segmenter snapshot, no backend | all public tables → Zustand (planned) | none planned |
 
 ## Data flow
 
