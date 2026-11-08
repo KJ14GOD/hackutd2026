@@ -107,6 +107,7 @@ SpacetimeDB gotchas (verified against v2.14.1):
 - [docs/DATA_MODEL.md](docs/DATA_MODEL.md): every table and reducer (schema source of truth)
 - [docs/EVENTS.md](docs/EVENTS.md): UI event contract (DRAFT, versioned)
 - [docs/SEGMENTATION.md](docs/SEGMENTATION.md): extractors, graph, clustering, isolation
+- [docs/EXTRACTOR_SPIKE.md](docs/EXTRACTOR_SPIKE.md): prototype findings on CardDemo and beyond-code dependencies (feeds SEGMENTATION.md)
 - [docs/AGENT_LOOP.md](docs/AGENT_LOOP.md): per-pocket state machine, ranking, the oracle
 - [docs/HUMAN_LOOP.md](docs/HUMAN_LOOP.md): knowledge base, when to ask, routing, answer → test
 - [docs/DEMO.md](docs/DEMO.md): demo storyline and what to seed
