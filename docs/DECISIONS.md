@@ -24,6 +24,7 @@ reversible option, log it here, and keep going.
 | D-016 | `AGENTS.md` (read by Codex and most other agents) is an identical copy of `CLAUDE.md`. A vitest check fails if they differ. | Teammates use different agents; one set of instructions, no drift. | Accepted |
 | D-017 | CardDemo already contains two planted cases: `CBACT04C` computes interest with no `ROUNDED` (truncation) and stamps `FUNCTION CURRENT-DATE` (nondeterministic field). Its `1400-COMPUTE-FEES` paragraph is an empty "To be implemented" stub. | Found by reading the pinned source. Use them in the demo instead of planting copies. | Accepted |
 | D-018 | The fixture app covers only what CardDemo can't give us: transactions runnable over HTTP without CICS, a legacy bug that overpays, a real business rule that looks like dead code, a transaction that is never called. It reuses CardDemo's record layouts (copybooks) where it can. | Keeps the fixture small and on-theme. | Proposed |
+| D-027 | The frontend lives in `web/` as its own npm project (`web/package.json`, `web/package-lock.json`), outside the pnpm workspace; run it with `cd web && npm install && npm run dev`. PR #7 landed it at the repo root, which replaced the root `package.json` (all `pnpm` scripts) and broke the `CLAUDE.md`/`AGENTS.md` identity check, so it was moved. | Keeps the backend monorepo and the UI independent; the repo map and `vitest.config.ts` already reserved `web/`. Easy to fold into the workspace later. | Accepted |
 
 ### D-013 tradeoffs: Java vs TypeScript inside SpacetimeDB
 

@@ -1,0 +1,1726 @@
+{
+ "source": {
+  "ref": "59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e",
+  "depsHash": "31ca54a339967181",
+  "configHash": "503973f35dda5924"
+ },
+ "programs": [
+  {
+   "id": "CBACT01C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 430,
+   "pocket": "pkt-cbact01c"
+  },
+  {
+   "id": "CBACT02C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 178,
+   "pocket": "pkt-cocrdlic"
+  },
+  {
+   "id": "CBACT03C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 178,
+   "pocket": "pkt-cbact03c"
+  },
+  {
+   "id": "CBACT04C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 652,
+   "pocket": "pkt-cbtrn02c"
+  },
+  {
+   "id": "CBCUS01C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 178,
+   "pocket": "pkt-coactupc"
+  },
+  {
+   "id": "CBEXPORT",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 582,
+   "pocket": "pkt-cbexport"
+  },
+  {
+   "id": "CBIMPORT",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 487,
+   "pocket": "pkt-cbexport"
+  },
+  {
+   "id": "CBPAUP0C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 386,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "CBSTM03A",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 924,
+   "pocket": "pkt-cbstm03a"
+  },
+  {
+   "id": "CBSTM03B",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 230,
+   "pocket": "pkt-cbstm03a"
+  },
+  {
+   "id": "CBTRN01C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 494,
+   "pocket": "pkt-cbtrn02c"
+  },
+  {
+   "id": "CBTRN02C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 731,
+   "pocket": "pkt-cbtrn02c"
+  },
+  {
+   "id": "CBTRN03C",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 649,
+   "pocket": "pkt-cbact03c"
+  },
+  {
+   "id": "COACCT01",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 620,
+   "pocket": "pkt-coacct01"
+  },
+  {
+   "id": "COACTUPC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 4236,
+   "pocket": "pkt-coactupc"
+  },
+  {
+   "id": "COACTVWC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 941,
+   "pocket": "pkt-coactupc"
+  },
+  {
+   "id": "COADM01C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 288,
+   "pocket": "pkt-cousr00c"
+  },
+  {
+   "id": "COBDATFT",
+   "mode": "batch",
+   "lang": "asm",
+   "loc": 84,
+   "pocket": "pkt-cbact01c"
+  },
+  {
+   "id": "COBIL00C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 572,
+   "pocket": "pkt-cotrn00c"
+  },
+  {
+   "id": "COBSWAIT",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 41,
+   "pocket": "pkt-cobswait"
+  },
+  {
+   "id": "COBTUPDT",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 237,
+   "pocket": "pkt-cotrtlic"
+  },
+  {
+   "id": "COCRDLIC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 1459,
+   "pocket": "pkt-cocrdlic"
+  },
+  {
+   "id": "COCRDSLC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 887,
+   "pocket": "pkt-cocrdlic"
+  },
+  {
+   "id": "COCRDUPC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 1560,
+   "pocket": "pkt-cocrdlic"
+  },
+  {
+   "id": "CODATE01",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 524,
+   "pocket": "pkt-coacct01"
+  },
+  {
+   "id": "COMEN01C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 308,
+   "pocket": "pkt-shared"
+  },
+  {
+   "id": "COPAUA0C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 1026,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "COPAUS0C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 1032,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "COPAUS1C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 604,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "COPAUS2C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 244,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "CORPT00C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 649,
+   "pocket": "pkt-csutldtc"
+  },
+  {
+   "id": "COSGN00C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 260,
+   "pocket": "pkt-shared"
+  },
+  {
+   "id": "COTRN00C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 699,
+   "pocket": "pkt-cotrn00c"
+  },
+  {
+   "id": "COTRN01C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 330,
+   "pocket": "pkt-cotrn00c"
+  },
+  {
+   "id": "COTRN02C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 783,
+   "pocket": "pkt-csutldtc"
+  },
+  {
+   "id": "COTRTLIC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 2098,
+   "pocket": "pkt-cotrtlic"
+  },
+  {
+   "id": "COTRTUPC",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 1702,
+   "pocket": "pkt-cotrtlic"
+  },
+  {
+   "id": "COUSR00C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 695,
+   "pocket": "pkt-cousr00c"
+  },
+  {
+   "id": "COUSR01C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 299,
+   "pocket": "pkt-cousr00c"
+  },
+  {
+   "id": "COUSR02C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 414,
+   "pocket": "pkt-cousr00c"
+  },
+  {
+   "id": "COUSR03C",
+   "mode": "online",
+   "lang": "cobol",
+   "loc": 359,
+   "pocket": "pkt-cousr00c"
+  },
+  {
+   "id": "CSUTLDTC",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 157,
+   "pocket": "pkt-csutldtc"
+  },
+  {
+   "id": "DBUNLDGS",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 366,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "MVSWAIT",
+   "mode": "batch",
+   "lang": "asm",
+   "loc": 30,
+   "pocket": "pkt-cobswait"
+  },
+  {
+   "id": "PAUDBLOD",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 369,
+   "pocket": "pkt-paudblod"
+  },
+  {
+   "id": "PAUDBUNL",
+   "mode": "batch",
+   "lang": "cobol",
+   "loc": 317,
+   "pocket": "pkt-paudblod"
+  }
+ ],
+ "pockets": [
+  {
+   "id": "pkt-cbact01c",
+   "domain": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.298,
+   "loc": 514,
+   "programs": [
+    "CBACT01C",
+    "COBDATFT"
+   ]
+  },
+  {
+   "id": "pkt-cbact03c",
+   "domain": "dom-coactupc",
+   "kind": "code",
+   "isolation": 0.04,
+   "loc": 827,
+   "programs": [
+    "CBACT03C",
+    "CBTRN03C"
+   ]
+  },
+  {
+   "id": "pkt-cbexport",
+   "domain": "dom-cocrdlic",
+   "kind": "code",
+   "isolation": 0.24,
+   "loc": 1069,
+   "programs": [
+    "CBEXPORT",
+    "CBIMPORT"
+   ]
+  },
+  {
+   "id": "pkt-cbstm03a",
+   "domain": "dom-coactupc",
+   "kind": "code",
+   "isolation": 0.441,
+   "loc": 1154,
+   "programs": [
+    "CBSTM03A",
+    "CBSTM03B"
+   ]
+  },
+  {
+   "id": "pkt-cbtrn02c",
+   "domain": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.251,
+   "loc": 1877,
+   "programs": [
+    "CBACT04C",
+    "CBTRN01C",
+    "CBTRN02C"
+   ]
+  },
+  {
+   "id": "pkt-coacct01",
+   "domain": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.56,
+   "loc": 1144,
+   "programs": [
+    "COACCT01",
+    "CODATE01"
+   ]
+  },
+  {
+   "id": "pkt-coactupc",
+   "domain": "dom-coactupc",
+   "kind": "code",
+   "isolation": 0.1,
+   "loc": 5355,
+   "programs": [
+    "CBCUS01C",
+    "COACTUPC",
+    "COACTVWC"
+   ]
+  },
+  {
+   "id": "pkt-cobswait",
+   "domain": "dom-cobswait",
+   "kind": "code",
+   "isolation": 1,
+   "loc": 71,
+   "programs": [
+    "COBSWAIT",
+    "MVSWAIT"
+   ]
+  },
+  {
+   "id": "pkt-cocrdlic",
+   "domain": "dom-cocrdlic",
+   "kind": "code",
+   "isolation": 0.451,
+   "loc": 4084,
+   "programs": [
+    "CBACT02C",
+    "COCRDLIC",
+    "COCRDSLC",
+    "COCRDUPC"
+   ]
+  },
+  {
+   "id": "pkt-cotrn00c",
+   "domain": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.201,
+   "loc": 1601,
+   "programs": [
+    "COBIL00C",
+    "COTRN00C",
+    "COTRN01C"
+   ]
+  },
+  {
+   "id": "pkt-cotrtlic",
+   "domain": "dom-cocrdlic",
+   "kind": "code",
+   "isolation": 0.683,
+   "loc": 4037,
+   "programs": [
+    "COBTUPDT",
+    "COTRTLIC",
+    "COTRTUPC"
+   ]
+  },
+  {
+   "id": "pkt-cousr00c",
+   "domain": "dom-cocrdlic",
+   "kind": "code",
+   "isolation": 0.905,
+   "loc": 2055,
+   "programs": [
+    "COADM01C",
+    "COUSR00C",
+    "COUSR01C",
+    "COUSR02C",
+    "COUSR03C"
+   ]
+  },
+  {
+   "id": "pkt-csutldtc",
+   "domain": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.331,
+   "loc": 1589,
+   "programs": [
+    "CORPT00C",
+    "COTRN02C",
+    "CSUTLDTC"
+   ]
+  },
+  {
+   "id": "pkt-paudblod",
+   "domain": "dom-coactupc",
+   "kind": "code",
+   "isolation": 0.762,
+   "loc": 4344,
+   "programs": [
+    "CBPAUP0C",
+    "COPAUA0C",
+    "COPAUS0C",
+    "COPAUS1C",
+    "COPAUS2C",
+    "DBUNLDGS",
+    "PAUDBLOD",
+    "PAUDBUNL"
+   ]
+  },
+  {
+   "id": "pkt-shared",
+   "domain": "dom-shared",
+   "kind": "shared",
+   "isolation": 0,
+   "loc": 568,
+   "programs": [
+    "COMEN01C",
+    "COSGN00C"
+   ]
+  }
+ ],
+ "domains": [
+  {
+   "id": "dom-cotrn00c",
+   "kind": "code",
+   "isolation": 0.573
+  },
+  {
+   "id": "dom-coactupc",
+   "kind": "code",
+   "isolation": 0.701
+  },
+  {
+   "id": "dom-cocrdlic",
+   "kind": "code",
+   "isolation": 0.705
+  },
+  {
+   "id": "dom-cobswait",
+   "kind": "code",
+   "isolation": 1
+  },
+  {
+   "id": "dom-shared",
+   "kind": "shared",
+   "isolation": 0
+  }
+ ],
+ "stores": [
+  {
+   "id": "ACCTDATA",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.ACCTDATA.ARRYPS",
+    "AWS.M2.CARDDEMO.ACCTDATA.IMPORT",
+    "AWS.M2.CARDDEMO.ACCTDATA.PSCOMP",
+    "AWS.M2.CARDDEMO.ACCTDATA.VBPS",
+    "AWS.M2.CARDDEMO.ACCTDATA.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "AUTHFRDS",
+   "kind": "db2",
+   "datasets": [
+    "db2:CARDDEMO.AUTHFRDS"
+   ]
+  },
+  {
+   "id": "CARDDATA",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.CARDDATA.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "CARDXREF",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.CARDXREF.IMPORT",
+    "AWS.M2.CARDDEMO.CARDXREF.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "CUSTDATA",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.CUSTDATA.IMPORT",
+    "AWS.M2.CARDDEMO.CUSTDATA.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "DALYREJS",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.DALYREJS"
+   ]
+  },
+  {
+   "id": "DALYTRAN",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.DALYTRAN.PS"
+   ]
+  },
+  {
+   "id": "DATEPARM",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.DATEPARM"
+   ]
+  },
+  {
+   "id": "DISCGRP",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.DISCGRP.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "EXPORT",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.EXPORT.DATA"
+   ]
+  },
+  {
+   "id": "IMPORT",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.IMPORT.ERRORS"
+   ]
+  },
+  {
+   "id": "MQ.ERROR",
+   "kind": "mq",
+   "datasets": [
+    "CARD.DEMO.ERROR"
+   ]
+  },
+  {
+   "id": "MQ.REPLY.ACCT",
+   "kind": "mq",
+   "datasets": [
+    "CARD.DEMO.REPLY.ACCT"
+   ]
+  },
+  {
+   "id": "MQ.REPLY.DATE",
+   "kind": "mq",
+   "datasets": [
+    "CARD.DEMO.REPLY.DATE"
+   ]
+  },
+  {
+   "id": "PAUTDB",
+   "kind": "ims",
+   "datasets": [
+    "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+    "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+    "PAUTDTL1",
+    "PAUTSUM0"
+   ]
+  },
+  {
+   "id": "STATEMNT",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.STATEMNT.HTML",
+    "AWS.M2.CARDDEMO.STATEMNT.PS"
+   ]
+  },
+  {
+   "id": "SYSTRAN",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.SYSTRAN"
+   ]
+  },
+  {
+   "id": "TCATBALF",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TCATBALF.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "TRANCATG",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TRANCATG.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "TRANREPT",
+   "kind": "sequential",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TRANREPT"
+   ]
+  },
+  {
+   "id": "TRANSACT",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TRANSACT.DALY",
+    "AWS.M2.CARDDEMO.TRANSACT.IMPORT",
+    "AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "TRANSACTION_TYPE",
+   "kind": "db2",
+   "datasets": [
+    "db2:CARDDEMO.TRANSACTION_TYPE"
+   ]
+  },
+  {
+   "id": "TRANTYPE",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TRANTYPE.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "TRXFL",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.TRXFL.VSAM.KSDS"
+   ]
+  },
+  {
+   "id": "USRSEC",
+   "kind": "vsam",
+   "datasets": [
+    "AWS.M2.CARDDEMO.USRSEC.VSAM.KSDS"
+   ]
+  }
+ ],
+ "io": [
+  {
+   "program": "CBACT01C",
+   "store": "ACCTDATA",
+   "mode": "readwrite"
+  },
+  {
+   "program": "CBACT02C",
+   "store": "CARDDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBACT03C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBACT04C",
+   "store": "ACCTDATA",
+   "mode": "write"
+  },
+  {
+   "program": "CBACT04C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBACT04C",
+   "store": "DISCGRP",
+   "mode": "read"
+  },
+  {
+   "program": "CBACT04C",
+   "store": "SYSTRAN",
+   "mode": "write"
+  },
+  {
+   "program": "CBACT04C",
+   "store": "TCATBALF",
+   "mode": "read"
+  },
+  {
+   "program": "CBCUS01C",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "CARDDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "EXPORT",
+   "mode": "write"
+  },
+  {
+   "program": "CBEXPORT",
+   "store": "TRANSACT",
+   "mode": "read"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "ACCTDATA",
+   "mode": "write"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "CARDXREF",
+   "mode": "write"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "CUSTDATA",
+   "mode": "write"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "EXPORT",
+   "mode": "read"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "IMPORT",
+   "mode": "write"
+  },
+  {
+   "program": "CBIMPORT",
+   "store": "TRANSACT",
+   "mode": "write"
+  },
+  {
+   "program": "CBPAUP0C",
+   "store": "PAUTDB",
+   "mode": "readwrite"
+  },
+  {
+   "program": "CBSTM03A",
+   "store": "STATEMNT",
+   "mode": "write"
+  },
+  {
+   "program": "CBSTM03B",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBSTM03B",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBSTM03B",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBSTM03B",
+   "store": "TRXFL",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN01C",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN01C",
+   "store": "CARDDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN01C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN01C",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN01C",
+   "store": "DALYTRAN",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "ACCTDATA",
+   "mode": "write"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "DALYREJS",
+   "mode": "write"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "DALYTRAN",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "TCATBALF",
+   "mode": "write"
+  },
+  {
+   "program": "CBTRN02C",
+   "store": "TRANSACT",
+   "mode": "write"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "DATEPARM",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "TRANCATG",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "TRANREPT",
+   "mode": "write"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "TRANSACT",
+   "mode": "read"
+  },
+  {
+   "program": "CBTRN03C",
+   "store": "TRANTYPE",
+   "mode": "read"
+  },
+  {
+   "program": "COACCT01",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COACCT01",
+   "store": "MQ.ERROR",
+   "mode": "write"
+  },
+  {
+   "program": "COACCT01",
+   "store": "MQ.REPLY.ACCT",
+   "mode": "write"
+  },
+  {
+   "program": "COACTUPC",
+   "store": "ACCTDATA",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COACTUPC",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COACTUPC",
+   "store": "CUSTDATA",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COACTVWC",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COACTVWC",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COACTVWC",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COBIL00C",
+   "store": "ACCTDATA",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COBIL00C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COBIL00C",
+   "store": "TRANSACT",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COBTUPDT",
+   "store": "TRANSACTION_TYPE",
+   "mode": "write"
+  },
+  {
+   "program": "COCRDLIC",
+   "store": "CARDDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COCRDSLC",
+   "store": "CARDDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COCRDUPC",
+   "store": "CARDDATA",
+   "mode": "readwrite"
+  },
+  {
+   "program": "CODATE01",
+   "store": "MQ.ERROR",
+   "mode": "write"
+  },
+  {
+   "program": "CODATE01",
+   "store": "MQ.REPLY.DATE",
+   "mode": "write"
+  },
+  {
+   "program": "COPAUA0C",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUA0C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUA0C",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUA0C",
+   "store": "PAUTDB",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COPAUS0C",
+   "store": "ACCTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUS0C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUS0C",
+   "store": "CUSTDATA",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUS0C",
+   "store": "PAUTDB",
+   "mode": "read"
+  },
+  {
+   "program": "COPAUS1C",
+   "store": "PAUTDB",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COPAUS2C",
+   "store": "AUTHFRDS",
+   "mode": "write"
+  },
+  {
+   "program": "COSGN00C",
+   "store": "USRSEC",
+   "mode": "read"
+  },
+  {
+   "program": "COTRN00C",
+   "store": "TRANSACT",
+   "mode": "read"
+  },
+  {
+   "program": "COTRN01C",
+   "store": "TRANSACT",
+   "mode": "read"
+  },
+  {
+   "program": "COTRN02C",
+   "store": "CARDXREF",
+   "mode": "read"
+  },
+  {
+   "program": "COTRN02C",
+   "store": "TRANSACT",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COTRTLIC",
+   "store": "TRANSACTION_TYPE",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COTRTUPC",
+   "store": "TRANSACTION_TYPE",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COUSR00C",
+   "store": "USRSEC",
+   "mode": "read"
+  },
+  {
+   "program": "COUSR01C",
+   "store": "USRSEC",
+   "mode": "write"
+  },
+  {
+   "program": "COUSR02C",
+   "store": "USRSEC",
+   "mode": "readwrite"
+  },
+  {
+   "program": "COUSR03C",
+   "store": "USRSEC",
+   "mode": "readwrite"
+  },
+  {
+   "program": "DBUNLDGS",
+   "store": "PAUTDB",
+   "mode": "read"
+  },
+  {
+   "program": "PAUDBLOD",
+   "store": "PAUTDB",
+   "mode": "readwrite"
+  },
+  {
+   "program": "PAUDBUNL",
+   "store": "PAUTDB",
+   "mode": "readwrite"
+  }
+ ],
+ "calls": [
+  {
+   "from": "CBACT01C",
+   "to": "COBDATFT",
+   "kind": "calls"
+  },
+  {
+   "from": "CBSTM03A",
+   "to": "CBSTM03B",
+   "kind": "calls"
+  },
+  {
+   "from": "COACTUPC",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COACTUPC",
+   "to": "CSUTLDTC",
+   "kind": "calls"
+  },
+  {
+   "from": "COACTVWC",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COTRTLIC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COTRTUPC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COUSR00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COUSR01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COUSR02C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COADM01C",
+   "to": "COUSR03C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COBIL00C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COBIL00C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COBSWAIT",
+   "to": "MVSWAIT",
+   "kind": "calls"
+  },
+  {
+   "from": "COCRDLIC",
+   "to": "COCRDSLC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COCRDLIC",
+   "to": "COCRDUPC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COCRDLIC",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COCRDSLC",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COCRDUPC",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COACTUPC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COACTVWC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COBIL00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COCRDLIC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COCRDSLC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COCRDUPC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COPAUS0C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "CORPT00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COTRN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COTRN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COMEN01C",
+   "to": "COTRN02C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COPAUS0C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COPAUS0C",
+   "to": "COPAUS1C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COPAUS0C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COPAUS1C",
+   "to": "COPAUS0C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COPAUS1C",
+   "to": "COPAUS2C",
+   "kind": "links"
+  },
+  {
+   "from": "CORPT00C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "CORPT00C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "CORPT00C",
+   "to": "CSUTLDTC",
+   "kind": "calls"
+  },
+  {
+   "from": "COSGN00C",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COSGN00C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN00C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN00C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN00C",
+   "to": "COTRN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN01C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN01C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN01C",
+   "to": "COTRN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN02C",
+   "to": "COMEN01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN02C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRN02C",
+   "to": "CSUTLDTC",
+   "kind": "calls"
+  },
+  {
+   "from": "COTRTLIC",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRTLIC",
+   "to": "COTRTUPC",
+   "kind": "transfers"
+  },
+  {
+   "from": "COTRTUPC",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR00C",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR00C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR00C",
+   "to": "COUSR02C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR00C",
+   "to": "COUSR03C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR01C",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR01C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR02C",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR02C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR03C",
+   "to": "COADM01C",
+   "kind": "transfers"
+  },
+  {
+   "from": "COUSR03C",
+   "to": "COSGN00C",
+   "kind": "transfers"
+  }
+ ],
+ "entries": [
+  {
+   "id": "CA00",
+   "kind": "cics",
+   "program": "COADM01C",
+   "desc": ""
+  },
+  {
+   "id": "CAUP",
+   "kind": "cics",
+   "program": "COACTUPC",
+   "desc": "CREDIT CARD DEMO ACCOUNT UPDATE"
+  },
+  {
+   "id": "CAVW",
+   "kind": "cics",
+   "program": "COACTVWC",
+   "desc": ""
+  },
+  {
+   "id": "CB00",
+   "kind": "cics",
+   "program": "COBIL00C",
+   "desc": ""
+  },
+  {
+   "id": "CC00",
+   "kind": "cics",
+   "program": "COSGN00C",
+   "desc": ""
+  },
+  {
+   "id": "CCDL",
+   "kind": "cics",
+   "program": "COCRDSLC",
+   "desc": ""
+  },
+  {
+   "id": "CCLI",
+   "kind": "cics",
+   "program": "COCRDLIC",
+   "desc": ""
+  },
+  {
+   "id": "CCUP",
+   "kind": "cics",
+   "program": "COCRDUPC",
+   "desc": "CREDIT CARD UPDATE TRANSACTION"
+  },
+  {
+   "id": "CDRA",
+   "kind": "cics",
+   "program": "COACCT01",
+   "desc": ""
+  },
+  {
+   "id": "CDRD",
+   "kind": "cics",
+   "program": "CODATE01",
+   "desc": ""
+  },
+  {
+   "id": "CM00",
+   "kind": "cics",
+   "program": "COMEN01C",
+   "desc": ""
+  },
+  {
+   "id": "CP00",
+   "kind": "cics",
+   "program": "COPAUA0C",
+   "desc": ""
+  },
+  {
+   "id": "CPVD",
+   "kind": "cics",
+   "program": "COPAUS1C",
+   "desc": ""
+  },
+  {
+   "id": "CPVS",
+   "kind": "cics",
+   "program": "COPAUS0C",
+   "desc": ""
+  },
+  {
+   "id": "CR00",
+   "kind": "cics",
+   "program": "CORPT00C",
+   "desc": ""
+  },
+  {
+   "id": "CT00",
+   "kind": "cics",
+   "program": "COTRN00C",
+   "desc": ""
+  },
+  {
+   "id": "CT01",
+   "kind": "cics",
+   "program": "COTRN01C",
+   "desc": ""
+  },
+  {
+   "id": "CT02",
+   "kind": "cics",
+   "program": "COTRN02C",
+   "desc": ""
+  },
+  {
+   "id": "CTLI",
+   "kind": "cics",
+   "program": "COTRTLIC",
+   "desc": ""
+  },
+  {
+   "id": "CTTU",
+   "kind": "cics",
+   "program": "COTRTUPC",
+   "desc": ""
+  },
+  {
+   "id": "CU00",
+   "kind": "cics",
+   "program": "COUSR00C",
+   "desc": ""
+  },
+  {
+   "id": "CU01",
+   "kind": "cics",
+   "program": "COUSR01C",
+   "desc": ""
+  },
+  {
+   "id": "CU02",
+   "kind": "cics",
+   "program": "COUSR02C",
+   "desc": ""
+  },
+  {
+   "id": "CU03",
+   "kind": "cics",
+   "program": "COUSR03C",
+   "desc": ""
+  },
+  {
+   "id": "CBEXPORT",
+   "kind": "job",
+   "program": "CBEXPORT",
+   "desc": "runs CBEXPORT"
+  },
+  {
+   "id": "CBIMPORT",
+   "kind": "job",
+   "program": "CBIMPORT",
+   "desc": "runs CBIMPORT"
+  },
+  {
+   "id": "CBPAUP0J",
+   "kind": "job",
+   "program": "CBPAUP0C",
+   "desc": "runs CBPAUP0C"
+  },
+  {
+   "id": "CREASTMT",
+   "kind": "job",
+   "program": "CBSTM03A",
+   "desc": "runs CBSTM03A"
+  },
+  {
+   "id": "INTCALC",
+   "kind": "job",
+   "program": "CBACT04C",
+   "desc": "runs CBACT04C"
+  },
+  {
+   "id": "LOADPADB",
+   "kind": "job",
+   "program": "PAUDBLOD",
+   "desc": "runs PAUDBLOD"
+  },
+  {
+   "id": "MNTTRDB2",
+   "kind": "job",
+   "program": "COBTUPDT",
+   "desc": "runs COBTUPDT"
+  },
+  {
+   "id": "POSTTRAN",
+   "kind": "job",
+   "program": "CBTRN02C",
+   "desc": "runs CBTRN02C"
+  },
+  {
+   "id": "READACCT",
+   "kind": "job",
+   "program": "CBACT01C",
+   "desc": "runs CBACT01C"
+  },
+  {
+   "id": "READCARD",
+   "kind": "job",
+   "program": "CBACT02C",
+   "desc": "runs CBACT02C"
+  },
+  {
+   "id": "READCUST",
+   "kind": "job",
+   "program": "CBCUS01C",
+   "desc": "runs CBCUS01C"
+  },
+  {
+   "id": "READXREF",
+   "kind": "job",
+   "program": "CBACT03C",
+   "desc": "runs CBACT03C"
+  },
+  {
+   "id": "TRANREPT",
+   "kind": "job",
+   "program": "CBTRN03C",
+   "desc": "runs CBTRN03C"
+  },
+  {
+   "id": "UNLDGSAM",
+   "kind": "job",
+   "program": "DBUNLDGS",
+   "desc": "runs DBUNLDGS"
+  },
+  {
+   "id": "UNLDPADB",
+   "kind": "job",
+   "program": "PAUDBUNL",
+   "desc": "runs PAUDBUNL"
+  },
+  {
+   "id": "WAITSTEP",
+   "kind": "job",
+   "program": "COBSWAIT",
+   "desc": "runs COBSWAIT"
+  }
+ ]
+}

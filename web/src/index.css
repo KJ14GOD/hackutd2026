@@ -1,0 +1,167 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ *
+ * Shadow Diff — "dark silicon".
+ * Graphite die, copper traces, one cyan accent for live/selected.
+ * Status colors are muted and always paired with a word.
+ * Inter for UI, JetBrains Mono for anything that is code or data.
+ * Map colors live in src/components/map/theme.ts; keep them in step.
+ * ------------------------------------------------------------------ */
+@theme {
+  --color-bg: #0b0d10;
+  --color-bg-2: #0e1115;
+  --color-panel: #111419;
+  --color-panel-2: #161a20;
+  --color-raise: #1b2028;
+  --color-line: #1e232b;
+  --color-line-2: #2a313b;
+  --color-ink: #e6e8eb;
+  --color-muted: #a0a7b1;
+  --color-sub: #a0a7b1;
+  --color-faint: #6b737e;
+
+  --color-accent: #4cc9f0;
+  --color-accent-bright: #7dd8f4;
+  --color-accent-dim: rgba(76, 201, 240, 0.14);
+  --color-copper: #b08d57;
+
+  --color-good: #3fb68b;
+  --color-warn: #d9a441;
+  --color-bad: #e0605e;
+  --color-agent: #a99cf5;
+
+  /* aliases used by the older screens */
+  --color-fg: #e6e8eb;
+  --color-fg-dim: #a0a7b1;
+  --color-fg-muted: #6b737e;
+  --color-border: #1e232b;
+  --color-border-strong: #2a313b;
+  --color-surface-2: #161a20;
+  --color-surface-3: #1b2028;
+  --color-card: #111419;
+  --color-hair: #1e232b;
+  --color-warn-bg: rgba(217, 164, 65, 0.12);
+  --color-nvidia: #76b900;
+  --color-noise: #6b737e;
+  --color-cat-rounding: #d9a441;
+  --color-cat-noise: #6b737e;
+  --color-cat-logic: #e0605e;
+  --color-cat-formatting: #a99cf5;
+
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-accent-dim);
+  color: var(--color-accent-bright);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:focus-visible {
+  outline: 1.5px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-faint);
+}
+.glow {
+  text-shadow: none;
+}
+
+/* signal running along a lit trace */
+@keyframes trace-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+.trace-flow {
+  animation: trace-flow 0.9s linear infinite;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.08;
+  }
+}
+.pulse-soft {
+  animation: pulse-soft 2.2s ease-in-out infinite;
+}
+
+@keyframes pulse-stroke {
+  0%,
+  100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.25;
+  }
+}
+.pulse-stroke {
+  animation: pulse-stroke 2.2s ease-in-out infinite;
+}
+
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-80px, -40px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
