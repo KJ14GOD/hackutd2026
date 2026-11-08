@@ -15,7 +15,7 @@ const ITEMS: Item[] = [
 
 export interface SearchHandle { focus(): void }
 
-export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void }>(function Search({ onPick }, ref) {
+export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void; compact?: boolean }>(function Search({ onPick, compact }, ref) {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)
   const [i, setI] = useState(0)
@@ -38,9 +38,9 @@ export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void }>(fun
   }
 
   return (
-    <div className="relative w-[196px] xl:w-[256px]">
+    <div className={cn('relative', compact ? 'w-[200px]' : 'w-[304px]')}>
       <div className="flex h-8 items-center gap-2 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 focus-within:border-[var(--color-line-2)]">
-        <SearchIcon className="size-3.5 text-[var(--color-faint)]" />
+        <SearchIcon className="size-3.5 shrink-0 text-[var(--color-faint)]" />
         <input
           ref={input}
           value={q}
@@ -64,14 +64,16 @@ export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void }>(fun
               input.current?.blur()
             }
           }}
-          placeholder="Search programs, data, jobs"
+          placeholder={compact ? 'Search' : 'Search programs, data, jobs'}
           aria-label="Search the map"
           className="min-w-0 flex-1 bg-transparent text-[12.5px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
         />
-        <Kbd>Ctrl K</Kbd>
+        <span className="shrink-0">
+          <Kbd>Ctrl K</Kbd>
+        </span>
       </div>
       {open && results.length > 0 && (
-        <div role="listbox" className="absolute left-0 right-0 top-10 z-50 overflow-hidden rounded-[10px] border border-[var(--color-line-2)] bg-[var(--color-panel)] py-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)]">
+        <div role="listbox" className="absolute right-0 top-10 w-[360px] z-50 overflow-hidden rounded-[10px] border border-[var(--color-line-2)] bg-[var(--color-panel)] py-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)]">
           {results.map((it, n) => (
             <button
               key={`${it.ref.kind}:${it.ref.id}`}

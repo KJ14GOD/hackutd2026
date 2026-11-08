@@ -40,8 +40,15 @@ export const TEAM_COLOR: Record<string, string> = {
 export function isoColor(isolation: number) {
   return isolation >= 0.6 ? C.good : isolation >= 0.3 ? C.warn : C.bad
 }
+/** The one isolation scale the UI uses, in words. The score itself (0–1, from the
+ * segmenter) only appears as secondary detail. Thresholds match isoColor. */
+export const ISO_LEVELS = [
+  { min: 0.6, word: 'Easy to move', color: C.good },
+  { min: 0.3, word: 'Some ties', color: C.warn },
+  { min: 0, word: 'Tangled', color: C.bad },
+] as const
 export function isoWord(isolation: number) {
-  return isolation >= 0.6 ? 'isolated' : isolation >= 0.3 ? 'coupled' : 'tangled'
+  return ISO_LEVELS.find((l) => isolation >= l.min)!.word
 }
 
 /** readable text on top of a filled face */

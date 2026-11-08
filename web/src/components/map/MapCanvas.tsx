@@ -1,4 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { Maximize2, Minus, Plus } from 'lucide-react'
 import {
   BUS_ORDER,
   CALLS,
@@ -6,6 +7,7 @@ import {
   ENTRIES,
   POCKET,
   PROGRAM,
+  STORE,
   TEAMS,
   migrationProgress,
   pocketsUsingStore,
@@ -13,10 +15,11 @@ import {
   type Ref,
 } from '@/data/carddemo'
 import { G, LAYOUT, type PocketGeo, type TraceGeo } from './layout'
-import { box, clamp, floorText, lerp, mix, path, poly, proj, rect, shade, UNIT_X, wrap, ZS, type P3 } from './iso'
+import { box, clamp, floorText, lerp, mix, path, poly, proj, rect, shade, wrap, ZS, type P3 } from './iso'
 import { C, MIG_COLOR, TEAM_COLOR, inkOn, isoColor, isoWord } from './theme'
 import { useTweenMap, easeInOut } from './useTween'
 import type { Highlight } from './highlight'
+import { Btn, IconBtn } from '@/components/shell/kit'
 
 export type Lens = 'migration' | 'coupling' | 'blast' | 'owners'
 export type View = 'iso' | 'layers'
@@ -39,7 +42,8 @@ interface Props {
   frame?: string[]
   onPick(ref: Ref | null): void
   onHover(ref: Ref | null): void
-  onZoom(k: number): void
+  /** px of the map hidden behind an overlaid panel on the right; the camera centres in what is left */
+  insetRight?: number
   /** click the pending-question pin → open that program's message */
   onOpenMessages?(): void
 }
@@ -50,6 +54,16 @@ const L = LAYOUT
 const MONO = 'JetBrains Mono, ui-monospace, monospace'
 
 type Cam = { x: number; y: number; k: number }
+const camTransform = (c: Cam) => `translate(${c.x} ${c.y}) scale(${c.k})`
+
+/* Sizes that stay put on screen whatever the zoom. The camera writes the zoom to
+ * the CSS variable --k, so these never need a React render. lo/hi clamp the size
+ * in world units, which stops text growing huge or vanishing at the extremes. */
+const onScreen = (px: number, lo: number, hi: number) => `clamp(${lo}px, calc(${px}px / var(--k)), ${hi}px)`
+const fs = (px: number, lo: number, hi: number) => ({ fontSize: onScreen(px, lo, hi) })
+const UNZOOM = { transform: 'scale(calc(1 / var(--k)))' }
+/** JetBrains Mono advance width, as a fraction of the font size */
+const MONO_W = 0.6
 
 function parseHit(el: EventTarget | null): Ref | null {
   const node = (el as Element | null)?.closest?.('[data-hit]')
@@ -82,35 +96,57 @@ function focusBox(id: string, frame: string[] = []) {
 }
 
 export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
-  const { lens, view, focus, selection, hover, highlight: hl, mig, live, frame, onPick, onHover, onZoom, onOpenMessages } = props
+  const { lens, view, focus, selection, hover, highlight: hl, mig, live, frame, onPick, onHover, onOpenMessages } = props
+  const inset = props.insetRight ?? 0
   const frameKey = (frame ?? []).join(',')
   const wrapRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
   const [size, setSize] = useState({ w: 0, h: 0 })
-  const [cam, setCam] = useState<Cam>({ x: 0, y: 0, k: 0.5 })
-  const camRef = useRef(cam)
-  camRef.current = cam
+  // The camera lives outside React. Pan and zoom write the transform and --k
+  // straight to the DOM, so a gesture never re-renders the scene. kR is a coarse
+  // copy (updated every ~20% of zoom) for the few choices made in JS, like how
+  // much of a label fits.
+  const camRef = useRef<Cam>({ x: 0, y: 0, k: 0.5 })
+  const [kR, setKR] = useState(0.5)
+  const kRRef = useRef(0.5)
+  const gRef = useRef<SVGGElement>(null)
+  const zoomTextRef = useRef<HTMLSpanElement>(null)
+  const miniWrapRef = useRef<HTMLDivElement>(null)
+  const miniViewRef = useRef<SVGRectElement>(null)
+  const viewport = useRef({ w: 0, h: 0, inset: 0, homeK: 0.5 })
   const camAnim = useRef(0)
 
   /* ---------------- tweened scene state ---------------- */
+  // Once you are working at program level (a pocket is open), links you are looking at
+  // must land on programs too: open every pocket that holds a lit program. Unrelated
+  // pockets stay closed. Hover (soft) highlights never open anything, so the map
+  // doesn't churn as the pointer moves.
+  const expandKey = useMemo(() => {
+    if (!focus || !hl || hl.strength !== 'strong') return ''
+    return [...new Set([...hl.programs.keys()].map((id) => PROGRAM[id].pocket))].sort().join(',')
+  }, [focus, hl])
   const targets = useMemo(() => {
+    const expand = new Set(expandKey ? expandKey.split(',') : [])
     const t: Record<string, number> = { L: view === 'layers' ? 1 : 0 }
-    for (const id of L.order) t[id] = focus === id ? 1 : 0
+    for (const id of L.order) t[id] = focus === id || expand.has(id) ? 1 : 0
     return t
-  }, [focus, view])
+  }, [focus, view, expandKey])
   const tw = useTweenMap(targets, 700)
   const Lv = tw.L
   const open = (id: string) => tw[id] ?? 0
 
   /* ---------------- camera ---------------- */
-  const setCamera = useCallback(
-    (c: Cam) => {
-      camRef.current = c
-      setCam(c)
-      onZoom(c.k)
-    },
-    [onZoom],
-  )
+  const setCamera = useCallback((c: Cam) => {
+    camRef.current = c
+    gRef.current?.setAttribute('transform', camTransform(c))
+    svgRef.current?.style.setProperty('--k', String(c.k))
+    if (zoomTextRef.current) zoomTextRef.current.textContent = `${Math.round(c.k * 100)}%`
+    updateMinimap(c, viewport.current, miniWrapRef.current, miniViewRef.current)
+    if (Math.abs(Math.log(c.k / kRRef.current)) > 0.18) {
+      kRRef.current = c.k
+      setKR(c.k)
+    }
+  }, [])
 
   const flyTo = useCallback(
     (target: Cam, ms = 750) => {
@@ -136,35 +172,49 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
 
   const fitTarget = useCallback(
     (f: string | null, layers: boolean): Cam | null => {
-      const { w, h } = size
-      if (!w || !h) return null
+      const w = size.w - inset
+      const h = size.h
+      if (w <= 0 || !h) return null
       const zTop = layers ? LZ + LZE + 40 : 70
-      const b = f ? focusBox(f, frameKey ? frameKey.split(',') : []) : L.bounds
+      // the focused pocket, plus every pocket opened to show where the lit links land
+      const ids = f ? [f, ...(expandKey ? expandKey.split(',') : [])] : []
+      const fr = frameKey ? frameKey.split(',') : []
+      const b = ids.length
+        ? ids.map((id) => focusBox(id, fr)).reduce((a, c) => ({ x0: Math.min(a.x0, c.x0), x1: Math.max(a.x1, c.x1), y0: Math.min(a.y0, c.y0), y1: Math.max(a.y1, c.y1) }))
+        : L.bounds
       const s = screenBounds(b.x0, b.x1, b.y0, b.y1, zTop)
       const pad = f ? 56 : 36
       const k = clamp(Math.min((w - pad * 2) / (s.x1 - s.x0), (h - pad * 2) / (s.y1 - s.y0)), 0.15, 2.6)
       return { k, x: w / 2 - k * (s.x0 + s.x1) / 2, y: h / 2 - k * (s.y0 + s.y1) / 2 }
     },
-    [size, frameKey],
+    [size, inset, frameKey, expandKey],
   )
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      fit: () => {
-        const t = fitTarget(focus, view === 'layers')
-        if (t) flyTo(t, 500)
-      },
-      zoomBy: (f: number) => {
-        const c = camRef.current
-        const k = clamp(c.k * f, 0.15, 5)
-        const cx = size.w / 2
-        const cy = size.h / 2
-        flyTo({ k, x: cx - ((cx - c.x) * k) / c.k, y: cy - ((cy - c.y) * k) / c.k }, 260)
-      },
-    }),
-    [fitTarget, flyTo, focus, view, size],
-  )
+  // the whole-board zoom: the mini-map shows once you are well past it
+  const homeK = useMemo(() => fitTarget(null, view === 'layers')?.k ?? 0.5, [fitTarget, view])
+  useEffect(() => {
+    viewport.current = { w: size.w, h: size.h, inset, homeK }
+    updateMinimap(camRef.current, viewport.current, miniWrapRef.current, miniViewRef.current)
+  }, [size.w, size.h, inset, homeK])
+
+  const centerOn = (X: number, Y: number) => {
+    const c = camRef.current
+    cancelAnimationFrame(camAnim.current)
+    setCamera({ k: c.k, x: (size.w - inset) / 2 - X * c.k, y: size.h / 2 - Y * c.k })
+  }
+  const fit = () => {
+    const t = fitTarget(focus, view === 'layers')
+    if (t) flyTo(t, 500)
+  }
+
+  const zoomAround = (f: number) => {
+    const c = camRef.current
+    const k = clamp(c.k * f, 0.15, 5)
+    const cx = (size.w - inset) / 2
+    const cy = size.h / 2
+    flyTo({ k, x: cx - ((cx - c.x) * k) / c.k, y: cy - ((cy - c.y) * k) / c.k }, 260)
+  }
+  useImperativeHandle(ref, () => ({ fit, zoomBy: zoomAround }))
 
   // size
   useEffect(() => {
@@ -177,6 +227,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
 
   // first fit happens instantly; later focus/view changes fly
   const fitted = useRef(false)
+  const hasSize = size.w > 0 && size.h > 0
   useEffect(() => {
     const t = fitTarget(focus, view === 'layers')
     if (!t) return
@@ -184,8 +235,10 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
       fitted.current = true
       setCamera(t)
     } else flyTo(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus, view, frameKey, size.w > 0 && size.h > 0])
+    // keyed on what should move the camera, not on the helpers it reads:
+    // fitTarget/flyTo are rebuilt every render and would refly constantly
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus, view, frameKey, expandKey, inset, hasSize])
 
   // keep the frame when the window resizes
   const lastSize = useRef(size)
@@ -195,8 +248,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
     if (!prev.w || !size.w) return
     const c = camRef.current
     setCamera({ ...c, x: c.x + (size.w - prev.w) / 2, y: c.y + (size.h - prev.h) / 2 })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size.w, size.h])
+  }, [size, setCamera])
 
   // wheel zoom around the cursor (non-passive so the page never scrolls)
   useEffect(() => {
@@ -262,7 +314,6 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
   }
 
   /* ---------------- derived visuals ---------------- */
-  const k = cam.k
   const zPlane = LZ * Lv
   const zEntry = (LZ + LZE) * Lv
 
@@ -310,8 +361,8 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
 
   const pocketMetric = (id: string): string => {
     const p = POCKET[id]
-    if (lens === 'migration') return `${Math.round(migrationProgress(mig, p.programs) * 100)}% Java`
-    if (lens === 'coupling') return `iso ${p.isolation.toFixed(2)}`
+    if (lens === 'migration') return `${Math.round(migrationProgress(mig, p.programs) * 100)}% on Java`
+    if (lens === 'coupling') return isoWord(p.isolation)
     if (lens === 'owners') return TEAMS[p.team].owner
     if (hl) {
       const n = p.programs.filter((x) => hl.programs.get(x) === 'hit').length
@@ -348,19 +399,21 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
     return d
   }, [])
 
-  const fontPocket = clamp(11 / k, 8, 22)
-  const fontSmall = clamp(9 / k, 4.6, 10)
-  const fontTiny = clamp(8 / k, 4.2, 8.5)
   const showCalls = hl ? hl.calls : []
   const b = L.bounds
 
   /* ---------------- scene ---------------- */
+  // The camera lives in a ref and is written to the DOM directly (no re-render
+  // per frame). Renders read it once so they never undo what setCamera wrote.
+  // oxlint-disable-next-line react/refs
+  const cam0 = camRef.current
+
   return (
     <div ref={wrapRef} className="absolute inset-0 overflow-hidden">
       <svg
         ref={svgRef}
         className="h-full w-full touch-none select-none"
-        style={{ cursor: dragging ? 'grabbing' : hover ? 'pointer' : 'grab' }}
+        style={{ cursor: dragging ? 'grabbing' : hover ? 'pointer' : 'grab', ['--k' as string]: cam0.k }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -381,7 +434,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
           </marker>
         </defs>
 
-        <g transform={`translate(${cam.x} ${cam.y}) scale(${k})`}>
+        <g ref={gRef} transform={camTransform(cam0)}>
           {/* die substrate = data plane */}
           <polygon points={rect(b.x0, b.x1, b.y0, b.y1)} fill={C.die} stroke={C.dieEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" />
           <path d={grid} stroke={C.grid} strokeWidth={1} vectorEffect="non-scaling-stroke" opacity={0.9} />
@@ -407,7 +460,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                   strokeDasharray="5 4"
                   vectorEffect="non-scaling-stroke"
                 />
-                <text transform={floorText(d.x0 + 0.35, labelY)} fontFamily={MONO} fontSize={clamp(10 / k, 7, 15)} fill={tint ?? C.faint} dominantBaseline="middle">
+                <text transform={floorText(d.x0 + 0.35, labelY)} fontFamily={MONO} style={fs(10, 4, 15)} fill={tint ?? C.faint} dominantBaseline="middle">
                   {dom.title}
                   <tspan fill={C.faint}>{`  ·  ${team.owner} · ${team.name}`}</tspan>
                 </text>
@@ -430,8 +483,9 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                   vectorEffect="non-scaling-stroke"
                   opacity={lit ? 1 : 0.8}
                 />
-                <text transform={floorText(lane.x1 + 0.25, lane.y)} fontFamily={MONO} fontSize={clamp(9 / k, 6, 12)} fill={lit ? toneColor : C.faint} dominantBaseline="middle">
+                <text transform={floorText(lane.x1 + 0.25, lane.y)} fontFamily={MONO} style={fs(9, 3.5, 12)} fill={lit ? toneColor : C.faint} dominantBaseline="middle">
                   {s}
+                  <tspan fill={C.faint}>{`  ·  ${STORE[s].title}`}</tspan>
                 </text>
               </g>
             )
@@ -450,7 +504,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                 <polygon points={f.left} fill={shade(top, 0.5)} />
                 <polygon points={f.right} fill={shade(top, 0.65)} />
                 <polygon points={f.top} fill={top} stroke={sel ? C.accent : lit ? toneColor : C.copper} strokeOpacity={sel || lit ? 1 : 0.55} strokeWidth={sel ? 1.8 : 1} vectorEffect="non-scaling-stroke" />
-                <text transform={floorText((G.REG_X0 + G.REG_X1) / 2, lane.y, G.REG_H * ZS)} fontFamily={MONO} fontSize={clamp(12 / k, 8, 17)} fontWeight={600} fill={C.ink} textAnchor="middle" dominantBaseline="middle">
+                <text transform={floorText((G.REG_X0 + G.REG_X1) / 2, lane.y, G.REG_H * ZS)} fontFamily={MONO} style={fs(12, 5, 17)} fontWeight={600} fill={C.ink} textAnchor="middle" dominantBaseline="middle">
                   {s}
                   {lens === 'coupling' && <tspan fill={C.sub} fontWeight={400}>{` ×${users}`}</tspan>}
                 </text>
@@ -469,7 +523,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
             return (
               <g key={t.id} opacity={o * dimFor(lit) * focusDim(t.pocket)} style={{ transition: 'opacity 300ms' }}>
                 <path d={path(pts)} fill="none" vectorEffect="non-scaling-stroke" strokeLinejoin="round" {...st} />
-                <Via at={end} color={lit ? toneColor : C.copper} k={k} />
+                <Via at={end} color={lit ? toneColor : C.copper} />
               </g>
             )
           })}
@@ -484,7 +538,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
             return (
               <g key={t.id} opacity={o * dimFor(lit)} style={{ transition: 'opacity 300ms' }}>
                 <path d={path(pts)} fill="none" vectorEffect="non-scaling-stroke" strokeLinejoin="round" {...st} />
-                <Via at={pts[pts.length - 1]} color={lit ? toneColor : C.copper} k={k} />
+                <Via at={pts[pts.length - 1]} color={lit ? toneColor : C.copper} />
               </g>
             )
           })}
@@ -519,7 +573,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                       <polygon points={f.left} fill={shade(top, 0.55)} />
                       <polygon points={f.right} fill={shade(top, 0.7)} />
                       <polygon points={f.top} fill={top} stroke={sel ? C.accent : C.copper} strokeOpacity={sel ? 1 : 0.5} strokeWidth={sel ? 1.6 : 1} vectorEffect="non-scaling-stroke" />
-                      <text transform={floorText(tile.cx, tile.cy, 5)} fontFamily={MONO} fontSize={fontTiny} fill={C.sub} textAnchor="middle" dominantBaseline="middle">
+                      <text transform={floorText(tile.cx, tile.cy, 5)} fontFamily={MONO} style={fs(8, 4.2, 8.5)} fill={C.sub} textAnchor="middle" dominantBaseline="middle">
                         {tile.store.replace(/^MQ\./, '')}
                       </text>
                     </g>
@@ -533,8 +587,8 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
           {Lv > 0.02 && (
             <g opacity={Lv}>
               <polygon points={rect(b.x0, b.x1, b.y0, b.y1, zPlane)} fill="#11151B" fillOpacity={0.3} stroke={C.dieEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-              <PlaneLabel z={0} k={k} text={`Data  ·  ${BUS_ORDER.length} shared stores on the bus  ·  local stores beside their pocket`} />
-              <PlaneLabel z={zPlane} k={k} text={`Programs  ·  ${L.order.length} pockets`} />
+              <PlaneLabel z={0} text={`Data  ·  ${BUS_ORDER.length} shared stores on the bus  ·  local stores beside their pocket`} />
+              <PlaneLabel z={zPlane} text={`Programs  ·  ${L.order.length} pockets`} />
             </g>
           )}
 
@@ -546,9 +600,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
               o={open(pid)}
               zBase={zPlane}
               zTop={pocketZTop(pid)}
-              k={k}
-              fontPocket={fontPocket}
-              fontSmall={fontSmall}
+              kR={kR}
               lens={lens}
               mig={mig}
               hl={hl}
@@ -575,7 +627,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
           {Lv > 0.02 && (
             <g opacity={Lv}>
               <polygon points={rect(b.x0, b.x1, b.y0, b.y1, zEntry)} fill="#11151B" fillOpacity={0.12} stroke={C.dieEdge} strokeDasharray="3 5" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-              <PlaneLabel z={zEntry} k={k} text={`Entry points  ·  ${ENTRIES.filter((e) => e.kind === 'job').length} JCL jobs  ·  ${ENTRIES.filter((e) => e.kind === 'cics').length} CICS transactions`} />
+              <PlaneLabel z={zEntry} text={`Entry points  ·  ${ENTRIES.filter((e) => e.kind === 'job').length} JCL jobs  ·  ${ENTRIES.filter((e) => e.kind === 'cics').length} CICS transactions`} />
               {L.order.flatMap((pid) =>
                 L.pockets[pid].programs.flatMap((g) =>
                   g.entries.map((eid, j) => {
@@ -593,7 +645,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                         <polygon points={f.left} fill={shade(col, 0.6)} />
                         <polygon points={f.right} fill={shade(col, 0.75)} />
                         <polygon points={f.top} fill={col} stroke={sel || lit ? toneColor : e.kind === 'cics' ? C.accent : C.copper} strokeOpacity={sel || lit ? 1 : 0.6} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-                        <text transform={floorText(cx, g.cy, zEntry + 6)} fontFamily={MONO} fontSize={fontTiny} fill={C.ink} textAnchor="middle" dominantBaseline="middle">
+                        <text transform={floorText(cx, g.cy, zEntry + 6)} fontFamily={MONO} style={fs(8, 4.2, 8.5)} fill={C.ink} textAnchor="middle" dominantBaseline="middle">
                           {eid}
                         </text>
                       </g>
@@ -625,7 +677,8 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
             const w = Math.max(54, text.length * 6.4 + 16)
             const H = 21, RISE = 32
             return (
-              <g key={`hl:${hover.kind}:${hover.id}`} transform={`translate(${X} ${Y}) scale(${1 / k})`} pointerEvents="none">
+              <g key={`hl:${hover.kind}:${hover.id}`} transform={`translate(${X} ${Y})`} pointerEvents="none">
+                <g style={UNZOOM}>
                 <g className="float-in">
                   <line x1={0} y1={0} x2={0} y2={-RISE} stroke={C.accent} strokeWidth={1.1} />
                   <circle cx={0} cy={0} r={2.2} fill={C.accent} />
@@ -635,26 +688,47 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
                     {sub && <tspan fill={C.sub} fontWeight={400}>{`  ·  ${sub}`}</tspan>}
                   </text>
                 </g>
+                </g>
               </g>
             )
           })()}
         </g>
       </svg>
+
+      {/* camera controls: mini-map (once zoomed in) above zoom and fit */}
+      <div className="absolute bottom-3 flex flex-col items-end gap-2 transition-[right] duration-200" style={{ right: 12 + inset }}>
+        <Minimap wrapRef={miniWrapRef} viewRef={miniViewRef} focus={focus} hl={hl} toneColor={toneColor} onCenter={centerOn} />
+        <div className="flex items-center gap-0.5 rounded-[10px] border border-[var(--color-line)] bg-[var(--color-panel)] p-[3px]">
+          <IconBtn label="Zoom out" onClick={() => zoomAround(1 / 1.35)} className="size-7">
+            <Minus className="size-3.5" />
+          </IconBtn>
+          <span ref={zoomTextRef} className="tnum w-11 text-center font-mono text-[11px] text-[var(--color-muted)]" aria-hidden>
+            {Math.round(cam0.k * 100)}%
+          </span>
+          <IconBtn label="Zoom in" onClick={() => zoomAround(1.35)} className="size-7">
+            <Plus className="size-3.5" />
+          </IconBtn>
+          <div className="mx-0.5 h-4 w-px bg-[var(--color-line-2)]" />
+          <Btn onClick={fit} className="h-7 px-2 text-[11.5px]" title="Fit to view (F)">
+            <Maximize2 className="size-3.5" /> Fit
+          </Btn>
+        </div>
+      </div>
     </div>
   )
 })
 
 /* ------------------------------------------------------------------ */
 
-function Via({ at, color, k }: { at: P3; color: string; k: number }) {
+function Via({ at, color }: { at: P3; color: string }) {
   const { X, Y } = proj(at[0], at[1], at[2])
-  return <circle cx={X} cy={Y} r={clamp(2.6 / k, 1.6, 5)} fill={color} />
+  return <circle cx={X} cy={Y} style={{ r: onScreen(2.6, 1.6, 5) }} fill={color} />
 }
 
-function PlaneLabel({ z, k, text }: { z: number; k: number; text: string }) {
+function PlaneLabel({ z, text }: { z: number; text: string }) {
   const b = LAYOUT.bounds
   return (
-    <text transform={floorText(b.x0 + 0.4, b.y1 - 0.45, z)} fontFamily={MONO} fontSize={clamp(11 / k, 8, 18)} fill={C.sub} dominantBaseline="middle">
+    <text transform={floorText(b.x0 + 0.4, b.y1 - 0.45, z)} fontFamily={MONO} style={fs(11, 5, 18)} fill={C.sub} dominantBaseline="middle">
       {text}
     </text>
   )
@@ -684,9 +758,7 @@ function PocketView(p: {
   o: number
   zBase: number
   zTop: number
-  k: number
-  fontPocket: number
-  fontSmall: number
+  kR: number
   lens: Lens
   mig: MigrationMap
   hl: Highlight | null
@@ -702,7 +774,7 @@ function PocketView(p: {
   hideEntriesInline: boolean
   onOpenMessages?: () => void
 }) {
-  const { pg, o, zBase, zTop, k, lens, mig, hl, selection, hover, live } = p
+  const { pg, o, zBase, zTop, kR, lens, mig, hl, selection, hover, live } = p
   const pocket = POCKET[pg.id]
   const isSel = selection?.kind === 'pocket' && selection.id === pg.id
   const isHover = hover?.kind === 'pocket' && hover.id === pg.id
@@ -713,23 +785,29 @@ function PocketView(p: {
   const cx = (pg.x0 + pg.x1) / 2
   const cy = (pg.y0 + pg.y1) / 2
 
-  // overview label: title + metric, fitted to the block width
-  let f = p.fontPocket
-  const avail = (pg.x1 - pg.x0) * UNIT_X * 0.84
-  let maxChars = Math.floor(avail / (f * 0.6))
-  if (maxChars < 8) {
-    f = avail / (8 * 0.6)
-    maxChars = 8
-  }
-  const titleLines = (() => {
-    const full = wrap(pocket.title, maxChars)
-    return full.length <= 2 && full.every((l) => l.length <= maxChars) ? full : wrap(pocket.short, maxChars)
-  })()
-  const lines = [...titleLines, p.metric]
+  // names you navigate by face the viewer at a fixed size; fit them to the block's
+  // on-screen width (one block unit along x is TW/2 = 32 px before the camera)
+  const blockPx = (pg.x1 - pg.x0) * 32 * kR * 1.15
+  const name = fitName(pocket.title, pocket.short, blockPx)
+  const metricColor = lens === 'coupling' ? isoColor(pocket.isolation) : C.sub
+  const overview = name.length
+    ? [...name.map((t) => ({ text: t, weight: 600 })), ...(blockPx > 60 ? [{ text: p.metric, size: 10.5, color: metricColor }] : [])]
+    : []
 
-  const plateV = (pg.title[0] + pg.title[1]) / 2
-  const plateY = pg.y(plateV)
-  const plateFont = clamp(9.5 / k, 5, 11)
+  const plateY = pg.y((pg.title[0] + pg.title[1]) / 2)
+  const platePx = (pg.x1 - pg.x0) * 32 * kR * 1.6
+  const plateName = fitName(pocket.title, pocket.short, platePx)
+  const plateMeta = `${pocket.programs.length} programs · ${isoWord(pocket.isolation)} · ${TEAMS[pocket.team].owner}`
+  const plate = plateName.length
+    ? [
+        ...plateName.map((t) => ({ text: t, weight: 600 })),
+        // the detail line only when there is room for it (zoomed-out views open many pockets)
+        ...(platePx > plateMeta.length * 10.5 * MONO_W ? [{ text: plateMeta, size: 10.5, color: C.sub }] : []),
+      ]
+    : []
+  // a program's id shows once its cube is wide enough on screen to hold it;
+  // the selected or hovered one always shows
+  const progLabels = G.BLOCK * 64 * kR >= 8 * 10.5 * MONO_W - 6
   const sorted = [...pg.programs].sort((a, b) => a.cx + a.cy - (b.cx + b.cy))
 
   return (
@@ -753,29 +831,13 @@ function PocketView(p: {
             opacity={0.32 * (1 - o)}
           />
         )}
-        {/* title plate (open) */}
+        {/* title plate (open): the plate is part of the slab, the name faces you */}
         {o > 0.02 && (
-          <g opacity={o}>
-            <polygon points={rect(pg.x0 + 0.08, pg.x1 - 0.08, pg.y(pg.title[0] + 0.08), pg.y(pg.title[1] - 0.08), zTop + 0.4)} fill={C.plate} stroke={C.slabEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-            <text transform={floorText(pg.x0 + 0.3, plateY, zTop + 0.4)} fontFamily={MONO} fill={C.ink} fontSize={plateFont} dominantBaseline="middle">
-              <tspan x={0} dy={-plateFont * 0.75} fontWeight={600}>{pocket.title}</tspan>
-              <tspan x={0} dy={plateFont * 1.6} fill={C.sub} fontSize={plateFont * 0.85}>
-                {`${pocket.programs.length} programs · iso ${pocket.isolation.toFixed(2)} ${isoWord(pocket.isolation)} · ${TEAMS[pocket.team].owner}`}
-              </tspan>
-            </text>
-          </g>
-        )}
-        {/* overview label */}
-        {o < 0.98 && (
-          <text transform={floorText(cx, cy, zTop)} fontFamily={MONO} fontSize={f} textAnchor="middle" dominantBaseline="middle" opacity={1 - o} fill={inkOn(topCol)}>
-            {lines.map((l, i) => (
-              <tspan key={i} x={0} y={(i - (lines.length - 1) / 2) * f * 1.25} fontWeight={i < titleLines.length ? 600 : 400} fill={i < titleLines.length ? undefined : lens === 'coupling' ? isoColor(pocket.isolation) : C.sub}>
-                {l}
-              </tspan>
-            ))}
-          </text>
+          <polygon points={rect(pg.x0 + 0.08, pg.x1 - 0.08, pg.y(pg.title[0] + 0.08), pg.y(pg.title[1] - 0.08), zTop + 0.4)} fill={C.plate} stroke={C.slabEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" opacity={o} />
         )}
       </g>
+      <Billboard at={proj(cx, cy, zTop)} lines={overview} opacity={1 - o} />
+      <Billboard at={proj((pg.x0 + pg.x1) / 2, plateY, zTop + 0.4)} lines={plate} opacity={clamp((o - 0.4) / 0.6, 0, 1)} />
 
       {/* slab-level traces, then programs */}
       {o > 0.02 && (
@@ -795,9 +857,7 @@ function PocketView(p: {
                 <polygon points={fb.right} fill={shade(col, 0.66)} />
                 <polygon points={fb.top} fill={col} stroke={sel ? C.ink : hov ? C.sub : 'rgba(0,0,0,0.35)'} strokeWidth={sel ? 1.8 : 1} vectorEffect="non-scaling-stroke" />
                 {lens === 'migration' && shadowing && <polygon points={fb.top} fill={C.accent} className="pulse-soft" opacity={0.35} />}
-                <text transform={floorText(g.cx, g.cy, z1)} fontFamily={MONO} fontSize={clamp(9 / k, 4.4, 8.6)} fontWeight={600} fill={inkOn(col)} textAnchor="middle" dominantBaseline="middle" opacity={clamp((o - 0.5) * 2, 0, 1)}>
-                  {g.id}
-                </text>
+                {(progLabels || sel || hov) && <Billboard at={proj(g.cx, g.cy, z1)} lines={[{ text: g.id, size: 10.5, weight: 600 }]} opacity={clamp((o - 0.5) * 2, 0, 1)} />}
                 {!p.hideEntriesInline && g.entries.length > 0 && (
                   <polygon
                     points={poly([
@@ -809,7 +869,7 @@ function PocketView(p: {
                     opacity={0.7}
                   />
                 )}
-                {isLive && live!.pending > 0 && <Pin x={g.cx} y={g.cy} z={z1} n={live!.pending} k={k} onOpen={p.onOpenMessages} />}
+                {isLive && live!.pending > 0 && <Pin x={g.cx} y={g.cy} z={z1} n={live!.pending} onOpen={p.onOpenMessages} />}
               </g>
             )
           })}
@@ -818,7 +878,7 @@ function PocketView(p: {
       {/* pin on the closed block */}
       {o < 0.5 && live && pocket.programs.includes(live.id) && live.pending > 0 && (() => {
         const g = pg.programs.find((x) => x.id === live.id)!
-        return <Pin x={g.cx} y={g.cy} z={zTop} n={live.pending} k={k} onOpen={p.onOpenMessages} />
+        return <Pin x={g.cx} y={g.cy} z={zTop} n={live.pending} onOpen={p.onOpenMessages} />
       })()}
     </g>
   )
@@ -926,25 +986,152 @@ function CallRoute(p: {
   )
 }
 
-function Pin({ x, y, z, n, k, onOpen }: { x: number; y: number; z: number; n: number; k: number; onOpen?: () => void }) {
+/* a flag on a stalk, drawn in screen pixels so it reads at any zoom */
+function Pin({ x, y, z, n, onOpen }: { x: number; y: number; z: number; n: number; onOpen?: () => void }) {
   const base = proj(x, y, z)
-  const h = clamp(34 / k, 22, 60)
-  const r = clamp(7 / k, 4.5, 12)
-  const top = { X: base.X, Y: base.Y - h }
+  const h = 34
+  const r = 7
   const click = onOpen
     ? { onPointerDown: (e: React.PointerEvent) => e.stopPropagation(), onClick: (e: React.MouseEvent) => { e.stopPropagation(); onOpen() }, style: { cursor: 'pointer' } }
     : {}
   return (
-    <g pointerEvents={onOpen ? 'auto' : 'none'} {...click}>
-      <title>{n} question{n > 1 ? 's' : ''} waiting · click to open</title>
-      <line x1={base.X} y1={base.Y} x2={top.X} y2={top.Y} stroke={C.warn} strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-      {/* soft hit halo */}
-      {onOpen && <circle cx={top.X} cy={top.Y} r={r * 1.9} fill={C.warn} opacity={0.14} />}
-      <polygon points={`${top.X},${top.Y - r} ${top.X + r},${top.Y} ${top.X},${top.Y + r} ${top.X - r},${top.Y}`} fill={C.warn} />
-      <text x={top.X} y={top.Y + 0.5} fontFamily={MONO} fontSize={r * 1.15} fontWeight={700} fill={C.dark} textAnchor="middle" dominantBaseline="middle">
-        {n}
-      </text>
+    <g transform={`translate(${base.X} ${base.Y})`} pointerEvents={onOpen ? 'auto' : 'none'} {...click}>
+      <g style={{ transform: 'scale(clamp(0.65, calc(1 / var(--k)), 1.76))' }}>
+        <title>{`${n} question${n > 1 ? 's' : ''} waiting · click to open`}</title>
+        <line x1={0} y1={0} x2={0} y2={-h} stroke={C.warn} strokeWidth={1.2} />
+        {onOpen && <circle cx={0} cy={-h} r={r * 1.9} fill={C.warn} opacity={0.14} />}
+        <polygon points={`0,${-h - r} ${r},${-h} 0,${-h + r} ${-r},${-h}`} fill={C.warn} />
+        <text x={0} y={-h + 0.5} fontFamily={MONO} fontSize={r * 1.15} fontWeight={700} fill={C.dark} textAnchor="middle" dominantBaseline="middle">
+          {n}
+        </text>
+      </g>
     </g>
   )
 }
 
+/* Text that faces the viewer at a fixed screen size, pinned to a point on the
+ * map. Used for the names you navigate by; floor-engraved text is kept for faint
+ * background labels. A dark halo keeps it readable over wires and colored faces. */
+type BillboardLine = { text: string; size?: number; weight?: number; color?: string }
+function Billboard({ at, lines, opacity = 1 }: { at: { X: number; Y: number }; lines: BillboardLine[]; opacity?: number }) {
+  const lh = 14.5
+  if (!lines.length || opacity < 0.02) return null
+  return (
+    <g transform={`translate(${at.X} ${at.Y})`} pointerEvents="none" opacity={opacity}>
+      <g style={UNZOOM}>
+        <text fontFamily={MONO} textAnchor="middle" dominantBaseline="middle" stroke="#000" strokeWidth={3.2} strokeOpacity={0.75} strokeLinejoin="round" paintOrder="stroke">
+          {lines.map((l, i) => (
+            <tspan key={i} x={0} y={(i - (lines.length - 1) / 2) * lh} fontSize={l.size ?? 11.5} fontWeight={l.weight ?? 400} fill={l.color ?? C.ink}>
+              {l.text}
+            </tspan>
+          ))}
+        </text>
+      </g>
+    </g>
+  )
+}
+
+/* What part of a name fits in `px` of screen width: the full title (one or two
+ * lines), else the short name, else nothing. */
+function fitName(title: string, short: string, px: number, size = 11.5): string[] {
+  const chars = Math.floor(px / (size * MONO_W))
+  if (chars < 4) return []
+  if (title.length <= chars) return [title]
+  const lines = wrap(title, chars)
+  if (lines.length <= 2 && lines.every((l) => l.length <= chars)) return lines
+  return [short]
+}
+
+/* ------------------------------ mini-map ------------------------------ */
+/* The whole board, its pockets, and the part you are looking at. Moved straight
+ * from the camera (no React render); fades in once you zoom past the overview. */
+
+const MINI_W = 196
+const MINI_PAD = 14
+const MINI = (() => {
+  const b = LAYOUT.bounds
+  const s = screenBounds(b.x0, b.x1, b.y0, b.y1, 0)
+  const vb = { x: s.x0 - MINI_PAD, y: s.y0 - MINI_PAD, w: s.x1 - s.x0 + MINI_PAD * 2, h: s.y1 - s.y0 + MINI_PAD * 2 }
+  return { vb, h: Math.round((MINI_W * vb.h) / vb.w) }
+})()
+
+function updateMinimap(c: Cam, v: { w: number; h: number; inset: number; homeK: number }, wrapEl: HTMLDivElement | null, rectEl: SVGRectElement | null) {
+  if (wrapEl) {
+    const show = c.k > v.homeK * 1.35
+    wrapEl.style.opacity = show ? '1' : '0'
+    wrapEl.style.pointerEvents = show ? 'auto' : 'none'
+  }
+  if (rectEl) {
+    rectEl.setAttribute('x', String(-c.x / c.k))
+    rectEl.setAttribute('y', String(-c.y / c.k))
+    rectEl.setAttribute('width', String(Math.max(0, v.w - v.inset) / c.k))
+    rectEl.setAttribute('height', String(v.h / c.k))
+  }
+}
+
+function Minimap({
+  wrapRef,
+  viewRef,
+  focus,
+  hl,
+  toneColor,
+  onCenter,
+}: {
+  wrapRef: React.RefObject<HTMLDivElement | null>
+  viewRef: React.RefObject<SVGRectElement | null>
+  focus: string | null
+  hl: Highlight | null
+  toneColor: string
+  onCenter: (X: number, Y: number) => void
+}) {
+  const b = LAYOUT.bounds
+  const dragging = useRef(false)
+  const toMap = (e: React.PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    onCenter(MINI.vb.x + ((e.clientX - r.left) / r.width) * MINI.vb.w, MINI.vb.y + ((e.clientY - r.top) / r.height) * MINI.vb.h)
+  }
+  return (
+    <div ref={wrapRef} className="rounded-[10px] border border-[var(--color-line)] bg-[var(--color-bg-2)] p-1 transition-opacity duration-200" style={{ opacity: 0, pointerEvents: 'none' }}>
+      <svg
+        width={MINI_W}
+        height={MINI.h}
+        viewBox={`${MINI.vb.x} ${MINI.vb.y} ${MINI.vb.w} ${MINI.vb.h}`}
+        className="block cursor-crosshair touch-none"
+        role="img"
+        aria-label="Mini-map. Click or drag to move the view."
+        onPointerDown={(e) => {
+          dragging.current = true
+          e.currentTarget.setPointerCapture(e.pointerId)
+          toMap(e)
+        }}
+        onPointerMove={(e) => dragging.current && toMap(e)}
+        onPointerUp={() => (dragging.current = false)}
+        onPointerCancel={() => (dragging.current = false)}
+      >
+        <polygon points={rect(b.x0, b.x1, b.y0, b.y1)} fill="#0b0b0e" stroke={C.dieEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        {LAYOUT.laneOrder.map((s) => {
+          const lane = LAYOUT.lanes[s]
+          const lit = !!hl?.stores.has(s)
+          return <path key={s} d={path([[G.REG_X0, lane.y, 0], [lane.x1, lane.y, 0]])} stroke={lit ? toneColor : C.copper} strokeOpacity={lit ? 1 : 0.45} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        })}
+        {LAYOUT.order.map((id) => {
+          const pg = LAYOUT.pockets[id]
+          const lit = !!hl?.pockets.has(id)
+          const on = id === focus
+          return (
+            <polygon
+              key={id}
+              points={rect(pg.x0, pg.x1, pg.y0, pg.y1)}
+              fill={on ? C.accent : lit ? toneColor : '#2a2f37'}
+              fillOpacity={on ? 0.55 : lit ? 0.4 : 1}
+              stroke={on ? C.accent : 'none'}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+            />
+          )
+        })}
+        <rect ref={viewRef} fill="rgba(237,238,241,0.06)" stroke={C.ink} strokeWidth={1.2} vectorEffect="non-scaling-stroke" rx={2} />
+      </svg>
+    </div>
+  )
+}

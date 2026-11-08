@@ -17,7 +17,6 @@
   --color-line-2: #33333c;
   --color-ink: #edeef1;
   --color-muted: #a9afba;
-  --color-sub: #a9afba;
   --color-faint: #73737e;
 
   --color-accent: #45c7f5;
@@ -30,25 +29,7 @@
   --color-bad: #ee6d69;
   --color-agent: #b4a8f8;
 
-  /* aliases used by the older screens */
-  --color-fg: #e6e8eb;
-  --color-fg-dim: #a0a7b1;
-  --color-fg-muted: #6b737e;
-  --color-border: #1e232b;
-  --color-border-strong: #2a313b;
-  --color-surface-2: #161a20;
-  --color-surface-3: #1b2028;
-  --color-card: #111419;
-  --color-hair: #1e232b;
-  --color-warn-bg: rgba(217, 164, 65, 0.12);
-  --color-nvidia: #76b900;
-  --color-noise: #6b737e;
-  --color-cat-rounding: #d9a441;
-  --color-cat-noise: #6b737e;
-  --color-cat-logic: #e0605e;
-  --color-cat-formatting: #a99cf5;
 
-  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -94,9 +75,6 @@ body {
   outline-offset: 2px;
 }
 
-.font-display {
-  font-family: var(--font-display);
-}
 .font-mono {
   font-family: var(--font-mono);
 }
@@ -109,9 +87,6 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-faint);
-}
-.glow {
-  text-shadow: none;
 }
 
 /* signal running along a lit trace */
@@ -148,15 +123,6 @@ body {
 }
 .pulse-stroke {
   animation: pulse-stroke 2.2s ease-in-out infinite;
-}
-
-@keyframes drift {
-  from {
-    transform: translate3d(0, 0, 0);
-  }
-  to {
-    transform: translate3d(-80px, -40px, 0);
-  }
 }
 
 /* hovered node label lifting off the surface */

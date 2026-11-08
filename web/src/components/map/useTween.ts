@@ -17,6 +17,7 @@ export function useTweenMap(targets: Record<string, number>, ms = 650): Record<s
     cancelAnimationFrame(raf.current)
     if (reduced() || ms <= 0) {
       cur.current = targets
+      // oxlint-disable-next-line react/set-state-in-effect -- reduced motion: jump straight to the end
       setValues(targets)
       return
     }
@@ -36,7 +37,9 @@ export function useTweenMap(targets: Record<string, number>, ms = 650): Record<s
     }
     raf.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf.current)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // keyed on the targets' content, not the object's identity (a new object
+    // with the same numbers must not restart the tween)
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [key, ms])
 
   return values

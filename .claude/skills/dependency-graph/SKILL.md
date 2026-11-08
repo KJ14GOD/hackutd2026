@@ -1,67 +1,56 @@
 ---
 name: dependency-graph
-description: How to build and change the Architecture (dependency graph) screen with React Flow — data shape, layout, lenses, blast radius, drag/pan/zoom. Use for any graph work in this repo.
+description: How to build and change the codebase map (the dependency graph in web/src/components/map) — data snapshot, chip floorplan layout, isometric SVG renderer, camera and semantic zoom, lenses, blast radius, flows. Use for any graph or map work in this repo.
 ---
 
-# Dependency graph
+# Dependency graph (the codebase map)
 
-The graph answers four FDE questions: what is this system, what breaks if I touch X, where can we cut, who do I ask. Every feature must serve one of them.
+The map answers four FDE questions: what is this system, what breaks if I touch X, where can we cut, who do I ask. Every feature must serve one of them.
 
-## Data contract (from backend or mock)
-```ts
-type GraphNode = {
-  id: string; label: string;
-  kind: "job" | "program" | "file";
-  segment: string;              // cluster id from community detection
-  isolation?: number;           // 0..1, programs only
-  owner: string; migration: "legacy" | "shadowing" | "cutover" | "retired";
-  openQuestions: number;
-};
-type GraphEdge = { from: string; to: string; kind: "call" | "reads" | "writes" | "cochange" | "runs" };
-type Segment = { id: string; title: string; color: string; owner: string };
-```
-- Edges come from static analysis + groma.md scan + file I/O parsing + git co-change. Never from an LLM (AI recovers dependencies at <18% accuracy).
-- Edge id = `${from}->${to}:${kind}` (deterministic).
+It is **hand-drawn SVG**, not React Flow. Files: `web/src/components/map/` (`layout.ts`, `MapCanvas.tsx`, `highlight.ts`, `iso.ts`, `theme.ts`, `useTween.ts`) and `web/src/data/carddemo.ts`.
 
-## Derived values (compute in code, memoized)
-- **Blast radius(X)** = BFS over: callers of X (reverse `call`), and readers of any file X `writes`. Return programs and files separately.
-- **Cut cost(segment)** = edges with exactly one endpoint in the segment (files count as outside).
-- **Isolation** = provided by backend; color ≥0.8 safe, ≥0.6 warn, else danger, and always print the word.
+## Data (real CardDemo, offline)
+- `web/scripts/snapshot-graph.mjs <segmentation.json>` → `web/src/data/carddemo.graph.json`: `programs {id, mode, lang, loc, pocket}`, `pockets {id, domain, kind, isolation, loc, programs}`, `domains`, `stores {id, kind, datasets}`, `io {program, store, mode}`, `calls {from, to, kind}`, `entries {id, kind, program, desc}`. Never hand-edit; re-run the script.
+- `carddemo.ts` adds curation (`POCKET_INFO` titles, short names, row and order; program/store titles; teams; seed migration states; `FLOWS`) and pure queries. Selection is a `Ref { kind: 'program' | 'store' | 'entry' | 'pocket', id }`.
+- Edges come from static analysis + file I/O parsing + git co-change (the segmenter). Never from an LLM (AI recovers dependencies at <18% accuracy).
 
-## Layout
-- Shared data files run as a horizontal **spine** in the middle; segments above and below. Program → file wires go straight up/down.
-- Segment groups are React Flow **group/parent nodes** whose bounds are recomputed from children (padding 22, 52 on top for the title) so dragging a child stretches its segment.
-- Initial positions: precomputed (dagre/ELK offline, or hand-tuned). Never run auto-layout on every data change.
-- Preserve the user's manual moves; only "Reset layout" restores defaults. Persist positions per component in localStorage (try/catch).
+## Derived values (compute in code)
+- **Blast radius(X)** (`blastRadius`) = readers of every store X writes (one hop) + transitive callers of X. Returns `hits[{program, via[{store?, caller?}]}]`, stores and pockets, so the UI can say *why* each program is hit.
+- **Cut cost(pocket)** (`cutCost`) = links with exactly one end in the pocket.
+- **Isolation** comes from the segmenter. Colour ≥0.6 good, ≥0.3 warn, else bad, and always pair it with a word (Easy to move / Some ties / Tangled).
 
-## Edges
-- Custom bezier edge: exits the side facing the target (vertical when mostly above/below, horizontal otherwise), control offset = max(30, 0.5·distance).
-- Solid = call/read, dashed = write, dotted = co-change. Base stroke 1.25 px `wire`; highlighted stroke 2 px.
-- Render highlighted edges last (on top). Dim the rest to ~45% opacity — never hide them.
+## Layout (`layout.ts`, computed once as `LAYOUT`)
+- Chip floorplan in world units: the 6 shared stores (`BUS_ORDER`) are horizontal **bus lanes** with a register at the left end; pockets sit in two rows facing the bus; programs inside a pocket are staggered so wires pass through the gaps; local (single-pocket) stores are tiles on the pocket's outer edge reached through channel sub-lanes; cross-pocket calls route through a control channel.
+- Every wire is orthogonal with via dots at junctions. Pocket-level taps show in the overview; program-level taps replace them when a pocket is open.
+- Never run auto-layout on data change; change `POCKET_INFO` order/rows or the `G` constants instead.
 
-## Lenses (segmented control, one at a time)
-| Lens | Node tag | Highlight |
+## Renderer (`MapCanvas.tsx`)
+- Isometric projection `proj(x, y, z)`; strokes use `vector-effect: non-scaling-stroke`.
+- Names you navigate by (pockets, plates, program ids) are `Billboard`s: screen-facing, constant size (`scale(1/var(--k))`), shown only when they fit (`fitName`, program ids once the cube is wide enough). Only faint background labels are engraved on the floor.
+- The camera is a ref; `setCamera` writes the transform, `--k`, zoom % and mini-map directly. Never put per-frame camera values in React state; use the coarse `kR` for size-dependent decisions.
+- Isolation words and colors come only from `ISO_LEVELS` in `theme.ts`.
+- **Camera:** tweened `flyTo` (log-space zoom), wheel zoom about the cursor, drag to pan vs click to pick (<4 px = click), hit testing via `data-hit="kind:id"`. Fit targets: whole die, a focused pocket (`focusBox`), or a flow step (pocket + the bus lane it touches, via the `frame` prop). Don't refit after the user has panned unless focus/view changes.
+- **Semantic zoom:** per-pocket "open" tween: block → slab, programs rise, local tiles and title plate appear.
+- **Links stay at one level of detail:** while a pocket is focused and a strong highlight is active (selection, blast, flow), every pocket holding a lit program opens too (`expandKey`), so cross-pocket calls and taps land on the exact program; unrelated pockets stay closed. The camera frames the focused pocket plus those pockets, and flies back when the selection clears. Hover (soft) never opens pockets.
+- **Layers view:** data plane, program plane (`LZ`) and entry plane (`LZ + LZE`) joined by vertical vias.
+
+## Highlight (`highlight.ts`)
+- One `Highlight` model: `tone` (accent | warn), `strength` (strong | soft), role maps for programs/stores (`source` | `hit` | `on`), lit link ids (`io:prog:store`, `call:from:to`, `entry:ID`), pockets, calls.
+- Precedence in `MissionControl`: flow step → blast lens → selection → hover (soft).
+- Lit wires animate (`trace-flow`). Dim the rest (strong 0.3, soft 0.45) — **never hide** them.
+
+## Lenses (segmented control, keys 1–4)
+| Lens | Colours | Inspector hero |
 |---|---|---|
-| Coupling | `0.87 · isolated` in iso color | none |
-| Blast radius | "Changing this" / "Retest" | selected + dependents, orange wires, others 32% |
-| Owners | `@priya · Finance` in segment ink | none |
-| Migration | Legacy / Shadowing / Cut over | shadowing node tinted accent, dashed draft node for the rewrite |
-A **Segments** zoom level collapses each segment into a tile showing cut cost, with bundled edges labeled by count.
+| Migration | legacy / shadowing (cyan) / cutting over (amber) / on Java (green) | % codebase on Java, counts |
+| Coupling | pocket by isolation | most tangled pockets, most-shared stores |
+| Blast radius | source cyan, hits amber, lanes lit | "Changing X means retesting N programs in M pockets", grouped by via |
+| Owners | pocket by team | teams, open questions |
 
 ## Interaction
-- Drag node = move (cursor grab/grabbing, lift shadow while dragging). Click without moving (<4 px) = select.
-- Drag empty canvas = pan. Zoom buttons −/+ (0.5–1.8), Fit, Reset layout, bottom-right floating control.
-- Click segment region or sidebar chip = focus segment (others 40%).
-- "Play flow" animates a named flow step by step (1.3 s/step) in accent color.
-- Selection always drives the right-hand detail panel: kind, title, hero metric (blast radius or cut cost), owner, migration, writes, one-line insight.
-
-## React Flow rules
-- Define `nodeTypes`/`edgeTypes` outside render. Controlled `nodes`/`edges` (selection and lens are domain state).
-- Don't subscribe each custom node to the whole nodes array; pass derived props.
-- Buttons inside nodes get `nodrag nopan`.
-- Container needs explicit height (640 px). Don't auto-`fitView` after the user has panned/zoomed.
-- Keep drag/pan transient state out of Zustand; commit positions on drag stop.
-- Accessibility: `ariaLabelConfig`, `aria-label` on nodes (`CBTRN02C, program`), visible focus ring, keyboard: Tab between nodes, Enter selects, Esc clears.
+- Click pocket = fly in (focus). Click program/store/entry = select (drives the Inspector). `Esc` steps back out. `F` fit, `L` Iso/Layers, `/` or `Ctrl K` search, arrows step a flow.
+- Systems sidebar rows and search results pick the same `Ref`s; hovering them lights the map.
+- Respect `prefers-reduced-motion` (tweens jump to the end).
 
 ## Demo beat to protect
-Select CBTRN02C under Blast radius → interest (CBACT04C), statements (CBSTM03A) and three other programs light up through ACCTDATA/TRANSACT although nothing calls CBTRN02C. Any change must keep this readable in one glance.
+Blast radius lens, select CBTRN02C → 15 programs in 10 pockets light up through ACCTDATA (10), TRANSACT (6) and TCATBALF (local) although nothing calls CBTRN02C. Any change must keep this readable in one glance.
