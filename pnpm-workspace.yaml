@@ -1,0 +1,7 @@
+packages:
+  - spacetime
+  - packages/*
+  - services/*
+  - legacy
+  - target
+  - tools

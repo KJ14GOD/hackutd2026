@@ -1,0 +1,16 @@
+{
+  "name": "@theseus/spacetime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SpacetimeDB module: every table and state transition for Theseus",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "spacetimedb": "2.14.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
