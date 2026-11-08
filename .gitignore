@@ -22,3 +22,25 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+node_modules/
+dist/
+.env
+.env.local
+*.log
+
+# runtime state (regenerated on every run)
+.sandbox/
+.cache/
+out/
+legacy/fixture/build/
+legacy/fixture/data/runtime/
+target/java/build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# third-party legacy code, fetched by `pnpm legacy:fetch`
+legacy/carddemo/
