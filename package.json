@@ -19,7 +19,9 @@
     "stdb:logs": "node scripts/stdb.mjs logs",
     "stdb:sql": "node scripts/stdb.mjs sql",
     "config:push": "tsx packages/shared/src/config-push.ts",
-    "legacy:fetch": "node scripts/fetch-carddemo.mjs"
+    "legacy:fetch": "node scripts/fetch-carddemo.mjs",
+    "deps:extract": "tsx services/segmenter/src/extract/cli.ts",
+    "segment": "tsx services/segmenter/src/cli.ts"
   },
   "devDependencies": {
     "@types/node": "^24.10.0",

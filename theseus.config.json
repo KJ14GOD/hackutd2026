@@ -44,15 +44,26 @@
   "segmentation": {
     "seed": 7,
     "resolution": { "pocket": 1.0, "domain": 1.0 },
-    "edgeWeights": {
-      "call": 1.0,
-      "file": 6.0,
-      "table": 6.0,
-      "copybook": 2.0,
-      "cochange": 0.5
+    "splitResolutionFactor": 1.5,
+    "edgeWeights": { "calls": 1.0, "links": 1.0, "transfers": 0.5, "cochange": 0.5 },
+    "resourceWeights": {
+      "dataset": 6.0,
+      "copybook": 0.5,
+      "job": 2.0,
+      "screen": 1.0,
+      "mq": 3.0,
+      "ims": 6.0,
+      "tsq": 3.0,
+      "tdq": 3.0
     },
+    "accessFactor": { "writeWrite": 1.0, "readWrite": 0.6, "readRead": 0.3 },
+    "confidence": { "extracted": 1.0, "observed": 1.0, "inferred": 0.4, "unknown": 0.0 },
     "hubDampening": true,
-    "omnipresentThreshold": 0.5,
+    "omnipresentThreshold": 0.3,
+    "hubThreshold": 0.2,
+    "maxPocketLoc": 6500,
+    "maxSplitDepth": 3,
+    "resourceOwnershipMin": 0.6,
     "cochange": { "maxFilesPerCommit": 10, "minCount": 2 }
   },
   "shadow": {

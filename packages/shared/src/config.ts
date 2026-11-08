@@ -6,12 +6,15 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { z } from 'zod';
 
+const nonneg = z.number().nonnegative();
+
+// Segmentation weights (docs/SEGMENTATION.md, "Projection"). Rel and kind names are the
+// dependency graph's (docs/GRAPH_SCHEMA.md).
 const EdgeWeights = z.object({
-  call: z.number().nonnegative(),
-  file: z.number().nonnegative(),
-  table: z.number().nonnegative(),
-  copybook: z.number().nonnegative(),
-  cochange: z.number().nonnegative(),
+  calls: nonneg, // CALL
+  links: nonneg, // CICS LINK
+  transfers: nonneg, // CICS XCTL (screen navigation, weaker than a call)
+  cochange: nonneg, // changed in the same git commit
 });
 
 export const ConfigSchema = z.object({
@@ -58,10 +61,33 @@ export const ConfigSchema = z.object({
     .refine((r) => r.trafficWeight + r.isolationWeight > 0, 'ranking weights cannot both be 0'),
   segmentation: z.object({
     seed: z.number().int(),
+    // Louvain resolution. Each LOC split multiplies the pocket resolution by splitResolutionFactor.
     resolution: z.object({ pocket: z.number().positive(), domain: z.number().positive() }),
+    splitResolutionFactor: z.number().gt(1),
     edgeWeights: EdgeWeights,
-    hubDampening: z.boolean(),
+    // Two programs touching the same node of this kind are linked with this weight. Kinds not
+    // listed here (utility, system-api, ...) don't link programs. Add planned kinds as they appear.
+    resourceWeights: z.record(z.string(), nonneg),
+    // Shared-resource edges by access mode of the two programs.
+    accessFactor: z.object({ writeWrite: z.number().min(0).max(1), readWrite: z.number().min(0).max(1), readRead: z.number().min(0).max(1) }),
+    // Multiplier for edges by how sure we are they exist.
+    // unknown = placeholder target; keep it at 0 so guesses about nothing don't glue pockets.
+    confidence: z.object({
+      extracted: z.number().min(0).max(1),
+      observed: z.number().min(0).max(1),
+      inferred: z.number().min(0).max(1),
+      unknown: z.number().min(0).max(1),
+    }),
+    hubDampening: z.boolean(), // a resource shared by n programs adds w/(n-1) per pair
+    // Resources touched by more than this share of all programs are ignored for clustering.
     omnipresentThreshold: z.number().min(0).max(1),
+    // Programs that invoke or are invoked by more than this share of all programs (menus,
+    // sign-on) are hubs: left out of clustering and put in the shared pocket.
+    hubThreshold: z.number().min(0).max(1),
+    maxPocketLoc: z.number().int().positive(), // soft cap: bigger pockets get split
+    maxSplitDepth: z.number().int().nonnegative(),
+    // A resource belongs to a pocket when that pocket has at least this share of its access weight.
+    resourceOwnershipMin: z.number().min(0).max(1),
     cochange: z.object({ maxFilesPerCommit: z.number().int().positive(), minCount: z.number().int().positive() }),
   }),
   shadow: z.object({

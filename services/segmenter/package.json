@@ -1,0 +1,21 @@
+{
+  "name": "@theseus/segmenter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Clusters the dependency graph (deps.json) into pockets; includes a TS extractor that produces deps.json",
+  "scripts": {
+    "deps:extract": "tsx src/extract/cli.ts",
+    "segment": "tsx src/cli.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@theseus/shared": "workspace:*",
+    "graphology": "0.26.0",
+    "graphology-communities-louvain": "2.0.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "graphology-types": "0.24.8"
+  }
+}
