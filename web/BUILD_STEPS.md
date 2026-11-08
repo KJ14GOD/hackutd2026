@@ -72,6 +72,16 @@ A map of how the Shadow Diff mission-control UI is constructed, in the order you
 - `src/components/shell/Inspector.tsx` — **Inspect / Agent / People** tabs: lens-aware system view with a dismissible Start here note, pocket/program/store/entry details with relationships grouped by kind, live shadow card, blast summary, flow stepper, Nemotron log, Slack questions.
 - `src/components/shell/Search.tsx` — search programs, pockets, data and jobs.
 
+- `src/components/shell/Rail.tsx` — the workspace rail (Map, Requirements, Questions, Inbox, People) with per-viewer badges, and the **Viewing as** select.
+
+## 10b · The requirements layer (D-028)
+
+- `src/data/requirements.ts` — pure rules: statement lint, access (restricted scopes), approver rows and quorum, the gate (rewrite needs behavior / business-rule / data approved; cutover also needs passing checks), impact of a change (trace links + blast radius), word diff, escalation ladder on the sim clock, the inbox.
+- `src/data/reqEvents.ts` — `ReqEvent` union and `reduceReq`, routed by the main store reducer.
+- `src/data/reqSeed.ts` / `reqMock.ts` — the seed world and every action (`RealtimeSource.req`); the mock keeps its own world, applies the same reducer and emits each event. Sim clock: +1 minute per second.
+- `src/store/useUi.ts` — workspace, viewer, mode, open ids, the impact drawn on the map.
+- Screens: `components/requirements/` (list, detail, History, Checks, conflict, impact, pocket progress), `components/questions/`, `components/approvals/InboxScreen.tsx`, `components/people/PeopleScreen.tsx`; shared pieces in `components/shell/reqKit.tsx`.
+
 ## 11 · Demo safety net
 
 - Everything runs offline from the mock and the graph snapshot. **Simulate answer** fires the next scripted Slack answer (match rate jumps, question moves to Answered); **Replay** auto-answers hands-free; two scenario presets prove it isn't hardcoded to one component.

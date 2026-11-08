@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Box, ChevronRight, Expand, Layers, PanelLeftOpen, PanelRightOpen, Radio, RotateCcw, Shrink } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
+import { Box, ChevronRight, Expand, Layers, PanelLeftOpen, PanelRightOpen, Radio, RotateCcw, Shrink, X } from 'lucide-react'
 import {
   selectAgentLog,
   selectComponent,
@@ -9,6 +10,8 @@ import {
   selectThreshold,
   useStore,
 } from '@/store/useStore'
+import { useUi } from '@/store/useUi'
+import { canSeeScope, gate as gateOf, gateState, isRestrictedScope } from '@/data/requirements'
 import {
   BUS_ORDER,
   DOMAIN,
@@ -27,13 +30,18 @@ import {
   type MigrationMap,
   type Ref,
 } from '@/data/carddemo'
-import { MapCanvas, type Lens, type MapHandle, type View } from '@/components/map/MapCanvas'
-import { blastHighlight, flowHighlight, selectionHighlight, type Highlight } from '@/components/map/highlight'
-import { C, ISO_LEVELS, MIG_COLOR, TEAM_COLOR, isoWord } from '@/components/map/theme'
+import { MapCanvas, type Lens, type MapHandle, type PocketGate, type View } from '@/components/map/MapCanvas'
+import { blastHighlight, flowHighlight, impactHighlight, selectionHighlight, type Highlight } from '@/components/map/highlight'
+import { C, GATE_COLOR, ISO_LEVELS, MIG_COLOR, TEAM_COLOR, isoWord } from '@/components/map/theme'
 import { Hierarchy } from '@/components/shell/Hierarchy'
 import { INSPECTOR_W, Inspector, type InspectorTab, type LiveInfo } from '@/components/shell/Inspector'
 import { Search, type SearchHandle } from '@/components/shell/Search'
 import { Btn, IconBtn, Segmented } from '@/components/shell/kit'
+import { Rail, ViewingAs } from '@/components/shell/Rail'
+import { RequirementsScreen } from '@/components/requirements/RequirementsScreen'
+import { QuestionsScreen } from '@/components/questions/QuestionsScreen'
+import { InboxScreen } from '@/components/approvals/InboxScreen'
+import { PeopleScreen } from '@/components/people/PeopleScreen'
 import { cn } from '@/lib/cn'
 
 const LENSES: { id: Lens; label: string; hint: string }[] = [
@@ -41,6 +49,7 @@ const LENSES: { id: Lens; label: string; hint: string }[] = [
   { id: 'coupling', label: 'Coupling', hint: 'Where the code is tangled through shared data (2)' },
   { id: 'blast', label: 'Blast radius', hint: 'What to retest if a program changes (3)' },
   { id: 'owners', label: 'Owners', hint: 'Who owns what, who to ask (4)' },
+  { id: 'gate', label: 'Requirements', hint: 'Which pockets may be rewritten or cut over, and what blocks the rest (5)' },
 ]
 
 /** Below this width both panels stop docking: the sidebar collapses and the
@@ -92,6 +101,38 @@ export default function MissionControl() {
   const showTree = treeOpen && !mapOnly
   const showInsp = inspOpen && !mapOnly
 
+  const workspace = useUi((s) => s.workspace)
+  const go = useUi((s) => s.go)
+  const me = useUi((s) => s.viewerId)
+  const impact = useUi((s) => s.impact)
+  const showImpact = useUi((s) => s.showImpact)
+  const onMap = workspace === 'map'
+  // "Show on map": an impact spans pockets, so step back to the whole system
+  const [seenImpact, setSeenImpact] = useState(impact)
+  if (impact !== seenImpact) {
+    setSeenImpact(impact)
+    if (impact) {
+      setFocus(null)
+      setSelection(null)
+      setFlowState(null)
+    }
+  }
+  // the requirements gate per pocket, as strings so a clock tick doesn't re-render the map
+  const gateRows = useStore(
+    useShallow((s) =>
+      Object.fromEntries(
+        Object.keys(POCKET).map((id) => {
+          const locked = isRestrictedScope(s.reqs, id) && !canSeeScope(s.reqs, me, id)
+          return [id, locked ? 'locked:0' : `${gateState(s.reqs, id)}:${gateOf(s.reqs, id).blockers.length}`]
+        }),
+      ),
+    ),
+  )
+  const gateMap = useMemo(
+    () => Object.fromEntries(Object.entries(gateRows).map(([id, v]) => [id, { state: v.split(':')[0] as PocketGate['state'], blockers: Number(v.split(':')[1]) }])),
+    [gateRows],
+  )
+
   const controls = useStore(selectControls)
   const component = useStore(selectComponent)
   const threshold = useStore(selectThreshold)
@@ -136,11 +177,12 @@ export default function MissionControl() {
 
   const highlight: Highlight | null = useMemo(() => {
     if (flowStep) return flowHighlight(flowStep)
+    if (impact && !selection) return impactHighlight(impact.programs, impact.downstream)
     if (lens === 'blast' && selection?.kind !== 'store' && selection?.kind !== 'pocket' && blastSource) return blastHighlight(blastSource)
     if (selection && selection.kind !== 'pocket') return selectionHighlight(selection)
     if (hover && hover.kind !== 'pocket') return selectionHighlight(hover, 'soft')
     return null
-  }, [flowStep, lens, selection, hover, blastSource])
+  }, [flowStep, impact, lens, selection, hover, blastSource])
 
   // keep the step's shared store lane in shot while the camera follows the flow
   const flowFrame = useMemo(
@@ -160,6 +202,7 @@ export default function MissionControl() {
       }
       setFlowState(null)
       setTab('inspect')
+      go('map')
       if (r.kind === 'pocket') setFocus(r.id)
       else if (r.kind === 'program') setFocus(PROGRAM[r.id].pocket)
       else if (r.kind === 'entry') {
@@ -169,7 +212,7 @@ export default function MissionControl() {
       setSelection(r)
       if (narrow && !mapOnly) setInspOpen(true)
     },
-    [flowState, selection, focus, narrow, mapOnly],
+    [flowState, selection, focus, narrow, mapOnly, go],
   )
 
   const goFlow = useCallback(
@@ -206,8 +249,12 @@ export default function MissionControl() {
       }
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return
-      if (e.key === 'Escape') pick(null)
-      else if (e.key >= '1' && e.key <= '4') setLens(LENSES[Number(e.key) - 1].id)
+      // the rest are map keys
+      if (!onMap) return
+      if (e.key === 'Escape') {
+        if (impact && !selection && !flowState) showImpact(null)
+        else pick(null)
+      } else if (e.key >= '1' && e.key <= '5') setLens(LENSES[Number(e.key) - 1].id)
       else if (e.key.toLowerCase() === 'l') setView((v) => (v === 'iso' ? 'layers' : 'iso'))
       else if (e.key.toLowerCase() === 'f') mapRef.current?.fit()
       else if (e.key.toLowerCase() === 'm') setMapOnly((v) => !v)
@@ -218,7 +265,7 @@ export default function MissionControl() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [pick, flowState, goFlow])
+  }, [pick, flowState, goFlow, onMap, impact, selection, showImpact])
 
   const progress = migrationProgress(mig)
   const overlayInsp = narrow && showInsp
@@ -236,7 +283,7 @@ export default function MissionControl() {
           CARDDEMO
         </span>
 
-        <div className="hidden w-[160px] shrink-0 lg:block" title={`${Math.round(progress * 100)}% of the codebase is on Java`}>
+        <div className="hidden w-[160px] shrink-0 2xl:block" title={`${Math.round(progress * 100)}% of the codebase is on Java`}>
           <div className="flex items-baseline justify-between text-[11px]">
             <span className="text-[var(--color-faint)]">On Java</span>
             <span className="tnum font-mono text-[var(--color-good)]">{Math.round(progress * 100)}%</span>
@@ -261,6 +308,7 @@ export default function MissionControl() {
         </button>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <ViewingAs />
           <Search ref={searchRef} onPick={pick} compact={narrow} />
           <select
             value={scenarioId}
@@ -317,8 +365,18 @@ export default function MissionControl() {
 
       {/* ---------------- body ---------------- */}
       <div className="relative flex min-h-0 flex-1">
-        {showTree && <Hierarchy focus={focus} selection={selection} mig={mig} onPick={pick} onHover={setHover} onCollapse={() => setTreeOpen(false)} />}
+        <Rail />
+        {!onMap && (
+          <main className="flex min-w-0 flex-1 flex-col bg-[var(--color-bg)]">
+            {workspace === 'requirements' && <RequirementsScreen />}
+            {workspace === 'questions' && <QuestionsScreen />}
+            {workspace === 'inbox' && <InboxScreen />}
+            {workspace === 'people' && <PeopleScreen />}
+          </main>
+        )}
+        {onMap && showTree && <Hierarchy focus={focus} selection={selection} mig={mig} onPick={pick} onHover={setHover} onCollapse={() => setTreeOpen(false)} />}
 
+        {onMap && (
         <main className="flex min-w-0 flex-1 flex-col bg-[var(--color-bg)]">
           {/* canvas toolbar: where you are, how you look at it */}
           <div className="flex h-11 shrink-0 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-2.5">
@@ -361,6 +419,7 @@ export default function MissionControl() {
               hover={hover}
               highlight={highlight}
               mig={mig}
+              gate={gateMap}
               live={PROGRAM[component.id] ? { id: component.id, pending: pending.length } : null}
               frame={flowFrame}
               insetRight={overlayInsp ? INSPECTOR_W : 0}
@@ -379,14 +438,28 @@ export default function MissionControl() {
               <Readout r={hover ?? selection} mig={mig} />
             </div>
 
+            {impact && (
+              <div className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-2 rounded-[10px] border border-[rgba(239,178,74,.4)] bg-[var(--color-panel)] py-1 pl-3 pr-1 text-[12px] shadow-[0_8px_24px_rgba(0,0,0,.5)]">
+                <span className="text-[var(--color-warn)]">Showing impact</span>
+                <span className="max-w-[420px] truncate text-[var(--color-muted)]">{impact.label}</span>
+                <span className="shrink-0 text-[var(--color-faint)]">
+                  {impact.programs.length} changing · {impact.downstream.length} to retest
+                </span>
+                <IconBtn label="Clear the impact" onClick={() => showImpact(null)}>
+                  <X className="size-3.5" />
+                </IconBtn>
+              </div>
+            )}
+
             {/* bottom-left: legend */}
             <div className="pointer-events-none absolute bottom-3 left-3">
               <Legend lens={lens} blastSource={blastSource} hasHighlight={!!highlight} />
             </div>
           </div>
         </main>
+        )}
 
-        {showInsp && (
+        {onMap && showInsp && (
           <div className={cn(overlayInsp && 'absolute bottom-0 right-0 top-11 z-20 shadow-[-24px_0_48px_-24px_rgba(0,0,0,.8)]')}>
             <Inspector
               tab={tab}
@@ -539,6 +612,14 @@ function Legend({ lens, blastSource, hasHighlight }: { lens: Lens; blastSource: 
           <Swatch color={C.accent} label={blastSource ? `changing ${blastSource}` : 'pick a program'} />
           <Swatch color={C.warn} label="retest" />
           {!hasHighlight && <span className="text-[11px] text-[var(--color-faint)]">click any program</span>}
+        </>
+      )}
+      {lens === 'gate' && (
+        <>
+          <Swatch color={GATE_COLOR.open} label="gate open" />
+          <Swatch color={GATE_COLOR.blocked} label="blocked" />
+          <Swatch color={GATE_COLOR.none} label="no requirements yet" />
+          <Swatch color={GATE_COLOR.locked} label="restricted" />
         </>
       )}
       {lens === 'owners' && (

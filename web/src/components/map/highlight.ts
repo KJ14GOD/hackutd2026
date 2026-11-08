@@ -108,6 +108,22 @@ export function blastHighlight(program: string): Highlight {
   return finish(h)
 }
 
+/** A requirement change's impact (§7.3): the programs it touches are the
+ * source, downstream programs are what to retest. */
+export function impactHighlight(programs: string[], downstream: string[]): Highlight {
+  const h = empty('warn')
+  for (const p of programs) if (PROGRAM[p]) h.programs.set(p, 'source')
+  for (const p of downstream) if (PROGRAM[p] && !h.programs.has(p)) h.programs.set(p, 'hit')
+  for (const p of h.programs.keys())
+    for (const r of ioOf(p))
+      if (r.mode !== 'read' && downstream.some((d) => PROGRAM[d] && ioOf(d).some((x) => x.store === r.store))) {
+        h.stores.set(r.store, 'hit')
+        h.links.add(`io:${p}:${r.store}`)
+      }
+  for (const d of downstream) for (const r of PROGRAM[d] ? ioOf(d) : []) if (h.stores.has(r.store)) h.links.add(`io:${d}:${r.store}`)
+  return finish(h)
+}
+
 export function flowHighlight(step: FlowStep): Highlight {
   const h = empty('accent')
   const put = (r: Ref, role: Role) => {

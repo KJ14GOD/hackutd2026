@@ -32,7 +32,8 @@ This is its own npm project, outside the root pnpm workspace (see D-027 in
   Selecting a program there also opens every pocket it links to, so each wire ends on the
   exact program at the other end (unrelated pockets stay collapsed), and the camera frames them all.
   - **Views:** Iso, or Layers (data / programs / entry points as three stacked planes).
-  - **Lenses:** Migration, Coupling, Blast radius, Owners. Each recolours the same map.
+  - **Lenses:** Migration, Coupling, Blast radius, Owners, Requirements (gate open /
+    blocked / none / restricted). Each recolours the same map.
   - **Flows:** Nightly batch cycle, Online bill pay, Card update; step through with arrows.
   - The pin on a pocket with open questions opens that person's message in the People tab.
   - Names face the viewer at a constant size (billboards) and only show when they fit;
@@ -44,12 +45,32 @@ This is its own npm project, outside the root pnpm workspace (see D-027 in
   Nemotron log) and **People** (Slack questions waiting and answered). Relationships are
   grouped by kind (Started by / Reads and writes / Writes / Reads / Calls / Called by). A
   small dismissible **Start here** note explains pockets and the first three clicks.
+- **Requirements workspaces** (rail on the far left; D-028, mock data):
+  - **Requirements:** count chips and filters, open conflicts on top, bulk approve for
+    what you may approve. Detail: statement with flagged words, slots, evidence, trace to
+    code, approvals, and Approve / Reject / Edit / Needs info / Request change. Tabs
+    **History** (word diff between any two versions, restore) and **Checks** (run,
+    attest). A change request shows its impact and **Show on map**.
+  - **Conflicts:** both sides with sources, backers and what happens if each wins; keep
+    A, keep B or escalate, with a required comment.
+  - **Questions:** why it was asked, what the docs already say ("Use as the answer"),
+    one-click options, reassign, snooze, and an **Escalation** tab with the ladder on the
+    sim clock (`+1h` / `+6h` to move it).
+  - **Inbox:** what waits on the viewer, grouped by pocket, "Approve N clean".
+  - **People:** teams, who owns each pocket and why (signal, source, confidence),
+    corrections, mark as left (questions reroute), and the **Approver list** an admin
+    signs off.
+  - **Viewing as** in the top bar picks the person (no sign-in in the demo); restricted
+    pockets (User administration) show a lock for anyone without access.
+  - The pocket Inspector shows **Requirements and progress**: job state, the gate and
+    each blocker (click through), harness attempts, and cutover 1/10/100 for the live
+    pocket. The mock holds cutover while the gate is closed.
 - **Layout:** the expand button in the toolbar (or `M`) shows the map only. Below 1440 px
   wide (projectors) the Systems panel starts hidden and the Inspector slides over the
   map instead of squeezing it; the camera keeps the subject clear of it.
 - If a render ever throws, an error panel offers **Reset view** instead of a blank page.
 
-Keys: `1`–`4` lenses, `L` Iso/Layers, `M` map only, `F` fit, `/` or `Ctrl K` search,
+Keys (map only): `1`–`5` lenses, `L` Iso/Layers, `M` map only, `F` fit, `/` or `Ctrl K` search,
 `Esc` back out, `←`/`→` flow steps.
 
 ## Where things live
@@ -62,6 +83,9 @@ Keys: `1`–`4` lenses, `L` Iso/Layers, `M` map only, `F` fit, `/` or `Ctrl K` s
 | `src/data/carddemo.ts` | the CardDemo graph plus curation (titles, teams, flows) and queries (blast radius, cut cost) |
 | `src/data/carddemo.graph.json` | snapshot of the segmenter output; regenerate with `node scripts/snapshot-graph.mjs <path to segmentation.json>` |
 | `src/data/{source,mockSource,factory,scenarios,jev}.ts`, `src/store/useStore.ts` | the realtime seam: store fed by a swappable source (mock today) |
+| `src/data/{requirements,reqEvents,reqSeed,reqMock}.ts` | requirements layer: pure rules, events + reducer, seed world, mock actions |
+| `src/store/useUi.ts` | workspace, viewing as, Business / Engineer, cross-links |
+| `src/components/{requirements,questions,approvals,people}/` | the requirements workspaces; `shell/reqKit.tsx` holds their shared pieces, `shell/Rail.tsx` the nav |
 | `src/index.css` | theme tokens (Tailwind v4 `@theme`) |
 
 The earlier screens (dashboard, flow, React Flow graph) were deleted along with their

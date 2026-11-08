@@ -36,6 +36,7 @@ import { C, MIG_COLOR, TEAM_COLOR, isoColor, isoWord } from '@/components/map/th
 import type { Lens } from '@/components/map/MapCanvas'
 import { cn } from '@/lib/cn'
 import { Btn, Chip, Dot, IconBtn, SectionHead, Segmented, Stat } from './kit'
+import { PocketProgress } from '@/components/requirements/PocketProgress'
 
 export type InspectorTab = 'inspect' | 'agent' | 'people'
 
@@ -262,6 +263,7 @@ const LENS_HELP: Record<Lens, string> = {
   coupling: 'Shared data is the coupling. Thicker taps and lanes mean more programs depend on that store. Tangled pockets are risky to cut first.',
   blast: 'Pick a program. Everything that reads what it writes, or calls it, lights up amber: that is what you retest.',
   owners: 'Each pocket is tinted by the team that owns it. Pins mark open questions waiting on a person.',
+  gate: 'Green pockets have their requirements approved and checked, so the agent may rewrite or cut over. Amber ones are waiting on approvals, answers or failing checks; open one to see exactly what.',
 }
 
 function SystemView(p: Props) {
@@ -445,6 +447,8 @@ function PocketDetail({ id, ...p }: { id: string } & Props) {
         <Stat label="Programs" value={pk.programs.length} />
         <Stat label="Links out" value={cutCost(id)} sub="cut cost" />
       </div>
+      <Hr />
+      <PocketProgress pocketId={id} isolation={pk.isolation} liveProgram={p.live.id} threshold={p.live.threshold} />
       <Hr />
       <SectionHead>Programs</SectionHead>
       {pk.programs.map((x) => {

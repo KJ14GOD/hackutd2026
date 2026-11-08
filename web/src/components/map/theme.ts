@@ -57,3 +57,7 @@ export function inkOn(hex: string) {
   const l = 0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)
   return l > 140 ? C.dark : C.ink
 }
+
+/** Requirements lens: the gate per pocket ('locked' = restricted and the viewer has no access). */
+export type GateState = 'open' | 'blocked' | 'none' | 'done' | 'locked'
+export const GATE_COLOR: Record<GateState, string> = { open: C.good, done: C.good, blocked: C.warn, none: C.block, locked: C.faint }

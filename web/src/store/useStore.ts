@@ -1,7 +1,8 @@
 import { create } from 'zustand'
-import type { Snapshot } from '@/types'
+import type { ReqWorld, Snapshot } from '@/types'
 import type { RealtimeSource, SourceEvent } from '@/data/source'
 import { createSource } from '@/data/factory'
+import { REQ_EVENT_TYPES, reduceReq, type ReqEvent } from '@/data/reqEvents'
 
 /* ------------------------------------------------------------------ *
  * The single source of truth the UI reads.
@@ -21,12 +22,18 @@ const source = createSource()
 
 export interface StoreState extends Snapshot {
   controls: RealtimeSource
+  /** requirements layer, kept apart from the per-scenario snapshot */
+  reqs: ReqWorld
+  /** subscription state for the requirements screens (loading / ready / error) */
+  reqStatus: 'loading' | 'ready' | 'error'
+  reqError: string
   /** last event tag — lets components flash/animate on specific changes */
   lastEvent: SourceEvent['type'] | null
   apply: (event: SourceEvent) => void
 }
 
 function reduce(state: StoreState, e: SourceEvent): Partial<StoreState> {
+  if (REQ_EVENT_TYPES.has(e.type)) return { reqs: reduceReq(state.reqs, e as ReqEvent), reqStatus: 'ready' }
   switch (e.type) {
     case 'snapshot':
       return { ...e.snapshot, lastEvent: 'snapshot' }
@@ -85,6 +92,9 @@ function reduce(state: StoreState, e: SourceEvent): Partial<StoreState> {
 export const useStore = create<StoreState>((set) => ({
   ...source.getSnapshot(),
   controls: source,
+  reqs: source.req.world(),
+  reqStatus: 'ready',
+  reqError: '',
   lastEvent: null,
   apply: (event) => set((state) => reduce(state, event)),
 }))
@@ -104,3 +114,9 @@ export const selectAgentLog = (s: StoreState) => s.agentLog
 export const selectUIDecisions = (s: StoreState) => s.uiDecisions
 export const selectCutover = (s: StoreState) => s.cutoverStage
 export const selectGraph = (s: StoreState) => s.graph
+
+/* requirements layer: select the narrowest table you need; the whole world
+ * changes every sim-clock tick, its tables only when they change */
+export const selectReqs = (s: StoreState) => s.reqs
+export const selectReqActions = (s: StoreState) => s.controls.req
+export const selectNow = (s: StoreState) => s.reqs.nowMs

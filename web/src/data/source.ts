@@ -7,7 +7,11 @@ import type {
   Mismatch,
   Snapshot,
   UIDecision,
+  ReqSlot,
+  ReqWorld,
+  RequirementVersion,
 } from '@/types'
+import type { ReqEvent } from '@/data/reqEvents'
 
 /* ------------------------------------------------------------------ *
  * The realtime seam.
@@ -37,6 +41,7 @@ export type SourceEvent =
   | { type: 'uiDecision'; decision: UIDecision }
   | { type: 'statusChange'; status: ComponentStatus }
   | { type: 'cutover'; stage: CutoverStage }
+  | ReqEvent
 
 export type SourceListener = (event: SourceEvent) => void
 
@@ -80,7 +85,46 @@ export interface SourceControls {
   isAutoReplay(): boolean
 }
 
+/** The editable slots of a requirement version. */
+export type VersionSlots = Pick<RequirementVersion, 'statement' | 'actor' | 'condition' | 'outcome' | 'measure' | 'rationale'>
+
+/**
+ * Requirements-layer actions, one per reducer (REQUIREMENTS_IMPLEMENTATION.md §3.5).
+ * `as` is the person acting. The mock has no sign-in, so the UI passes the
+ * "Viewing as" person; SpacetimeSource ignores it because the reducers use
+ * ctx.sender. Every action is allowed or refused by the same rules the screens
+ * show (src/data/requirements.ts).
+ */
+export interface ReqActions {
+  world(): ReqWorld
+  approveRequirement(reqId: string, versionId: string, comment: string, as: string): void
+  rejectRequirement(reqId: string, versionId: string, comment: string, as: string): void
+  editRequirement(reqId: string, slots: VersionSlots, reason: string, as: string): void
+  restoreVersion(reqId: string, versionId: string, as: string): void
+  markNeedsInfo(reqId: string, slot: ReqSlot, as: string): void
+  requestRequirementChange(reqId: string, slots: VersionSlots, reason: string, as: string): string
+  decideChangeRequest(changeId: string, decision: 'approve' | 'reject', comment: string, as: string): void
+  resolveConflict(conflictId: string, pick: 'a' | 'b' | 'escalate', comment: string, as: string): void
+  answerQuestion(questionId: string, text: string, as: string, viaHitId?: string): void
+  reassignQuestion(questionId: string, personIds: string[], as: string): void
+  snoozeQuestion(questionId: string, hours: number, reason: string, as: string): void
+  escalateNow(questionId: string, as: string): void
+  pauseEscalation(questionId: string, reason: string | null, as: string): void
+  runVerification(verificationId: string): void
+  requestAttestation(verificationId: string, personId: string, as: string): void
+  attest(verificationId: string, comment: string, as: string): void
+  correctOwnership(ownershipId: string, personId: string, reason: string, as: string): void
+  markPersonLeft(personId: string, as: string): void
+  decideApproverChange(approverId: string, decision: 'accepted' | 'rejected', as: string): void
+  signOffApprovers(as: string): void
+  startMigration(pocketId: string, as: string): void
+  /** demo only: move the sim clock forward (the traffic service owns it for real) */
+  advanceClock(ms: number): void
+}
+
 export interface RealtimeSource extends SourceControls {
+  /** requirements layer: questions, requirements, approvals, people */
+  req: ReqActions
   /** Current full state — read once on mount. */
   getSnapshot(): Snapshot
   /** Subscribe to the live event stream. Returns an unsubscribe fn. */

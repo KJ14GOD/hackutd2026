@@ -2,6 +2,8 @@ import type { CutoverStage, DecisionAnswer, Snapshot } from '@/types'
 import type { RealtimeSource, SourceEvent, SourceListener } from '@/data/source'
 import { MockDecider } from '@/data/jev'
 import { buildSnapshot, getScenario, SCENARIOS, type Scenario } from '@/data/scenarios'
+import { ReqMock } from '@/data/reqMock'
+import { PROGRAM } from '@/data/carddemo'
 
 /* ------------------------------------------------------------------ *
  * MockSource — scripted, fully offline replay engine.
@@ -48,11 +50,15 @@ export class MockSource implements RealtimeSource {
   private autoTimer: number | null = null
   private ambientIdx = 0
   private seq = 0 // monotonic id suffix
+  /** requirements layer: questions, requirements, approvals, people */
+  readonly req: ReqMock
 
   constructor(scenarioId: string = SCENARIOS[0].id) {
     this.scenario = getScenario(scenarioId)
     this.snapshot = buildSnapshot(this.scenario)
     this.currentRate = this.scenario.component.matchRate
+    this.req = new ReqMock((e) => this.emit(e))
+    this.req.start()
   }
 
   /* --------------------------- plumbing --------------------------- */
@@ -127,6 +133,7 @@ export class MockSource implements RealtimeSource {
 
   reset() {
     this.loadScenario(this.scenario.id)
+    this.req.reset()
   }
 
   loadScenario(id: string) {
@@ -165,6 +172,14 @@ export class MockSource implements RealtimeSource {
   setCutover(stage: CutoverStage) {
     // Guarded by the UI too, but enforce the threshold here as well.
     if (stage > 0 && this.currentRate < this.scenario.threshold) return
+    // the requirements gate (§7.2): no canary until requirements are approved and verified
+    const pocket = PROGRAM[this.scenario.component.id]?.pocket
+    const blocked = stage > 0 && pocket ? this.req.cutoverBlocked(pocket) : ''
+    if (blocked) {
+      this.emit({ type: 'agentThought', thought: { id: this.uid('t'), at: new Date().toISOString(), phase: 'shadow', text: `Cutover held. ${blocked}.`, model: 'Nemotron' } })
+      if (this.autoReplay) this.setAutoReplay(false)
+      return
+    }
     this.cutoverStage = stage
     this.emit({ type: 'cutover', stage })
     if (stage === 100) this.emit({ type: 'statusChange', status: 'cutover' })
