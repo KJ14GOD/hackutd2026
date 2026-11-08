@@ -89,7 +89,35 @@ export const ConfigSchema = z.object({
       channelAfterSimMinutes: z.number().nonnegative(),
     }),
   }),
-  llm: z.object({ cacheDir: z.string(), maxFixAttempts: z.number().int().positive() }),
+  // requestsPerMinute: NVIDIA's hosted API rate-limits per account; the client paces itself under this.
+  llm: z.object({ cacheDir: z.string(), maxFixAttempts: z.number().int().positive(), requestsPerMinute: z.number().positive() }),
+  // Part 2 reader (docs/SPEC_DEPENDENCY_PASSES.md §3): pack size, answer size, extra-context rounds.
+  part2: z.object({
+    maxPackTokens: z.number().int().positive(),
+    maxOutputTokens: z.number().int().positive(),
+    maxNeedMoreRounds: z.number().int().nonnegative(),
+    maxExtraTokens: z.number().int().positive(),
+    concurrency: z.number().int().positive(),
+  }),
+  // Requirements layer (docs/REQUIREMENTS_ANALYSIS.md §15). Authority: weights per ownership signal,
+  // commit half-life, and the score an active person with access needs to become an approver.
+  requirements: z.object({
+    authority: z.object({
+      weights: z.object({
+        namedCodeOwner: z.number(), policyOwner: z.number(), managerOfOwningTeam: z.number(), commits: z.number(),
+        ticketReporter: z.number(), specAuthor: z.number(), ticketAssignee: z.number(), chatParticipant: z.number(), teamCodeOwner: z.number(),
+      }),
+      commitHalfLifeDays: z.number().positive(),
+      approverThreshold: z.number().nonnegative(),
+    }),
+    // Phase 4 lookups: judge calls at once (NVIDIA rate-limits bursts) and documents read per question.
+    context: z.object({ concurrency: z.number().int().positive(), maxDocsPerQuestion: z.number().int().positive() }),
+    // Phase 5 worker: pause between steps so the live feed reads as a story, and the programs it runs by default.
+    harness: z.object({ stepDelayMs: z.number().int().nonnegative(), demoPrograms: z.array(z.string()) }),
+  }),
+  // Rewrite + shadow (services/rewrite): javac fix passes, mismatch-driven fix passes, and the Java file's token budget.
+  // gateThreshold: the match rate a program needs before cutover may start.
+  rewrite: z.object({ maxCompileFixes: z.number().int().nonnegative(), maxDiffFixes: z.number().int().nonnegative(), maxOutputTokens: z.number().int().positive(), gateThreshold: z.number().min(0).max(1) }),
 });
 
 export type TheseusConfig = z.infer<typeof ConfigSchema>;

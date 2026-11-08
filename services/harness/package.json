@@ -1,0 +1,10 @@
+{
+  "name": "@theseus/harness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Phase 5: loads people and questions into SpacetimeDB, asks routed questions on Slack as digests, and runs harness jobs that pause on a person and resume on their answer",
+  "scripts": { "typecheck": "tsc -p tsconfig.json" },
+  "dependencies": { "@slack/bolt": "^4.6.0", "spacetimedb": "2.14.1" },
+  "devDependencies": { "tsx": "^4.20.6", "typescript": "^5.9.3", "vitest": "^4.0.8" }
+}

@@ -4,6 +4,10 @@
 //   POST /api/repos/connect {repo: "owner/name"}  -> shallow-clones the repo so /api/graph can read it
 //   GET  /api/runtime?source=...                  -> the last Runtime witness result, or 404
 //   GET  /api/runtime/stream?source=...           -> runs the witness (or joins the run in progress), streaming progress as SSE
+//   GET  /api/harness/stream, POST /api/harness/answer -> live Phase 5 jobs from SpacetimeDB (server/harness.ts)
+//   POST /api/jev                                  -> Jev decision via OpenRouter, key kept server-side (server/jev.ts)
+//   GET  /api/connectors                           -> which sources are connected, checked live (server/connectors.ts)
+//   GET  /api/rewrite[/list|/stream]               -> Nemotron's Java rewrite and its shadow run against the COBOL (server/rewrite.ts)
 // Results are cached per source; a repo is re-read only when its commit changes.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -15,6 +19,11 @@ import { runPass1 } from '../../../services/segmenter/src/pass1';
 import type { Pass1 } from '../../../services/segmenter/src/types';
 import { runWitness } from '../../../services/runtime/src/witness';
 import type { Runtime, RuntimeEvent } from '../../../services/runtime/src/types';
+import { readRoutes } from './read';
+import { harnessRoutes } from './harness';
+import { jevRoutes } from './jev';
+import { connectorRoutes } from './connectors';
+import { rewriteRoutes } from './rewrite';
 
 const REPO_ROOT = resolve(__dirname, '../../..');
 const SOURCES: Record<string, string> = { carddemo: resolve(REPO_ROOT, 'legacy/carddemo') };
@@ -50,6 +59,14 @@ export function dataApi(): Plugin {
           void repos(req, res, url.pathname);
           return;
         }
+        if (harnessRoutes(url, req, res)) return;
+        if (jevRoutes(url, req, res)) return;
+        if (connectorRoutes(url, req, res)) return;
+        if (rewriteRoutes(url, res, { sourceDir, pass1For })) return;
+        if (readRoutes(url, res, {
+          sourceDir, pass1For,
+          runtimeFor: (source) => (existsSync(resultFile(source)) ? JSON.parse(readFileSync(resultFile(source), 'utf8')) as Runtime : undefined),
+        })) return;
         if (url.pathname === '/api/runtime' || url.pathname === '/api/runtime/stream') {
           const source = url.searchParams.get('source') || 'carddemo';
           const dir = sourceDir(source);

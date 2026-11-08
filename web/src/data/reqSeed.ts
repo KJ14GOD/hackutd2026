@@ -20,6 +20,7 @@ import type {
 } from '@/types'
 import { POCKETS, PROGRAM, TEAMS, sourceUrl } from './carddemo'
 import { HOUR, T0, impactOf } from './requirements'
+import { withFindings } from './findings'
 
 /* ------------------------------------------------------------------ *
  * Demo seed for the requirements layer: a small synthetic org (CardDemo's
@@ -925,5 +926,6 @@ export function seedWorld(): ReqWorld {
   w.flags[proposed.id] = []
   w.changeRequests['CR-0001'] = { id: 'CR-0001', requirementId: r1, proposedVersionId: proposed.id, impact: impactOf(w, r1), status: 'open', byPersonId: 'p-dev', atMs: at(-1.5) }
 
-  return w
+  // Nemotron's real findings replace the hand-written requirements above (src/data/findings.ts).
+  return withFindings(w)
 }

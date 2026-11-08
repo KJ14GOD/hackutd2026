@@ -84,6 +84,27 @@
   },
   "llm": {
     "cacheDir": ".cache/llm",
-    "maxFixAttempts": 3
-  }
+    "maxFixAttempts": 3,
+    "requestsPerMinute": 30
+  },
+  "part2": {
+    "maxPackTokens": 100000,
+    "maxOutputTokens": 12000,
+    "maxNeedMoreRounds": 1,
+    "maxExtraTokens": 6000,
+    "concurrency": 10
+  },
+  "requirements": {
+    "authority": {
+      "weights": {
+        "namedCodeOwner": 1.0, "policyOwner": 1.0, "managerOfOwningTeam": 0.8, "commits": 0.6, "ticketReporter": 0.5,
+        "specAuthor": 0.5, "ticketAssignee": 0.3, "chatParticipant": 0.1, "teamCodeOwner": 0
+      },
+      "commitHalfLifeDays": 180,
+      "approverThreshold": 1.0
+    },
+    "context": { "concurrency": 3, "maxDocsPerQuestion": 6 },
+    "harness": { "stepDelayMs": 400, "demoPrograms": ["CBACT04C", "CBTRN02C", "COTRN02C", "COBTUPDT"] }
+  },
+  "rewrite": { "maxCompileFixes": 3, "maxDiffFixes": 3, "maxOutputTokens": 16000, "gateThreshold": 0.99 }
 }

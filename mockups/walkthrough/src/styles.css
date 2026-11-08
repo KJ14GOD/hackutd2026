@@ -1063,3 +1063,71 @@ html[data-theme="dark"] .signin-github img { filter: none; }
 .run-legend .rl-title { color: var(--text-3); }
 .details-run { font-family: var(--mono); font-size: 11px; color: var(--text-2); margin: 6px 0 4px; }
 .details-target em.mark { margin-left: 8px; min-width: 0; font-style: normal; }
+/* Step 4: Nemotron read */
+.read-actions { display: flex; gap: 8px; }
+.read-stage, .read-meta { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin: -24px 0 32px; }
+.read-body { margin-top: 14px; }
+.read-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 8px; flex-wrap: wrap; }
+.read-tab { font: inherit; font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-3); padding: 8px 10px; cursor: pointer; display: inline-flex; gap: 6px; }
+.read-tab span { color: var(--text-3); }
+.read-tab.on { color: var(--text); border-bottom-color: var(--text); }
+.read-item { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.read-item:last-child { border-bottom: none; }
+.read-line { display: grid; grid-template-columns: 112px 1fr auto; gap: 12px; align-items: baseline; }
+.read-kind { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
+.read-kind.hot { color: var(--accent); }
+.read-text { font-size: 13px; line-height: 1.5; color: var(--text); }
+.read-conf { font-family: var(--mono); font-size: 10px; color: var(--text-3); text-transform: uppercase; }
+.read-conf.c-high { color: var(--text-2); }
+.read-options { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0 124px; }
+.read-options span { font-size: 12px; color: var(--text-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; }
+.read-cites { margin: 6px 0 0 124px; }
+.cite { font: inherit; font-family: var(--mono); font-size: 10px; color: var(--text-3); background: none; border: 1px solid var(--line); border-radius: 4px; padding: 2px 6px; margin: 0 4px 4px 0; cursor: pointer; }
+.cite:hover, .cite.on { color: var(--text); border-color: var(--text-3); }
+.read-code { font-family: var(--mono); font-size: 11px; line-height: 1.55; color: var(--text-3); border-left: 2px solid var(--line); padding: 6px 12px; margin: 4px 0 0; white-space: pre; overflow-x: auto; }
+.read-code span { display: block; }
+.read-code .hit { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.read-none { font-size: 13px; color: var(--text-3); padding: 8px 0; }
+.read-honest { height: 320px; margin-top: 12px; }
+@media (max-width: 760px) { .read-line { grid-template-columns: 1fr; gap: 4px; } .read-options, .read-cites { margin-left: 0; } .read-actions { flex-direction: column; } }
+.details-group h4 span { margin-left: 8px; }
+/* Calm header: step names as plain text with an underline on the current one, no numbers or circles,
+   and the controls as text links instead of boxed buttons. */
+.top .chapters { gap: 22px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.top .chapters::-webkit-scrollbar { display: none; }
+.top .chapter { white-space: nowrap; font-size: 13px; }
+.top .chapter .num { display: none; }
+.top .controls { gap: 18px; }
+.top .controls .btn { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0; min-height: 0; height: auto;
+  color: var(--text-3); text-transform: none; letter-spacing: 0; font: 13px var(--font, inherit); }
+.top .controls .btn:hover:not(:disabled) { color: var(--text); }
+.top .controls .btn.primary { color: var(--text); }
+.top .controls .btn:disabled { opacity: 0.35; }
+.top .who-am-i { gap: 10px; }
+.top .who-am-i img { display: none; }
+.top .who-am-i span { color: var(--text-2); font: 12px var(--mono); }
+/* Step 1: connected tools, as hairline rows (no boxes, no status dots) */
+.connectors-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 13px; color: var(--text-3); padding-bottom: 10px; }
+.link-btn { font: inherit; background: none; border: 0; padding: 0; color: var(--text-2); cursor: pointer; }
+.link-btn:hover:not(:disabled) { color: var(--text); }
+.connector { display: grid; grid-template-columns: 150px 110px 1fr; column-gap: 16px; row-gap: 2px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 13px; }
+.connector b { font-weight: 500; color: var(--text-2); }
+.connector.on b { color: var(--text); }
+.connector-state { font: 11px var(--mono); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); padding-top: 2px; }
+.connector.on .connector-state { color: var(--text-2); }
+.connector-detail { color: var(--text-2); }
+.connector-use { grid-column: 3; color: var(--text-3); font-size: 12px; }
+@media (max-width: 760px) { .connector { grid-template-columns: 1fr; } .connector-use { grid-column: 1; } }
+.top .controls .btn { outline: none !important; }
+.top .controls .btn:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
+/* Header: every control the same quiet text style (Next included), GitHub mark beside the username */
+.top .controls .btn.primary { background: none !important; color: var(--text-3) !important; }
+.top .controls .btn.primary:hover:not(:disabled) { color: var(--text) !important; }
+.top .who-name { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font: 12px var(--mono); }
+.top .who-name .connector-icon { color: var(--text-3); }
+/* Connector rows: the mark sits before the name, in the row's muted text color */
+.connector b { display: inline-flex; align-items: center; gap: 8px; }
+.connector .connector-icon { color: var(--text-2); flex: none; }
+.connector:not(.on) .connector-icon { color: var(--text-3); }
+.top .controls .btn { font-family: inherit; font-size: 13px; font-weight: 400; }
+.top .controls .btn { font-family: var(--sans) !important; }

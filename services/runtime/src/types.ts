@@ -36,6 +36,8 @@ export interface ProgramRun {
   missingData: string[];
   /** Inputs Theseus built from the record layout because no sample exists. */
   synthesized: string[];
+  /** What the sandbox changed so GnuCOBOL would compile it (src/sourcePatches.ts); legacy/ is never edited. */
+  patched?: string[];
   /** DB2 tables recreated in the sandbox's PostgreSQL, when the program uses SQL. */
   tables?: string[];
 }

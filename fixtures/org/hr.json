@@ -1,0 +1,216 @@
+{
+  "_source": "Workday-style HR export (synthetic). Fields follow Workday report naming.",
+  "exportedAt": "2026-11-01",
+  "organizations": [
+    {
+      "id": "card-services",
+      "name": "Card Services",
+      "parent": null
+    },
+    {
+      "id": "card-batch",
+      "name": "Card Batch Engineering",
+      "parent": "card-services"
+    },
+    {
+      "id": "card-online",
+      "name": "Card Online Engineering",
+      "parent": "card-services"
+    },
+    {
+      "id": "payments-product",
+      "name": "Payments Product",
+      "parent": "card-services"
+    },
+    {
+      "id": "platform-ops",
+      "name": "Platform Operations",
+      "parent": null
+    },
+    {
+      "id": "data-platform",
+      "name": "Data Platform",
+      "parent": "platform-ops"
+    },
+    {
+      "id": "finance-compliance",
+      "name": "Finance Compliance",
+      "parent": null
+    },
+    {
+      "id": "it-admin",
+      "name": "IT Administration",
+      "parent": "platform-ops"
+    },
+    {
+      "id": "print-ops",
+      "name": "Print Operations",
+      "parent": "platform-ops"
+    },
+    {
+      "id": "theseus",
+      "name": "Theseus (vendor)",
+      "parent": null
+    }
+  ],
+  "workers": [
+    {
+      "employeeId": "HC-1000",
+      "workerId": "ravi",
+      "firstName": "Ravi",
+      "lastName": "Menon",
+      "workEmail": "ravi.menon@harborcard.example",
+      "jobTitle": "VP, Card Services",
+      "supervisoryOrg": "card-services",
+      "managerWorkerId": null,
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1007",
+      "workerId": "maria",
+      "firstName": "Maria",
+      "lastName": "Lopez",
+      "workEmail": "maria.lopez@harborcard.example",
+      "jobTitle": "Manager, Card Services",
+      "supervisoryOrg": "card-services",
+      "managerWorkerId": "ravi",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1014",
+      "workerId": "dev",
+      "firstName": "Dev",
+      "lastName": "Okafor",
+      "workEmail": "dev.okafor@harborcard.example",
+      "jobTitle": "Senior mainframe engineer",
+      "supervisoryOrg": "card-batch",
+      "managerWorkerId": "maria",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1021",
+      "workerId": "dana",
+      "firstName": "Dana",
+      "lastName": "Whitfield",
+      "workEmail": "dana.whitfield@harborcard.example",
+      "jobTitle": "Staff mainframe engineer",
+      "supervisoryOrg": "card-batch",
+      "managerWorkerId": "maria",
+      "workerStatus": "terminated",
+      "hireDate": "2016-04-04",
+      "terminationDate": "2024-03-15"
+    },
+    {
+      "employeeId": "HC-1028",
+      "workerId": "priya",
+      "firstName": "Priya",
+      "lastName": "Nair",
+      "workEmail": "priya.nair@harborcard.example",
+      "jobTitle": "Product manager, Payments",
+      "supervisoryOrg": "payments-product",
+      "managerWorkerId": "ravi",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1035",
+      "workerId": "tom",
+      "firstName": "Tom",
+      "lastName": "Becker",
+      "workEmail": "tom.becker@harborcard.example",
+      "jobTitle": "CICS developer",
+      "supervisoryOrg": "card-online",
+      "managerWorkerId": "maria",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1042",
+      "workerId": "leo",
+      "firstName": "Leo",
+      "lastName": "Park",
+      "workEmail": "leo.park@harborcard.example",
+      "jobTitle": "Platform on-call lead",
+      "supervisoryOrg": "platform-ops",
+      "managerWorkerId": "nina",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1049",
+      "workerId": "nina",
+      "firstName": "Nina",
+      "lastName": "Shah",
+      "workEmail": "nina.shah@harborcard.example",
+      "jobTitle": "Director, Platform",
+      "supervisoryOrg": "platform-ops",
+      "managerWorkerId": null,
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1056",
+      "workerId": "grace",
+      "firstName": "Grace",
+      "lastName": "Kim",
+      "workEmail": "grace.kim@harborcard.example",
+      "jobTitle": "Database administrator (DB2)",
+      "supervisoryOrg": "data-platform",
+      "managerWorkerId": "nina",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1063",
+      "workerId": "ana",
+      "firstName": "Ana",
+      "lastName": "Ruiz",
+      "workEmail": "ana.ruiz@harborcard.example",
+      "jobTitle": "Finance compliance manager",
+      "supervisoryOrg": "finance-compliance",
+      "managerWorkerId": "ravi",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1070",
+      "workerId": "sam",
+      "firstName": "Sam",
+      "lastName": "Patel",
+      "workEmail": "sam.patel@harborcard.example",
+      "jobTitle": "IT administrator (customer admin)",
+      "supervisoryOrg": "it-admin",
+      "managerWorkerId": "nina",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    },
+    {
+      "employeeId": "HC-1077",
+      "workerId": "alex",
+      "firstName": "Alex",
+      "lastName": "Chen",
+      "workEmail": "alex.chen@harborcard.example",
+      "jobTitle": "Modernization lead (Theseus)",
+      "supervisoryOrg": "theseus",
+      "managerWorkerId": null,
+      "workerStatus": "active",
+      "hireDate": "2016-04-04",
+      "contractor": true
+    },
+    {
+      "employeeId": "HC-1084",
+      "workerId": "jordan",
+      "firstName": "Jordan",
+      "lastName": "Reyes",
+      "workEmail": "jordan.reyes@harborcard.example",
+      "jobTitle": "Print operations analyst",
+      "supervisoryOrg": "print-ops",
+      "managerWorkerId": "nina",
+      "workerStatus": "active",
+      "hireDate": "2016-04-04"
+    }
+  ]
+}

@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "description": "Runtime witness: runs legacy batch programs in a GnuCOBOL sandbox and marks Part 1's links confirmed, added, or never fired",
-  "scripts": { "typecheck": "tsc -p tsconfig.json" },
-  "devDependencies": { "typescript": "^5.9.3" }
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsx": "^4.20.6",
+    "vitest": "^4.0.8"
+  }
 }

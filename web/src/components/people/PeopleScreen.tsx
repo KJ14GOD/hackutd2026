@@ -20,6 +20,7 @@ const SIGNAL_LABEL: Record<OwnershipSignal, string> = {
   'confluence-author': 'Confluence author',
   'org-chart': 'Org chart',
   runbook: 'Runbook',
+  chat: 'Slack',
   override: 'Corrected',
 }
 const KIND_LABEL: Record<Ownership['kind'], string> = { owns: 'Owns', contributes: 'Contributes', consulted: 'Consulted', consumes: 'Consumes' }

@@ -1,0 +1,748 @@
+{
+  "_source": "Slack workspace history (synthetic), built by build_slack.py. Seeded under per-person display names; the original date is shown in the text and kept in message metadata.",
+  "channels": {
+    "card-batch": [
+      {
+        "user": "dev",
+        "date": "2019-04-20",
+        "text": "reviewed the TRANREPT change, looks fine"
+      },
+      {
+        "user": "dev",
+        "date": "2019-05-27",
+        "text": "is anyone else seeing COBDATFT return odd dates in the test lpar"
+      },
+      {
+        "user": "dev",
+        "date": "2019-06-17",
+        "text": "INTCALC ran clean last night"
+      },
+      {
+        "user": "leo",
+        "date": "2019-08-01",
+        "text": "test lpar is getting a new compiler next week, heads up"
+      },
+      {
+        "user": "dana",
+        "date": "2019-10-03",
+        "text": "TRANREPT page totals look off again on the 3rd, will check"
+      },
+      {
+        "user": "dana",
+        "date": "2021-02-03",
+        "text": "DEFAULT disclosure group is a temporary hack until finance sends real rates for every group. will remove next year"
+      },
+      {
+        "user": "dana",
+        "date": "2021-04-13",
+        "text": "added comments to the posting reject codes, 100-103"
+      },
+      {
+        "user": "priya",
+        "date": "2021-06-12",
+        "text": "quick q, does interest get calculated on the posting date or the run date"
+      },
+      {
+        "user": "maria",
+        "date": "2021-06-12",
+        "text": "ack",
+        "thread": 7
+      },
+      {
+        "user": "dev",
+        "date": "2022-08-30",
+        "text": "heads up, I left a DISPLAY of the balance record in INTCALC (CBACT04C) while chasing INC-2207"
+      },
+      {
+        "user": "dev",
+        "date": "2022-08-30",
+        "text": "SYSOUT gets purged nightly so it is harmless, safe to remove whenever",
+        "thread": 9
+      },
+      {
+        "user": "leo",
+        "date": "2022-08-31",
+        "text": "ok, ping me if INC-2207 comes back",
+        "thread": 9
+      },
+      {
+        "user": "D. Okafor",
+        "date": "2023-02-07",
+        "text": "pushed a comment typo fix on INTCALC"
+      },
+      {
+        "user": "dana",
+        "date": "2023-09-14",
+        "text": "anyone know why CBACT01C writes three output files? inherited it like that"
+      },
+      {
+        "user": "dana",
+        "date": "2023-11-14",
+        "text": "reminder the TRANID suffix in INTCALC is only 6 digits. fine for now"
+      },
+      {
+        "user": "dana",
+        "date": "2023-11-28",
+        "text": "POSTTRAN took 40 min, a bit slower than usual, watching it"
+      },
+      {
+        "user": "maria",
+        "date": "2024-03-15",
+        "text": "Dana's last day today. Dev is taking INTCALC and POSTTRAN."
+      },
+      {
+        "user": "dev",
+        "date": "2024-03-15",
+        "text": "will miss you Dana. I have the handover doc",
+        "thread": 16
+      },
+      {
+        "user": "priya",
+        "date": "2024-03-15",
+        "text": "thank you Dana!!",
+        "thread": 16
+      },
+      {
+        "user": "tom",
+        "date": "2024-07-22",
+        "text": "I think Dana said the DEFAULT disclosure group was temporary? is that still a thing"
+      },
+      {
+        "user": "leo",
+        "date": "2024-07-22",
+        "text": "no, it is permanent now. see the disclosure group runbook, the load job checks it exists",
+        "thread": 19
+      },
+      {
+        "user": "maria",
+        "date": "2024-08-25",
+        "text": "can someone summarize batch health for the ops review"
+      },
+      {
+        "user": "dev",
+        "date": "2025-07-24",
+        "text": "run date, from the job parm"
+      },
+      {
+        "user": "dev",
+        "date": "2025-08-08",
+        "text": "TCATBALF is getting big, might need a reorg next quarter"
+      },
+      {
+        "user": "grace",
+        "date": "2025-08-08",
+        "text": "nice",
+        "thread": 23
+      },
+      {
+        "user": "dev",
+        "date": "2025-08-22",
+        "text": "CBTRN02C reject file had 43 records today, normal range"
+      },
+      {
+        "user": "dev",
+        "date": "2025-09-27",
+        "text": "month-end volume is up 20%, all jobs still in the window"
+      }
+    ],
+    "card-services": [
+      {
+        "user": "maria",
+        "date": "2019-12-17",
+        "text": "who is covering approvals while I am out next week? Ravi"
+      },
+      {
+        "user": "priya",
+        "date": "2020-03-27",
+        "text": "branch rollout went well"
+      },
+      {
+        "user": "maria",
+        "date": "2022-09-09",
+        "text": "quarterly policy review on the 12th"
+      },
+      {
+        "user": "ravi",
+        "date": "2022-09-17",
+        "text": "board wants the modernization plan by Q3"
+      },
+      {
+        "user": "priya",
+        "date": "2024-02-23",
+        "text": "can we get a dashboard for rejected transactions"
+      },
+      {
+        "user": "priya",
+        "date": "2024-06-18",
+        "text": "why does INTCALC truncate interest? filed CARD-88 to round normally"
+      },
+      {
+        "user": "maria",
+        "date": "2024-06-18",
+        "text": "please don't touch that before reading the interest policy page",
+        "thread": 5
+      },
+      {
+        "user": "maria",
+        "date": "2025-01-19",
+        "text": "interest policy page is the source of truth, link it in tickets please"
+      },
+      {
+        "user": "dev",
+        "date": "2025-01-19",
+        "text": "good to know",
+        "thread": 7
+      },
+      {
+        "user": "priya",
+        "date": "2025-07-19",
+        "text": "customers asked about statement dates again"
+      }
+    ],
+    "data-platform": [
+      {
+        "user": "leo",
+        "date": "2021-05-01",
+        "text": "can we get the transaction type maintenance file under version control"
+      },
+      {
+        "user": "grace",
+        "date": "2021-05-01",
+        "text": "on it",
+        "thread": 0
+      },
+      {
+        "user": "grace",
+        "date": "2022-07-07",
+        "text": "new read-only DB2 user for reporting"
+      },
+      {
+        "user": "grace",
+        "date": "2022-11-10",
+        "text": "DB2 upgrade planned for next quarter"
+      },
+      {
+        "user": "grace",
+        "date": "2023-05-18",
+        "text": "TRANSACTION_TYPE has 7 rows in prod, do not hand edit without a ticket"
+      },
+      {
+        "user": "grace",
+        "date": "2023-05-18",
+        "text": "ack",
+        "thread": 4
+      },
+      {
+        "user": "nina",
+        "date": "2023-11-17",
+        "text": "data retention policy review next month"
+      },
+      {
+        "user": "grace",
+        "date": "2024-08-26",
+        "text": "ACCT-EXPIRAION-DATE typo is in the copybook forever, sorry"
+      }
+    ],
+    "deploys": [
+      {
+        "user": "dana",
+        "date": "2019-05-11",
+        "text": "promoted POSTTRAN reject codes"
+      },
+      {
+        "user": "tom",
+        "date": "2020-07-27",
+        "text": "COACTUPC hotfix promoted"
+      },
+      {
+        "user": "dev",
+        "date": "2020-07-27",
+        "text": "on it",
+        "thread": 1
+      },
+      {
+        "user": "jordan",
+        "date": "2022-02-15",
+        "text": "TRANREPT form length change promoted"
+      },
+      {
+        "user": "grace",
+        "date": "2022-09-22",
+        "text": "COBTUPDT promoted, sqlcode handling"
+      },
+      {
+        "user": "dev",
+        "date": "2022-09-25",
+        "text": "promoted INTCALC to prod, comment change only"
+      },
+      {
+        "user": "dev",
+        "date": "2023-05-15",
+        "text": "rolled back yesterday's TRANREPT change, totals looked wrong in UAT"
+      },
+      {
+        "user": "leo",
+        "date": "2024-12-26",
+        "text": "JCL change for INTCALC ordering promoted"
+      },
+      {
+        "user": "priya",
+        "date": "2024-12-26",
+        "text": "thanks!",
+        "thread": 7
+      },
+      {
+        "user": "tom",
+        "date": "2025-08-26",
+        "text": "promoted COTRN02 date trim to prod"
+      }
+    ],
+    "finance-questions": [
+      {
+        "user": "ana",
+        "date": "2019-10-26",
+        "text": "GL feed, not the transaction report"
+      },
+      {
+        "user": "ravi",
+        "date": "2020-04-04",
+        "text": "can finance confirm Q2 fee revenue"
+      },
+      {
+        "user": "ana",
+        "date": "2021-08-16",
+        "text": "reminder for everyone asking: late and over-limit fees are assessed by Billing, not the mainframe interest job"
+      },
+      {
+        "user": "ana",
+        "date": "2023-01-25",
+        "text": "SOX evidence for batch changes due friday"
+      },
+      {
+        "user": "priya",
+        "date": "2023-05-22",
+        "text": "is the interest rate table owned by finance or card services"
+      },
+      {
+        "user": "priya",
+        "date": "2023-09-27",
+        "text": "where do I find the monthly interest totals"
+      },
+      {
+        "user": "ana",
+        "date": "2024-11-20",
+        "text": "audit sample found account balances printed in a batch job SYSOUT. who owns INTCALC these days?"
+      },
+      {
+        "user": "maria",
+        "date": "2024-11-20",
+        "text": "Dev, since March",
+        "thread": 6
+      },
+      {
+        "user": "ana",
+        "date": "2024-11-21",
+        "text": "filed CARD-131, PCI says it has to go",
+        "thread": 6
+      },
+      {
+        "user": "ana",
+        "date": "2025-06-05",
+        "text": "card services owns rates, finance audits them"
+      }
+    ],
+    "general": [
+      {
+        "user": "grace",
+        "date": "2019-06-21",
+        "text": "DB2 maintenance window this saturday 2-4am"
+      },
+      {
+        "user": "nina",
+        "date": "2019-07-03",
+        "text": "platform town hall recording is up"
+      },
+      {
+        "user": "grace",
+        "date": "2019-07-03",
+        "text": "+1",
+        "thread": 1
+      },
+      {
+        "user": "ravi",
+        "date": "2019-07-22",
+        "text": "great quarter everyone, thank you"
+      },
+      {
+        "user": "jordan",
+        "date": "2020-03-26",
+        "text": "whoever left lunch in the fridge since friday, please"
+      },
+      {
+        "user": "priya",
+        "date": "2020-03-26",
+        "text": "ack",
+        "thread": 4
+      },
+      {
+        "user": "ravi",
+        "date": "2020-07-01",
+        "text": "reminder the holiday freeze starts dec 15. no mainframe changes after that"
+      },
+      {
+        "user": "alex",
+        "date": "2020-09-26",
+        "text": "hi all, Alex from the Theseus modernization team. happy to answer questions"
+      },
+      {
+        "user": "maria",
+        "date": "2020-09-26",
+        "text": "nice",
+        "thread": 7
+      },
+      {
+        "user": "leo",
+        "date": "2021-01-01",
+        "text": "pager rotation for next month is posted"
+      },
+      {
+        "user": "grace",
+        "date": "2021-01-01",
+        "text": "thanks!",
+        "thread": 9
+      },
+      {
+        "user": "sam",
+        "date": "2022-07-26",
+        "text": "laptop refresh signups are open"
+      },
+      {
+        "user": "maria",
+        "date": "2022-07-26",
+        "text": "ack",
+        "thread": 11
+      },
+      {
+        "user": "sam",
+        "date": "2023-03-20",
+        "text": "office wifi password rotates monday, check your email"
+      },
+      {
+        "user": "maria",
+        "date": "2023-04-16",
+        "text": "welcome to the new Card Services folks!"
+      },
+      {
+        "user": "nina",
+        "date": "2024-09-10",
+        "text": "all hands thursday 10am, agenda in the calendar invite"
+      },
+      {
+        "user": "priya",
+        "date": "2025-05-17",
+        "text": "payments roadmap review moved to next week"
+      }
+    ],
+    "incidents": [
+      {
+        "user": "leo",
+        "date": "2019-11-18",
+        "text": "INC-2207: interest category balances mismatched in the GL feed, investigating"
+      },
+      {
+        "user": "tom",
+        "date": "2019-11-18",
+        "text": "on it",
+        "thread": 0
+      },
+      {
+        "user": "sam",
+        "date": "2020-09-05",
+        "text": "INC-2501: VPN outage 40 min, no batch impact"
+      },
+      {
+        "user": "leo",
+        "date": "2020-11-17",
+        "text": "INC-2410: TRANREPT late, printer vendor issue"
+      },
+      {
+        "user": "leo",
+        "date": "2020-11-17",
+        "text": "nice",
+        "thread": 3
+      },
+      {
+        "user": "leo",
+        "date": "2020-11-28",
+        "text": "INC-2503: statement job CBSTM03A failed on bad customer record, rerun ok"
+      },
+      {
+        "user": "grace",
+        "date": "2024-11-01",
+        "text": "INC-2402: DB2 lock contention on TRANSACTION_TYPE during maintenance, resolved"
+      },
+      {
+        "user": "leo",
+        "date": "2025-01-15",
+        "text": "INC-2207 resolved, data fix applied"
+      },
+      {
+        "user": "leo",
+        "date": "2025-04-16",
+        "text": "INC-2311: CICS region slow, resolved by restart"
+      }
+    ],
+    "mainframe-ops": [
+      {
+        "user": "sam",
+        "date": "2019-02-15",
+        "text": "storage alert on the batch volume, cleared"
+      },
+      {
+        "user": "leo",
+        "date": "2019-04-08",
+        "text": "TRANREPT printed twice, printer queue glitch, not the job"
+      },
+      {
+        "user": "leo",
+        "date": "2019-06-28",
+        "text": "restarted POSTTRAN after a file lock, no data issue"
+      },
+      {
+        "user": "grace",
+        "date": "2019-06-28",
+        "text": "+1",
+        "thread": 2
+      },
+      {
+        "user": "leo",
+        "date": "2019-09-26",
+        "text": "CA7 schedule updated for daylight saving"
+      },
+      {
+        "user": "nina",
+        "date": "2020-06-18",
+        "text": "reminder: incidents go in #incidents, this channel is for ops chatter"
+      },
+      {
+        "user": "leo",
+        "date": "2022-02-08",
+        "text": "wrote up the DISCGRP runbook. DEFAULT group is permanent, INTCALC abends if it is missing and that is on purpose"
+      },
+      {
+        "user": "leo",
+        "date": "2022-03-11",
+        "text": "INTCALC started 20 min late because POSTTRAN overran"
+      },
+      {
+        "user": "nina",
+        "date": "2023-05-27",
+        "text": "can we get a list of every job that touches ACCTDATA"
+      },
+      {
+        "user": "grace",
+        "date": "2023-08-15",
+        "text": "DB2 backups done"
+      },
+      {
+        "user": "grace",
+        "date": "2023-11-06",
+        "text": "reorged ACCTDATA, should be a bit faster"
+      },
+      {
+        "user": "leo",
+        "date": "2024-01-09",
+        "text": "POSTTRAN abended again, duplicate tran id from the network feed. INTCALC will be late."
+      },
+      {
+        "user": "dev",
+        "date": "2024-01-09",
+        "text": "we keep that abend. without it we would double post",
+        "thread": 11
+      },
+      {
+        "user": "leo",
+        "date": "2024-01-10",
+        "text": "upstream says they dedupe now",
+        "thread": 11
+      },
+      {
+        "user": "leo",
+        "date": "2024-06-14",
+        "text": "month-end close all green"
+      },
+      {
+        "user": "tom",
+        "date": "2024-06-14",
+        "text": "+1",
+        "thread": 14
+      },
+      {
+        "user": "leo",
+        "date": "2025-02-03",
+        "text": "VPN is down, mainframe jobs unaffected"
+      },
+      {
+        "user": "leo",
+        "date": "2025-07-10",
+        "text": "nightly chain green"
+      },
+      {
+        "user": "maria",
+        "date": "2025-07-10",
+        "text": "good to know",
+        "thread": 17
+      }
+    ],
+    "online-dev": [
+      {
+        "user": "tom",
+        "date": "2019-01-04",
+        "text": "user admin screens are a mess but they work"
+      },
+      {
+        "user": "priya",
+        "date": "2020-01-10",
+        "text": "dark mode request is CARD-150 for whenever"
+      },
+      {
+        "user": "tom",
+        "date": "2020-03-09",
+        "text": "COTRN02 now picks the next transaction id as max+1. there is a race if two people add at once but volume is tiny, accepting it"
+      },
+      {
+        "user": "dev",
+        "date": "2021-02-01",
+        "text": "is COTRN02C still reading the xref by card number"
+      },
+      {
+        "user": "tom",
+        "date": "2021-03-09",
+        "text": "COSGN00C login screen got the new banner text"
+      },
+      {
+        "user": "priya",
+        "date": "2021-05-19",
+        "text": "can the add-transaction screen default today's date"
+      },
+      {
+        "user": "tom",
+        "date": "2022-05-14",
+        "text": "yes, alternate key"
+      },
+      {
+        "user": "tom",
+        "date": "2024-02-17",
+        "text": "new BMS map for the transaction list is in test"
+      },
+      {
+        "user": "tom",
+        "date": "2024-03-21",
+        "text": "COACTUPC screen is 4k lines, please do not touch without telling me"
+      },
+      {
+        "user": "tom",
+        "date": "2024-11-04",
+        "text": "CARD-130 is that race. we need a real sequence now"
+      },
+      {
+        "user": "priya",
+        "date": "2024-11-04",
+        "text": "how soon? branches are complaining",
+        "thread": 9
+      },
+      {
+        "user": "tom",
+        "date": "2024-11-05",
+        "text": "after the modernization decision, no point patching COTRN02 twice",
+        "thread": 9
+      },
+      {
+        "user": "tom",
+        "date": "2025-02-10",
+        "text": "CICS region restarted, all screens back"
+      }
+    ],
+    "random": [
+      {
+        "user": "ana",
+        "date": "2019-05-23",
+        "text": "running club meets at 6"
+      },
+      {
+        "user": "jordan",
+        "date": "2021-05-24",
+        "text": "parking garage closed monday"
+      },
+      {
+        "user": "priya",
+        "date": "2021-07-10",
+        "text": "coffee machine on 3 is fixed"
+      },
+      {
+        "user": "maria",
+        "date": "2021-07-10",
+        "text": "+1",
+        "thread": 2
+      },
+      {
+        "user": "dev",
+        "date": "2021-09-22",
+        "text": "my cat walked on the keyboard during the INTCALC review, sorry for the extra comment"
+      },
+      {
+        "user": "jordan",
+        "date": "2021-10-07",
+        "text": "new printer forms arrive friday"
+      },
+      {
+        "user": "sam",
+        "date": "2023-08-14",
+        "text": "reminder: rotate your passwords"
+      },
+      {
+        "user": "tom",
+        "date": "2023-08-14",
+        "text": "thanks!",
+        "thread": 6
+      },
+      {
+        "user": "tom",
+        "date": "2024-02-22",
+        "text": "anyone want to split a pizza order"
+      },
+      {
+        "user": "grace",
+        "date": "2024-12-14",
+        "text": "bake sale for the food bank tomorrow"
+      },
+      {
+        "user": "maria",
+        "date": "2025-02-10",
+        "text": "team lunch friday, Card Services is paying"
+      },
+      {
+        "user": "maria",
+        "date": "2025-02-10",
+        "text": "thanks!",
+        "thread": 10
+      },
+      {
+        "user": "leo",
+        "date": "2025-06-02",
+        "text": "who has the good HDMI adapter"
+      },
+      {
+        "user": "leo",
+        "date": "2025-06-02",
+        "text": "ack",
+        "thread": 12
+      },
+      {
+        "user": "dana",
+        "date": "2025-07-11",
+        "text": "farewell cake in the kitchen!"
+      }
+    ]
+  }
+}

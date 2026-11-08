@@ -8,6 +8,7 @@ dist/
 .sandbox/
 .cache/
 out/
+out-run/
 legacy/fixture/build/
 legacy/fixture/data/runtime/
 target/java/build/

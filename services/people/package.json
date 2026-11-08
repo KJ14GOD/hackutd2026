@@ -1,0 +1,15 @@
+{
+  "name": "@theseus/people",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Phase 3: people and ownership. Pulls the org from HR, GitHub, Jira, Notion and Slack, resolves identities, scores authority and generates the approver list (docs/REQUIREMENTS_ANALYSIS.md \u00a75)",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "tsx": "^4.20.6",
+    "vitest": "^4.0.8"
+  }
+}

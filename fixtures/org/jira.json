@@ -1,0 +1,154 @@
+{
+  "_source": "Jira project CARD (synthetic). Seeded via REST; original reporter and dates kept in fields.",
+  "project": {
+    "key": "CARD",
+    "name": "Harbor Card"
+  },
+  "issues": [
+    {
+      "key": "CARD-41",
+      "created": "2023-04-12",
+      "reporter": "priya",
+      "assignee": "dev",
+      "status": "Open",
+      "component": "Interest batch",
+      "summary": "Implement fee computation in INTCALC",
+      "description": "The 1400-COMPUTE-FEES paragraph in CBACT04C is an empty stub. Late and over-limit fees should be computed in the nightly interest run so statements show them on the same cycle.",
+      "comments": [
+        {
+          "author": "dev",
+          "date": "2023-04-20",
+          "body": "Parked. Need Finance to confirm fees belong in INTCALC at all; Billing may already assess them."
+        }
+      ]
+    },
+    {
+      "key": "CARD-77",
+      "created": "2023-09-05",
+      "reporter": "priya",
+      "assignee": "dev",
+      "status": "Open",
+      "component": "Reports",
+      "summary": "Transaction report totals off by one transaction",
+      "description": "TRANREPT (CBTRN03C) account totals and the grand total include the last transaction twice when the account changes on the final record.",
+      "comments": [
+        {
+          "author": "dev",
+          "date": "2023-09-11",
+          "body": "Reproduced. The ELSE branch adds the amount again. Low priority, finance reconciles from TRANSACT not the report."
+        }
+      ]
+    },
+    {
+      "key": "CARD-88",
+      "created": "2024-06-18",
+      "reporter": "priya",
+      "assignee": null,
+      "status": "Open",
+      "component": "Interest batch",
+      "summary": "Round interest normally instead of truncating",
+      "description": "Customers see interest a cent lower than our web calculator. INTCALC truncates; we should round half-up like everything else.",
+      "comments": [
+        {
+          "author": "maria",
+          "date": "2024-06-25",
+          "body": "Do not change without checking the interest policy page first. There is a reason it truncates."
+        }
+      ]
+    },
+    {
+      "key": "CARD-102",
+      "created": "2024-01-09",
+      "reporter": "leo",
+      "assignee": "dev",
+      "status": "Done",
+      "component": "Posting batch",
+      "summary": "INCIDENT: duplicate DALYTRAN record crashed POSTTRAN",
+      "description": "Nightly POSTTRAN abended on a duplicate transaction id from the card network feed. Interest ran late.",
+      "comments": [
+        {
+          "author": "leo",
+          "date": "2024-01-10",
+          "body": "Root cause: upstream feed resent a file. Upstream now dedupes."
+        },
+        {
+          "author": "dev",
+          "date": "2024-01-11",
+          "body": "Keeping the abend on duplicate ids on purpose: it is the safety stop that kept us from double posting. Resolution: upstream fix only."
+        }
+      ]
+    },
+    {
+      "key": "CARD-130",
+      "created": "2024-11-02",
+      "reporter": "priya",
+      "assignee": "tom",
+      "status": "In Progress",
+      "component": "Online",
+      "summary": "Duplicate TRAN-ID seen in production from COTRN02",
+      "description": "Two clerks added transactions at the same second and one got DUPREC. Volume is higher since the branch rollout.",
+      "comments": [
+        {
+          "author": "tom",
+          "date": "2024-11-04",
+          "body": "Known race from the max+1 approach. Was fine at 2020 volume."
+        }
+      ]
+    },
+    {
+      "key": "CARD-131",
+      "created": "2024-11-20",
+      "reporter": "ana",
+      "assignee": null,
+      "status": "Open",
+      "component": "Compliance",
+      "summary": "PCI: card balance data in job SYSOUT",
+      "description": "Audit sample found account balance records printed in batch job output. Remove or mask.",
+      "comments": []
+    },
+    {
+      "key": "CARD-140",
+      "created": "2025-01-15",
+      "reporter": "jordan",
+      "assignee": "jordan",
+      "status": "Done",
+      "component": "Print",
+      "summary": "Statement printer vendor migration",
+      "description": "New printer vendor needs a longer form. TRANREPT and the statement jobs (CBSTM03A) were checked; only page length changes.",
+      "comments": []
+    },
+    {
+      "key": "CARD-145",
+      "created": "2025-02-03",
+      "reporter": "sam",
+      "assignee": "sam",
+      "status": "Done",
+      "component": "IT",
+      "summary": "VPN outage during month-end",
+      "description": "VPN down 40 minutes. INTCALC and POSTTRAN unaffected (mainframe-side scheduling).",
+      "comments": []
+    },
+    {
+      "key": "CARD-150",
+      "created": "2025-03-10",
+      "reporter": "priya",
+      "assignee": null,
+      "status": "Open",
+      "component": "Online",
+      "summary": "Add dark mode to the CardDemo screens",
+      "description": "Low priority UI request. COTRN02C and COACTUPC maps would need new attributes.",
+      "comments": []
+    },
+    {
+      "key": "CARD-155",
+      "created": "2025-04-22",
+      "reporter": "maria",
+      "assignee": null,
+      "status": "Done",
+      "component": "Team",
+      "summary": "Card Services offsite agenda",
+      "description": "Topics: mainframe modernization, INTCALC ownership after Dana left, hiring.",
+      "comments": []
+    }
+  ]
+}

@@ -10,10 +10,128 @@ import {
   type Infer as __Infer,
 } from "spacetimedb";
 
+export const Approver = __t.object("Approver", {
+  id: __t.string(),
+  personId: __t.string(),
+  scope: __t.string(),
+  category: __t.string(),
+  score: __t.f64(),
+  evidenceJson: __t.string(),
+  signedOffBy: __t.string(),
+});
+export type Approver = __Infer<typeof Approver>;
+
 export const Config = __t.object("Config", {
   id: __t.u32(),
   json: __t.string(),
   version: __t.u32(),
 });
 export type Config = __Infer<typeof Config>;
+
+export const HarnessEvent = __t.object("HarnessEvent", {
+  id: __t.u64(),
+  jobId: __t.string(),
+  atMs: __t.u64(),
+  kind: __t.string(),
+  message: __t.string(),
+  dataJson: __t.string(),
+});
+export type HarnessEvent = __Infer<typeof HarnessEvent>;
+
+export const HarnessJob = __t.object("HarnessJob", {
+  id: __t.string(),
+  program: __t.string(),
+  status: __t.string(),
+  waitingOnJson: __t.string(),
+  stateJson: __t.string(),
+  startedAtMs: __t.u64(),
+  updatedAtMs: __t.u64(),
+});
+export type HarnessJob = __Infer<typeof HarnessJob>;
+
+export const IdentityMatch = __t.object("IdentityMatch", {
+  id: __t.string(),
+  aRef: __t.string(),
+  bRef: __t.string(),
+  evidence: __t.string(),
+  status: __t.string(),
+});
+export type IdentityMatch = __Infer<typeof IdentityMatch>;
+
+export const Outreach = __t.object("Outreach", {
+  id: __t.u64(),
+  questionId: __t.string(),
+  digestKey: __t.string(),
+  recipientPersonId: __t.string(),
+  channel: __t.string(),
+  rendering: __t.string(),
+  urgency: __t.string(),
+  step: __t.string(),
+  status: __t.string(),
+  slackTs: __t.string(),
+  slackChannel: __t.string(),
+  nextActionAtMs: __t.u64(),
+  sentAtMs: __t.u64(),
+});
+export type Outreach = __Infer<typeof Outreach>;
+
+export const Ownership = __t.object("Ownership", {
+  id: __t.u64(),
+  personId: __t.string(),
+  target: __t.string(),
+  kind: __t.string(),
+  signal: __t.string(),
+  weight: __t.f64(),
+  source: __t.string(),
+  evidence: __t.string(),
+  observedAt: __t.string(),
+});
+export type Ownership = __Infer<typeof Ownership>;
+
+export const Person = __t.object("Person", {
+  id: __t.string(),
+  name: __t.string(),
+  title: __t.string(),
+  team: __t.string(),
+  active: __t.bool(),
+  emailsJson: __t.string(),
+  source: __t.string(),
+});
+export type Person = __Infer<typeof Person>;
+
+export const Question = __t.object("Question", {
+  id: __t.string(),
+  program: __t.string(),
+  text: __t.string(),
+  evidenceJson: __t.string(),
+  optionsJson: __t.string(),
+  blocks: __t.string(),
+  status: __t.string(),
+  verdict: __t.string(),
+  answer: __t.string(),
+  quotesJson: __t.string(),
+  confidence: __t.string(),
+  routeTo: __t.string(),
+  routeName: __t.string(),
+  routeWhy: __t.string(),
+  answeredBy: __t.string(),
+  answerText: __t.string(),
+  answeredAtMs: __t.u64(),
+});
+export type Question = __Infer<typeof Question>;
+
+export const ReportsTo = __t.object("ReportsTo", {
+  id: __t.u64(),
+  personId: __t.string(),
+  managerId: __t.string(),
+  source: __t.string(),
+});
+export type ReportsTo = __Infer<typeof ReportsTo>;
+
+export const Team = __t.object("Team", {
+  id: __t.string(),
+  name: __t.string(),
+  parentTeamId: __t.string(),
+});
+export type Team = __Infer<typeof Team>;
 

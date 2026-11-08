@@ -120,7 +120,7 @@ export function RunChapter({ title, line, source }: { title: string; line: strin
 }
 
 /** Placeholder rows while the last result loads. */
-function Skeleton() {
+export function Skeleton() {
   return (
     <section className="section" aria-busy="true" aria-label="Loading">
       <div className="section-head"><span className="sk sk-title" /><span className="sk sk-line" /></div>
@@ -137,7 +137,7 @@ function Skeleton() {
 }
 
 /** The sandbox's own output, newest at the bottom. Live mode follows new lines; afterwards it folds away. */
-function LogPanel({ lines, live = false }: { lines: string[]; live?: boolean }) {
+export function LogPanel({ lines, live = false }: { lines: string[]; live?: boolean }) {
   const box = useRef<HTMLPreElement>(null);
   const [open, setOpen] = useState(live);
   // Keep the newest line in view while the run streams; scrolling is DOM state only the element has.

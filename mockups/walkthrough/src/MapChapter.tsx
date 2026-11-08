@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from './GraphCanvas';
 import { buildModel, prettyData, type Marks, type P1Edge, type Pass1 } from './graphModel';
 import type { Runtime } from '../../../services/runtime/src/types';
+import type { PackResult } from '../../../services/reader/src/contract';
+import type { ReadRun } from '../server/readTypes';
 
 type Load = { status: 'loading' } | { status: 'ready'; pass1: Pass1 } | { status: 'error'; message: string };
 
@@ -18,6 +20,7 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [selected, setSelected] = useState<string | null>(null);
   const [runtime, setRuntime] = useState<Runtime | null>(null);
+  const [reads, setReads] = useState<PackResult[]>([]);
 
   // Fetches the map from the dev server, which runs Part 1 on the chosen codebase.
   useEffect(() => {
@@ -33,6 +36,12 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
     fetch(`/api/runtime?source=${encodeURIComponent(source)}`)
       .then((r) => (r.ok ? (r.json() as Promise<Runtime>) : null))
       .then((r) => { if (live) setRuntime(r); })
+      .catch(() => {});
+    // The last Nemotron read (step 4), for the details panel.
+    setReads([]);
+    fetch(`/api/read?source=${encodeURIComponent(source)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<ReadRun>) : null))
+      .then((r) => { if (live && r) setReads(r.part2.results); })
       .catch(() => {});
     return () => { live = false; };
   }, [source]);
@@ -57,7 +66,7 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
             <div><dt>Open questions</dt><dd>{pass1.unresolved.length}</dd></div>
           </dl>
         )}
-        {pass1 && selected && <Details id={selected} pass1={pass1} runtime={runtime} onClose={() => setSelected(null)} />}
+        {pass1 && selected && <Details id={selected} pass1={pass1} runtime={runtime} read={reads.find((r) => `prog:${r.program}` === selected)} onClose={() => setSelected(null)} />}
         {pass1 && pass1.inventory.programs.length === 0 && <p className="map-hint">No COBOL programs found in {source.replace(/^gh:/, '')}. Theseus maps COBOL, JCL and CICS today.</p>}
         {pass1 && !selected && pass1.inventory.programs.length > 0 && <p className="map-hint">Online programs sit on top, batch programs below, and the data they share sits between them. Click anything to see every link and the line of COBOL it came from.</p>}
         {load.status === 'error' && <p className="signin-error">Couldn’t build the map: {load.message}. Run <code>pnpm legacy:fetch</code> from the repo root.</p>}
@@ -69,7 +78,7 @@ export function MapChapter({ title, line, source }: { title: string; line: strin
   );
 }
 
-function Details({ id, pass1, runtime, onClose }: { id: string; pass1: Pass1; runtime: Runtime | null; onClose: () => void }) {
+function Details({ id, pass1, runtime, read, onClose }: { id: string; pass1: Pass1; runtime: Runtime | null; read?: PackResult; onClose: () => void }) {
   // Runtime marks by evidence line, so each row can say whether its line ran.
   const markOf = (e: P1Edge) => runtime?.edges.find((m) => m.from === e.from && m.to === e.to && m.rel === e.rel && m.evidence === e.evidence)?.mark;
   const run = runtime?.programs.find((p) => `prog:${p.program}` === id);
@@ -96,6 +105,7 @@ function Details({ id, pass1, runtime, onClose }: { id: string; pass1: Pass1; ru
         ? `Ran in the sandbox: ${run.scenarios.length} scenarios, ${run.paragraphs.total.length - run.paragraphs.neverRan.length} of ${run.paragraphs.total.length} paragraphs reached`
         : `Not run: ${run.reason}`}</div>}
       <div className="details-body">
+        {read && <NemotronSummary read={read} />}
         {[...groups].map(([system, edges]) => (
           <div key={system} className="details-group">
             <h4>{SYSTEM_LABEL[system] ?? system} <span>{edges.length}</span></h4>
@@ -134,5 +144,25 @@ function Details({ id, pass1, runtime, onClose }: { id: string; pass1: Pass1; ru
         )}
       </div>
     </section>
+  );
+}
+
+/** What Nemotron said about this program in step 4: its questions first, then bugs, then rules. */
+function NemotronSummary({ read }: { read: PackResult }) {
+  const pick = [
+    ...read.questions.map((q) => ({ kind: q.blocks === 'none' ? 'question' : `blocks ${q.blocks}`, text: q.text, at: q.evidence[0] })),
+    ...read.findings.filter((f) => f.kind === 'defect' && f.confidence === 'high').map((f) => ({ kind: 'bug', text: f.summary, at: f.evidence[0] })),
+    ...read.findings.filter((f) => f.kind === 'rule').map((f) => ({ kind: 'rule', text: f.summary, at: f.evidence[0] })),
+  ].slice(0, 6);
+  return (
+    <div className="details-group">
+      <h4>Nemotron read{' '}<span>{read.questions.length} questions · {read.findings.filter((f) => f.kind === 'defect').length} bugs · {read.findings.filter((f) => f.kind === 'rule').length} rules</span></h4>
+      {pick.map((x, i) => (
+        <div key={i} className="details-q">
+          <b>{x.kind}</b>: {x.text}
+          <span className="details-ev">{x.at?.split('/').pop()}</span>
+        </div>
+      ))}
+    </div>
   );
 }

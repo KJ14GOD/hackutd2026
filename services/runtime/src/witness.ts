@@ -14,6 +14,7 @@ import { fileDefs, loaderSource, openModes, type FileDef } from './cobolFiles';
 import { expandCopies, layoutOf, recordReadFrom, testedValues } from './layout';
 import { buildScenarios, dateFromParm, synthesize, type Scenario } from './scenarios';
 import { sqlCopybook, sqlProgram } from './sqlSource';
+import { patchForGnuCobol, type Patched } from './sourcePatches';
 import type { EdgeMark, ProgramRun, Runtime, RuntimeEvent, ScenarioResult } from './types';
 
 export const IMAGE = 'theseus-runtime:2';
@@ -26,6 +27,8 @@ const NEEDS = [
   { re: /\bEXEC\s+SQL\b/, what: 'DB2' },
   { re: /\bEXEC\s+DLI\b|CBLTDLI|AIBTDLI/, what: 'IMS' },
   { re: /\bMQ(?:OPEN|GET|PUT|CONN)\b/, what: 'MQ' },
+  // CBSTM03A walks PSA -> TCB -> TIOT to find its job name; those blocks exist only in z/OS memory.
+  { re: /\bSET\s+ADDRESS\s+OF\s+\S+\s+TO\s+PSAPTR\b/, what: 'z/OS control blocks (PSA, TCB, TIOT)' },
 ];
 
 const VERBS = new Set(['ACCEPT', 'ADD', 'CALL', 'CLOSE', 'COMPUTE', 'CONTINUE', 'DELETE', 'DISPLAY', 'DIVIDE', 'EVALUATE', 'EXEC', 'EXIT',
@@ -208,7 +211,9 @@ function planFor(program: string, file: SourceFile, ctx: Context, sql: boolean):
     }
   }
 
-  const defs = fileDefs(file.text).filter((d) => !d.isSort);
+  // An FD can bring its record in with COPY; the record name then comes from the copybook.
+  const defs = fileDefs(file.text).filter((d) => !d.isSort)
+    .map((d) => (d.record ? d : { ...d, record: /^\s*01\s+([A-Z0-9-]+)/.exec(expandCopies(d.fd, ctx.copybooks).find((l) => /^\s*01\s/.test(l)) ?? '')?.[1] ?? '' }));
   const modes = openModes(file.text);
   const ddToDataset = new Map<string, string>();
   for (const e of pass1.edges) {
@@ -284,12 +289,18 @@ function stubSource(name: string): string {
 }
 
 /** Writes everything the container needs into `stage` and returns the script it runs. */
-function stagePlan(plan: Plan, stage: string, copyDirs: string[], copyFiles: SourceFile[]): string[] {
+function stagePlan(plan: Plan, stage: string, copyDirs: string[], copyFiles: SourceFile[], patches: Map<string, Patched>): string[] {
   rmSync(stage, { recursive: true, force: true });
   mkdirSync(join(stage, 'cbl'), { recursive: true });
   for (const f of ['RUNDRV.cbl', 'CEE3ABD.cbl', 'SQLDRV.cbl']) writeFileSync(join(stage, 'cbl', f), readFileSync(join(HERE, '../cobol', f)));
   for (const s of plan.stubs.filter((s) => s !== 'CEE3ABD')) writeFileSync(join(stage, 'cbl', `${s}.cbl`), stubSource(s));
-  for (const { def } of plan.inputs) writeFileSync(join(stage, 'cbl', `LOAD_${def.dd}.cbl`), loaderSource(def, `LOAD-${def.dd}`.slice(0, 30)));
+  // A loader writes the file the way the program declares it, so it takes the patched SELECT and FD when there is one.
+  const patchedDefs = [...patches.values()].flatMap((p) => fileDefs(p.text));
+  for (const { def } of plan.inputs) {
+    const p = patchedDefs.find((x) => x.dd === def.dd);
+    const d = p && p.select !== def.select ? { ...p, record: def.record } : def;
+    writeFileSync(join(stage, 'cbl', `LOAD_${def.dd}.cbl`), loaderSource(d, `LOAD-${def.dd}`.slice(0, 30)));
+  }
 
   const date = dateFromParm(plan.parm);
   for (const sc of plan.scenarios) {
@@ -309,7 +320,7 @@ function stagePlan(plan: Plan, stage: string, copyDirs: string[], copyFiles: Sou
     ].join('\n') + '\n');
     writeFileSync(join(stage, 'db', 'tables.txt'), plan.tables!.map((t) => t.name).join('\n') + '\n');
     mkdirSync(join(stage, 'sql'), { recursive: true });
-    for (const m of plan.modules) writeFileSync(join(stage, 'sql', `${m.name}.sqb`), sqlProgram(m.text));
+    for (const m of plan.modules) writeFileSync(join(stage, 'sql', `${m.name}.sqb`), sqlProgram(patches.get(m.name)?.text ?? m.text));
     // EXEC SQL INCLUDE looks for the member by bare name next to the source; DCLGEN members can be any kind of file.
     const wanted = new Set(plan.modules.flatMap((m) => [...m.text.toUpperCase().matchAll(/EXEC\s+SQL\s+INCLUDE\s+([A-Z0-9#@$-]+)/g)].map((x) => x[1])));
     for (const c of copyFiles.filter((f) => wanted.has(f.name))) {
@@ -318,12 +329,18 @@ function stagePlan(plan: Plan, stage: string, copyDirs: string[], copyFiles: Sou
     }
   }
 
+  // Patched programs compile from a staged copy; everything else straight from the read-only source.
+  for (const m of plan.modules) {
+    const p = patches.get(m.name);
+    if (p && !sql) { mkdirSync(dirname(join(stage, 'src', m.path)), { recursive: true }); writeFileSync(join(stage, 'src', m.path), p.text); }
+  }
+  const srcOf = (m: SourceFile) => (patches.has(m.name) ? `/in/src/${m.path}` : `/src/${m.path}`);
   const inc = copyDirs.map((d) => `-I ${shq(`/src/${d}`)}`).join(' ');
   const compile = (m: SourceFile) => [`echo ${shq(`compile ${m.name}${sql ? ' (EXEC SQL -> PostgreSQL)' : ''}`)}`, ...(sql
     ? [`ocesql ${m.name}.sqb ${m.name}.cob >> /out/compile.txt 2>&1 || fail ${shq(m.name)}`,
        `cp ${m.name}.cob /out/${m.name}.cob`,
-       `cobc -m -std=ibm -fixed -ftraceall -I /opt/ocesql/copy ${inc} -o ${m.name}.so ${m.name}.cob -locesql >> /out/compile.txt 2>&1 || fail ${shq(m.name)}`]
-    : [`cobc -m -std=ibm -fixed -ftraceall ${inc} -o ${m.name}.so ${shq(`/src/${m.path}`)} >> /out/compile.txt 2>&1 || fail ${shq(m.name)}`])];
+       `cobc -m -std=ibm -fixed -ftab-width=4 -ftraceall -I /opt/ocesql/copy ${inc} -o ${m.name}.so ${m.name}.cob -locesql >> /out/compile.txt 2>&1 || fail ${shq(m.name)}`]
+    : [`cobc -m -std=ibm -fixed -ftab-width=4 -ftraceall ${inc} -o ${m.name}.so ${shq(srcOf(m))} >> /out/compile.txt 2>&1 || fail ${shq(m.name)}`])];
   const dump = (when: string) => `    i=0; while read t; do i=$((i+1)); psql -qAt -F'|' -c "SELECT * FROM $t ORDER BY 1" > "/out/$n/db-${when}-$i.txt" 2>&1; done < /in/db/tables.txt`;
   return [
     'set -u', 'ulimit -f 400000', 'mkdir -p /work/bin && cd /work/bin && cp /in/cbl/*.cbl .',
@@ -341,7 +358,8 @@ function stagePlan(plan: Plan, stage: string, copyDirs: string[], copyFiles: Sou
     sql
       ? 'ocesql SQLDRV.cbl SQLDRV.cob >> /out/compile.txt 2>&1 && cobc -x -std=ibm -fixed -I /opt/ocesql/copy SQLDRV.cob -locesql -o RUNDRV >> /out/compile.txt 2>&1 || fail SQLDRV'
       : 'cobc -x -std=ibm -fixed RUNDRV.cbl >> /out/compile.txt 2>&1 || fail RUNDRV',
-    'for f in *.cbl; do case $f in RUNDRV.cbl|SQLDRV.cbl) ;; LOAD_*) cobc -x -std=ibm -fixed "$f" >> /out/compile.txt 2>&1 || fail "$f";; *) [ -f "${f%.cbl}.so" ] || [ ! -f "/in/cbl/$f" ] || cobc -m -std=ibm -fixed "$f" >> /out/compile.txt 2>&1 || fail "$f";; esac; done',
+    // Loaders need the copybook folders too: an FD can bring its record in with COPY.
+    `for f in *.cbl; do case $f in RUNDRV.cbl|SQLDRV.cbl) ;; LOAD_*) cobc -x -std=ibm -fixed -ftab-width=4 ${inc} "$f" >> /out/compile.txt 2>&1 || fail "$f";; *) [ -f "\${f%.cbl}.so" ] || [ ! -f "/in/cbl/$f" ] || cobc -m -std=ibm -fixed "$f" >> /out/compile.txt 2>&1 || fail "$f";; esac; done`,
     sql ? 'export COB_LIBRARY_PATH=/work/bin:/usr/local/lib COB_PRE_LOAD=libocesql COB_FILE_PATH=.' : 'export COB_LIBRARY_PATH=/work/bin COB_FILE_PATH=.',
     'for sc in /in/sc/*; do',
     '  n=$(basename "$sc"); mkdir -p "/work/run/$n" "/out/$n"; cd "/work/run/$n"',
@@ -417,12 +435,15 @@ export async function runWitness(root: string, pass1: Pass1, opts: WitnessOption
     }
     emit({ type: 'program', program, status: 'running' });
     const stage = join(opts.workDir, 'stage', program), out = join(opts.workDir, 'out', program);
-    const result = await dockerRun(stage, out, root, stagePlan(plan, stage, copyDirs, sources), (line) => emit({ type: 'log', program, line }));
+    const patches = new Map(plan.modules.flatMap((m) => { const p = patchForGnuCobol(m.text, copybooks); return p ? [[m.name, p] as const] : []; }));
+    const patched = [...patches.values()].flatMap((p) => p.notes);
+    for (const note of patched) emit({ type: 'log', program, line: `patched for GnuCOBOL: ${note}` });
+    const result = await dockerRun(stage, out, root, stagePlan(plan, stage, copyDirs, sources, patches), (line) => emit({ type: 'log', program, line }));
     const failedAt = read(join(out, 'compile-failed')).trim();
     if (result.code !== 0 || failedAt) {
       const errors = read(join(out, 'compile.txt')).split('\n').filter((l) => /error/i.test(l)).slice(0, 3).join(' · ');
       const reason = failedAt ? `Didn’t compile under GnuCOBOL (${failedAt}): ${errors || 'see compiler output'}` : `Sandbox failed: ${result.log.slice(-300)}`;
-      runs.push({ ...blank, status: 'failed', reason, job: plan.job, parm: plan.parm, missingData: plan.missingData, synthesized: plan.synthesized });
+      runs.push({ ...blank, status: 'failed', reason, job: plan.job, parm: plan.parm, missingData: plan.missingData, synthesized: plan.synthesized, ...(patched.length ? { patched } : {}) });
       emit({ type: 'program', program, status: 'failed', reason });
       continue;
     }
@@ -490,7 +511,7 @@ export async function runWitness(root: string, pass1: Pass1, opts: WitnessOption
     }
 
     const neverRan = total.filter((p) => !ranAnywhere.has(p));
-    runs.push({ program, file: file.path, status: 'ran', job: plan.job, parm: plan.parm, scenarios, paragraphs: { total, neverRan }, missingData: plan.missingData, synthesized: plan.synthesized, tables: plan.tables?.map((t) => t.name) });
+    runs.push({ program, file: file.path, status: 'ran', job: plan.job, parm: plan.parm, scenarios, paragraphs: { total, neverRan }, missingData: plan.missingData, synthesized: plan.synthesized, tables: plan.tables?.map((t) => t.name), ...(patched.length ? { patched } : {}) });
     emit({ type: 'program', program, status: 'ran' });
   }
 

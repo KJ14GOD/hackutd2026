@@ -108,3 +108,22 @@ Validated by `packages/shared/src/config.ts` (zod). Sections: `sim`, `ports`, `t
 `shadow` (caps, noise), `cutover` (steps, match-rate thresholds), `selfHeal`, `deadCode`,
 `humanLoop` (question caps, escalation timeouts), `llm`. The endpoint rates and account
 ids under `traffic` are placeholders until the CardDemo endpoints are fixed (D-012).
+
+## Built: people, questions and the harness feed (Phases 3-5)
+
+Implemented in `spacetime/src/index.ts` (published to the local server by `node scripts/stdb.mjs publish`;
+the native `spacetime` CLI is needed to build TypeScript modules). Shapes follow
+REQUIREMENTS_IMPLEMENTATION.md §3.2-3.3; all tables are public for now (views and access control come later).
+
+| Table | Written by | Holds |
+| --- | --- | --- |
+| `person`, `team`, `reportsTo`, `ownership`, `identityMatch`, `approver` | `loadOrg` (from `out/people/org.json`) | Phase 3 org, ownership with evidence, merge-review pairs, generated approvers |
+| `question` | `loadQuestions` (Part 2 + `out/context/resolutions.json`) | each question with its Phase 4 verdict, quotes and route; status `needs-person`, `answered-by-docs`, `known-issue`, `conflict`, `asking`, `answered` |
+| `outreach` | `queueOutreach`, `markOutreachSent`, `answerQuestion` | one row per question per person; rows sharing a `digestKey` (person + program) go out as one Slack message |
+| `harnessJob` | `upsertJob`, `answerQuestion` | one job per program: `reading`, `looking-up`, `asking`, `waiting` (with the question ids), `resuming`, `done` |
+| `harnessEvent` | `upsertJob`, `recordEvent`, `answerQuestion` | the live step feed the UI shows |
+
+`answerQuestion` is the only way a question is answered (Slack button or the UI). It marks the question and its
+outreach answered, logs an event on every job waiting for it, and moves a job to `resuming` once nothing it waits
+on is still open. Reloading questions never erases a human answer. `resetRuns` clears jobs, events and outreach
+for a fresh demo.

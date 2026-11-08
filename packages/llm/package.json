@@ -1,0 +1,17 @@
+{
+  "name": "@theseus/llm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The one way to call a model: NVIDIA (OpenAI-compatible), mock, and a record/replay cache keyed by prompt hash",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

@@ -26,7 +26,7 @@ Look: dark, near-black (`#000` map, `#0b0b0e`/`#121216` panels), Inter + JetBrai
 The UI **never** talks to a backend directly. It reads a Zustand store (`@/store`), fed by whatever `createSource()` returns:
 
 - today: **`MockSource`** — scripted scenario replay, 100% offline (demo-safe)
-- later: `SpacetimeSource` / `WebSocketSource` — same `RealtimeSource` interface
+- live: **`SpacetimeSource`** (`src/data/spacetimeSource.ts`), opt-in with `?source=spacetime` or `VITE_SOURCE=spacetime` (`VITE_STDB_URI`, default `ws://localhost:3000`; `VITE_STDB_DB`, default `theseus`). It wraps MockSource and overlays the tables the backend has today: people, teams, reports-to, ownership, approvers, questions and Slack outreach. Requirements, conflicts, approvals, checks and the shadow run still come from the mock until their tables exist. Answering a live question calls the `answerQuestion` reducer. If SpacetimeDB is unreachable it logs a warning and stays on mock data.
 
 Swapping backends is a **one-line change** in `src/data/factory.ts`. No UI component imports a source directly. Source emits `SourceEvent`s → store reducer applies them → components read granular selectors.
 
@@ -45,7 +45,7 @@ The codebase graph is separate from the live stream: `src/data/carddemo.graph.js
 4. **Top bar** — on-Java progress (2xl and wider), shadowing chip with live match rate, **Viewing as** (stands in for sign-in), search, scenario, Replay, Reset, **Simulate answer**. Money moment: Simulate answer → match rate jumps in <1s and the question moves to Answered.
 5. **Rail (far left)** — Map plus four requirements workspaces (D-028, `REQUIREMENTS_ANALYSIS.md` §12): **Requirements** (review list, detail with History and Checks tabs, conflicts side by side, change request with impact preview and "Show on map"), **Questions** (evidence, context hits, one-click answers, escalation timeline on the sim clock), **Inbox** (what waits on the viewer, grouped by pocket) and **People** (org, ownership with signal and source, corrections, approver list and sign-off). Every screen has loading / empty / error / restricted states and a Business / Engineer toggle remembered per viewer. The pocket Inspector gains **Requirements and progress** (job state, the gate and what blocks it, harness attempts, cutover 1/10/100 for the live pocket).
 
-Requirements data: `src/data/requirements.ts` (pure rules: lint, access, quorum, gate, impact, escalation ladder, inbox), `reqEvents.ts` (events + reducer), `reqSeed.ts` (seed world), `reqMock.ts` (the actions, sim clock +1 min per second). Screen state shared across workspaces (workspace, viewer, mode, open ids, impact on map) lives in `src/store/useUi.ts`.
+Requirements data: `src/data/requirements.ts` (pure rules: lint, access, quorum, gate, impact, escalation ladder, inbox), `reqEvents.ts` (events + reducer), `reqSeed.ts` (seed world: people, ownership, approvers, jobs), `findings.ts` (Nemotron's Part 2 rules and suspected bugs as draft requirements and its questions as open questions, from `carddemo.findings.json`, which `node scripts/snapshot-findings.mjs [part2.json]` makes from `out/part2.json`; these replace the hand-written requirements, conflicts, approvals, checks and change request), `reqMock.ts` (the actions, sim clock +1 min per second). Screen state shared across workspaces (workspace, viewer, mode, open ids, impact on map) lives in `src/store/useUi.ts`.
 
 Keyboard: `1`–`5` lenses (5 = Requirements gate), `L` view, `M` map only, `F` fit, `/` or `Ctrl K` search, `Esc` back, `←`/`→` flow steps.
 

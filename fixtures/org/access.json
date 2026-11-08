@@ -1,0 +1,89 @@
+{
+  "_source": "Access grants (synthetic), standing in for repo teams / RACF.",
+  "pockets": {
+    "card": "app/cbl and app/jcl (card batch and online)",
+    "transaction-type": "app/app-transaction-type-db2",
+    "*": "everything"
+  },
+  "grants": [
+    {
+      "person": "ravi",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "maria",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "dev",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "dana",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "priya",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "tom",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "leo",
+      "scopes": [
+        "card",
+        "transaction-type"
+      ]
+    },
+    {
+      "person": "nina",
+      "scopes": [
+        "card",
+        "transaction-type"
+      ]
+    },
+    {
+      "person": "grace",
+      "scopes": [
+        "card",
+        "transaction-type"
+      ]
+    },
+    {
+      "person": "ana",
+      "scopes": [
+        "card"
+      ]
+    },
+    {
+      "person": "sam",
+      "scopes": [
+        "*"
+      ]
+    },
+    {
+      "person": "alex",
+      "scopes": [
+        "*"
+      ]
+    },
+    {
+      "person": "jordan",
+      "scopes": []
+    }
+  ]
+}

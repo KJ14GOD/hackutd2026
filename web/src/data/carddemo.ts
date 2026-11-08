@@ -163,12 +163,9 @@ const STORE_TITLES: Record<string, string> = {
   'MQ.REPLY.DATE': 'Date reply queue',
 }
 
-/** state before the live scenario touches anything */
-const SEED: Record<string, Migration> = {
-  COUSR00C: 'done', COUSR01C: 'done', COUSR02C: 'done', COUSR03C: 'done', COADM01C: 'done',
-  CBACT02C: 'done', CBCUS01C: 'done', CBACT03C: 'done', CSUTLDTC: 'done', COBSWAIT: 'done', MVSWAIT: 'done',
-  CBACT01C: 'cutover', COBDATFT: 'cutover', COACTVWC: 'cutover', COCRDSLC: 'cutover', CODATE01: 'cutover', COTRN01C: 'cutover',
-}
+/** State before the live scenario touches anything. Empty: nothing has been converted yet, so every
+ * program starts as legacy. Fill it from real migration state once the backend tracks one. */
+const SEED: Record<string, Migration> = {}
 
 /* ------------------------------ graph ------------------------------ */
 

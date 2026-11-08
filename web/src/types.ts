@@ -373,7 +373,7 @@ export interface Team {
   managerId: string
 }
 
-export type OwnershipSignal = 'codeowners' | 'git-blame' | 'jira-assignee' | 'confluence-author' | 'org-chart' | 'runbook' | 'override'
+export type OwnershipSignal = 'codeowners' | 'git-blame' | 'jira-assignee' | 'confluence-author' | 'org-chart' | 'runbook' | 'chat' | 'override'
 export interface Ownership {
   id: string
   personId: string

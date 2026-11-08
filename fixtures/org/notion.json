@@ -1,0 +1,122 @@
+{
+  "_source": "Notion workspace \"Harbor Card wiki\" (synthetic). Seeded as a database with Owner and Last edited properties.",
+  "pages": [
+    {
+      "id": "interest-policy",
+      "title": "Interest policy",
+      "owner": "maria",
+      "lastEdited": "2019-03-01",
+      "tags": [
+        "CBACT04C",
+        "INTCALC",
+        "interest"
+      ],
+      "body": [
+        "Monthly interest = category balance x annual rate / 1200.",
+        "Interest is TRUNCATED to the cent, never rounded. This was confirmed in the 2019 audit and matches our card network agreement.",
+        "Changes to this rule need sign-off from the Card Services manager."
+      ]
+    },
+    {
+      "id": "fees-policy",
+      "title": "Fees policy",
+      "owner": "ana",
+      "lastEdited": "2021-08-16",
+      "tags": [
+        "fees",
+        "billing",
+        "CBACT04C"
+      ],
+      "body": [
+        "Late and over-limit fees are assessed by the Billing platform, not by the mainframe interest job.",
+        "The mainframe only reports balances; Billing reads TRANSACT the next morning."
+      ]
+    },
+    {
+      "id": "discgrp-runbook",
+      "title": "Disclosure group runbook",
+      "owner": "leo",
+      "lastEdited": "2022-02-07",
+      "tags": [
+        "DISCGRP",
+        "INTCALC",
+        "runbook"
+      ],
+      "body": [
+        "Every account group falls back to the DEFAULT disclosure group when its own rate row is missing.",
+        "The DEFAULT row must always exist. The DISCGRP load job checks for it before INTCALC runs.",
+        "If DEFAULT is missing, INTCALC abends. That is intended: never charge interest at an unknown rate."
+      ]
+    },
+    {
+      "id": "account-dictionary",
+      "title": "Account data dictionary",
+      "owner": "grace",
+      "lastEdited": "2021-10-01",
+      "tags": [
+        "ACCTDATA",
+        "data dictionary"
+      ],
+      "body": [
+        "ACCT-EXPIRAION-DATE (sic) is stored as text YYYY-MM-DD.",
+        "Because of that format, comparing dates as strings orders them correctly; no conversion needed.",
+        "ACCT-CURR-BAL is S9(10)V99."
+      ]
+    },
+    {
+      "id": "pci-controls",
+      "title": "PCI controls for batch",
+      "owner": "ana",
+      "lastEdited": "2024-12-01",
+      "tags": [
+        "PCI",
+        "SYSOUT",
+        "compliance"
+      ],
+      "body": [
+        "No card numbers or balances may appear in job output (SYSOUT).",
+        "Findings go to Finance Compliance."
+      ]
+    },
+    {
+      "id": "batch-schedule",
+      "title": "Nightly batch schedule",
+      "owner": "leo",
+      "lastEdited": "2023-05-10",
+      "tags": [
+        "POSTTRAN",
+        "INTCALC",
+        "schedule"
+      ],
+      "body": [
+        "Order: POSTTRAN, then INTCALC, then TRANREPT.",
+        "INTCALC must run after posting so interest sees the day's transactions."
+      ]
+    },
+    {
+      "id": "offsite-2025",
+      "title": "Card Services offsite 2025",
+      "owner": "maria",
+      "lastEdited": "2025-04-25",
+      "tags": [
+        "team"
+      ],
+      "body": [
+        "Agenda: modernization with Theseus, who owns INTCALC now, hiring two engineers."
+      ]
+    },
+    {
+      "id": "printer-migration",
+      "title": "Printer vendor migration",
+      "owner": "jordan",
+      "lastEdited": "2025-01-20",
+      "tags": [
+        "print",
+        "CBSTM03A"
+      ],
+      "body": [
+        "Form length changes for statements and the transaction report."
+      ]
+    }
+  ]
+}

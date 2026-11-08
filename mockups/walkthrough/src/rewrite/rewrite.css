@@ -1,0 +1,82 @@
+/* Rewrite the code. Same tokens and hairline language as the war room; prefix rw-. Reuses .wr-link. */
+
+.rw { height: 100%; min-height: 0; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 10px; padding: 22px 28px 16px; }
+.rw-top { display: flex; align-items: baseline; gap: 28px; }
+.rw-top h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
+.rw-programs { display: flex; gap: 18px; }
+.rw-programs button { border: 0; background: none; padding: 0; color: var(--text-3); font: 500 12px var(--mono); cursor: pointer; }
+.rw-programs button:hover { color: var(--text-2); }
+.rw-programs button.on { color: var(--text); text-decoration: underline; text-underline-offset: 4px; }
+.rw-controls { margin-left: auto; display: flex; gap: 18px; }
+
+.rw-seq { display: flex; margin: 4px 0 0; padding: 0; list-style: none; font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); }
+.rw-seq li { position: relative; padding: 0 22px 8px 0; }
+.rw-seq li::after { content: '→'; position: absolute; right: 7px; top: 0; color: var(--line-2); }
+.rw-seq li:last-child::after { content: none; }
+.rw-seq li.done { color: var(--text-2); }
+.rw-seq li.now { color: var(--text); }
+.rw-seq li.now::before { content: ''; position: absolute; left: 0; right: 22px; bottom: 0; height: 1px; background: var(--accent); }
+.rw-stage { margin: 0; color: var(--text-3); font: 12px var(--mono); min-height: 15px; }
+
+
+.rw-body { min-height: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 0; border-top: 1px solid var(--line); }
+.rw-pane { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.rw-pane.rw-cobol { border-right: 1px solid var(--line); padding-right: 16px; }
+.rw-pane.java { padding-left: 16px; }
+.rw-pane-head { display: flex; justify-content: space-between; padding: 8px 0; color: var(--text-3); font: 500 10.5px var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+.rw-code { margin: 0; overflow: auto; font: 11.5px/1.55 var(--mono); color: var(--text-2); white-space: pre; }
+.rw-line { display: grid; grid-template-columns: 44px 1fr; transition: background-color 700ms var(--ease); }
+.rw-no { text-align: right; padding-right: 12px; color: var(--text-3); user-select: none; }
+.rw-line.focus { color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+.rw-line.focus .rw-no { color: var(--accent); }
+.rw-line.fresh { animation: rw-flash 900ms var(--ease) both; }
+.rw-line.muted .rw-src { color: var(--text-3); }
+.rw-cursor { color: var(--accent); animation: rw-blink 1s steps(2) infinite; padding-left: 44px; }
+.rw-src .k { color: var(--text); }
+.rw-src .s { color: var(--text-2); }
+.rw-src .c { color: var(--text-3); }
+.rw-pane.java .rw-line .rw-src { color: var(--text-2); }
+
+.rw-diff .rw-hunk { padding: 6px 0; border-bottom: 1px solid var(--line); }
+.rw-diff .rw-hunk:last-child { border-bottom: 0; }
+.rw-line.del { color: var(--text-3); text-decoration: line-through; text-decoration-color: var(--text-3); }
+.rw-line.del .rw-src span { color: inherit; }
+.rw-line.add { color: var(--text); box-shadow: inset 2px 0 0 var(--accent); animation: rw-flash 1200ms var(--ease) both; }
+.rw-line.add .rw-no { color: var(--accent); }
+
+.rw-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; border-top: 1px solid var(--line); max-height: 30vh; overflow: auto; }
+.rw-block { min-width: 0; }
+.rw-log { margin: 0; font: 11px/1.5 var(--mono); color: var(--text-2); white-space: pre-wrap; }
+.rw-runs { margin: 0; padding: 0; list-style: none; font: 11.5px var(--mono); }
+.rw-runs li { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); color: var(--text-2); }
+.rw-runs li em { font-style: normal; color: var(--text-3); }
+.rw-runs li.match em { color: var(--text-2); }
+.rw-runs li.mismatch em, .rw-runs li.fail em { color: var(--accent); }
+.rw-rate { color: var(--text); }
+.rw-mismatch { border-collapse: collapse; width: 100%; font: 11.5px var(--mono); }
+.rw-mismatch td { padding: 4px 10px 4px 0; border-bottom: 1px solid var(--line); color: var(--text-2); vertical-align: top; }
+.rw-mismatch td.old { color: var(--text-3); }
+.rw-mismatch td.new { color: var(--accent); }
+.rw-note { margin: 8px 0 0; color: var(--text-3); font: 12px/1.5 var(--sans); max-width: 60ch; }
+
+@keyframes rw-flash { 0% { background: color-mix(in srgb, var(--accent) 28%, transparent); } 100% { background: transparent; } }
+@keyframes rw-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rw * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+/* The shared stylesheet frames <pre>; these panes are hairline-only. */
+.rw pre.rw-code, .rw pre.rw-log { background: none; border: 0; box-shadow: none; border-radius: 0; padding: 0; }
+.rw section.rw-pane, .rw section.rw-results { background: none; border: 0; border-radius: 0; box-shadow: none; padding-top: 0; padding-bottom: 0; }
+.rw section.rw-pane.rw-cobol { border-right: 1px solid var(--line); }
+.rw section.rw-results { border-top: 1px solid var(--line); }
+.rw-mode { color: var(--text-3); }
+.rw-programs button small { font-size: 10px; color: var(--text-3); margin-left: 2px; }
+.rw-pane-tools { display: inline-flex; gap: 14px; align-items: center; }
+.rw-mismatch td.cat { color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+.rw-pane.rw-cobol .rw-code { scroll-behavior: smooth; position: relative; }
+.rw-mismatch { table-layout: fixed; }
+.rw-mismatch td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rw-mismatch td:nth-child(1) { width: 14%; }
+.rw-mismatch td:nth-child(2) { width: 11%; }
+.rw-mismatch td:nth-child(3), .rw-mismatch td:nth-child(4) { width: 32%; }
+.rw-mismatch td.cat { width: 11%; }
+.rw-runs li span { white-space: nowrap; }

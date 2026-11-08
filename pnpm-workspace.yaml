@@ -5,3 +5,5 @@ packages:
   - legacy
   - target
   - tools
+allowBuilds:
+  esbuild: set this to true or false

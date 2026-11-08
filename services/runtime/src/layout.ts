@@ -79,6 +79,15 @@ function size(item: Item): number {
   return one * item.occurs;
 }
 
+/** Total bytes of a record (group sizes, OCCURS and REDEFINES included), or 0 when it isn't defined. */
+export function recordLength(lines: string[], record: string): number {
+  const find = (items: Item[]): Item | undefined => {
+    for (const i of items) { if (i.name === record) return i; const f = find(i.children); if (f) return f; }
+  };
+  const root = find(parseItems(lines));
+  return root ? size(root) : 0;
+}
+
 /** Elementary fields of a record, with their offsets. Repeated fields list their first copy only. */
 export function layoutOf(lines: string[], record: string): Field[] {
   const find = (items: Item[]): Item | undefined => {

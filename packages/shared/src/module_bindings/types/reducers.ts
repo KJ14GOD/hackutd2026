@@ -6,7 +6,23 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import AnswerQuestionReducer from "../answer_question_reducer";
+import LoadOrgReducer from "../load_org_reducer";
+import LoadQuestionsReducer from "../load_questions_reducer";
+import MarkOutreachSentReducer from "../mark_outreach_sent_reducer";
+import QueueOutreachReducer from "../queue_outreach_reducer";
+import RecordEventReducer from "../record_event_reducer";
+import ResetRunsReducer from "../reset_runs_reducer";
 import SetConfigReducer from "../set_config_reducer";
+import UpsertJobReducer from "../upsert_job_reducer";
 
+export type AnswerQuestionParams = __Infer<typeof AnswerQuestionReducer>;
+export type LoadOrgParams = __Infer<typeof LoadOrgReducer>;
+export type LoadQuestionsParams = __Infer<typeof LoadQuestionsReducer>;
+export type MarkOutreachSentParams = __Infer<typeof MarkOutreachSentReducer>;
+export type QueueOutreachParams = __Infer<typeof QueueOutreachReducer>;
+export type RecordEventParams = __Infer<typeof RecordEventReducer>;
+export type ResetRunsParams = __Infer<typeof ResetRunsReducer>;
 export type SetConfigParams = __Infer<typeof SetConfigReducer>;
+export type UpsertJobParams = __Infer<typeof UpsertJobReducer>;
 

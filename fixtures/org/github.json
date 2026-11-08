@@ -1,0 +1,117 @@
+{
+  "_source": "GitHub repository history (synthetic authors, applied with git --author/--date when seeded).",
+  "repo": "harborcard-mainframe",
+  "codeowners": "# Harbor Card mainframe ownership (synthetic)\n/app/cbl/CB*            @harborcard/card-batch\n/app/cbl/CBACT04C.cbl   @dev-okafor\n/app/cbl/CBTRN0*.cbl    @dev-okafor\n/app/cbl/CO*            @harborcard/card-online\n/app/cbl/COTRN02C.cbl   @tom-becker\n/app/app-transaction-type-db2/  @grace-kim\n/app/jcl/               @leo-park\n",
+  "aliases": {
+    "dokafor-old": {
+      "name": "D. Okafor",
+      "email": "dokafor@oldmail.example"
+    }
+  },
+  "commits": [
+    {
+      "date": "2019-02-11",
+      "author": "dana",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: compute monthly interest per category balance (rate / 1200)"
+    },
+    {
+      "date": "2019-02-18",
+      "author": "dana",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: truncate interest to the cent, per Card Services policy"
+    },
+    {
+      "date": "2019-06-03",
+      "author": "dana",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: add 1400-COMPUTE-FEES placeholder, fees TBD with Finance"
+    },
+    {
+      "date": "2020-01-20",
+      "author": "dana",
+      "path": "app/cbl/CBTRN02C.cbl",
+      "message": "POSTTRAN: reject codes 100-103 for card, account, limit, expiry"
+    },
+    {
+      "date": "2020-01-27",
+      "author": "dana",
+      "path": "app/cbl/CBTRN02C.cbl",
+      "message": "POSTTRAN: copy close blocks from XREF for DALYREJS"
+    },
+    {
+      "date": "2020-03-09",
+      "author": "tom",
+      "path": "app/cbl/COTRN02C.cbl",
+      "message": "COTRN02: new transaction id = highest id + 1 (low volume, see #online-dev)"
+    },
+    {
+      "date": "2020-09-14",
+      "author": "dana",
+      "path": "app/cbl/CBTRN03C.cbl",
+      "message": "TRANREPT: page and account totals"
+    },
+    {
+      "date": "2021-05-04",
+      "author": "grace",
+      "path": "app/app-transaction-type-db2/cbl/COBTUPDT.cbl",
+      "message": "COBTUPDT: abend on SQLCODE +100 for update/delete"
+    },
+    {
+      "date": "2021-11-22",
+      "author": "leo",
+      "path": "app/jcl/INTCALC.jcl",
+      "message": "INTCALC: run after POSTTRAN in the nightly chain"
+    },
+    {
+      "date": "2022-08-30",
+      "author": "dev",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: DISPLAY TRAN-CAT-BAL-RECORD while chasing INC-2207 (temporary)"
+    },
+    {
+      "date": "2023-02-07",
+      "author": "dokafor-old",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "fix comment typo"
+    },
+    {
+      "date": "2023-07-19",
+      "author": "dev",
+      "path": "app/cbl/CBTRN02C.cbl",
+      "message": "POSTTRAN: keep abend on duplicate tran id (CARD-102 follow-up)"
+    },
+    {
+      "date": "2024-02-12",
+      "author": "dana",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: TRANID suffix is 9(06), fine for current volume"
+    },
+    {
+      "date": "2024-05-06",
+      "author": "dev",
+      "path": "app/cbl/CBACT04C.cbl",
+      "message": "INTCALC: take over ownership from Dana (CODEOWNERS)"
+    },
+    {
+      "date": "2024-09-30",
+      "author": "tom",
+      "path": "app/cbl/COTRN02C.cbl",
+      "message": "COTRN02: trim screen date to YYYY-MM-DD"
+    },
+    {
+      "date": "2025-03-03",
+      "author": "jordan",
+      "path": "app/cbl/CBTRN03C.cbl",
+      "message": "TRANREPT: new printer form length for statement vendor"
+    }
+  ],
+  "members": {
+    "_note": "GitHub org membership export: handle -> verified email (synthetic).",
+    "dev-okafor": "dev.okafor@harborcard.example",
+    "tom-becker": "tom.becker@harborcard.example",
+    "grace-kim": "grace.kim@harborcard.example",
+    "leo-park": "leo.park@harborcard.example",
+    "dana-whitfield": "dana.whitfield@harborcard.example"
+  }
+}

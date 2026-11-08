@@ -34,17 +34,52 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import AnswerQuestionReducer from "./answer_question_reducer";
+import LoadOrgReducer from "./load_org_reducer";
+import LoadQuestionsReducer from "./load_questions_reducer";
+import MarkOutreachSentReducer from "./mark_outreach_sent_reducer";
+import QueueOutreachReducer from "./queue_outreach_reducer";
+import RecordEventReducer from "./record_event_reducer";
+import ResetRunsReducer from "./reset_runs_reducer";
 import SetConfigReducer from "./set_config_reducer";
+import UpsertJobReducer from "./upsert_job_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
+import ApproverRow from "./approver_table";
 import ConfigRow from "./config_table";
+import HarnessEventRow from "./harness_event_table";
+import HarnessJobRow from "./harness_job_table";
+import IdentityMatchRow from "./identity_match_table";
+import OutreachRow from "./outreach_table";
+import OwnershipRow from "./ownership_table";
+import PersonRow from "./person_table";
+import QuestionRow from "./question_table";
+import ReportsToRow from "./reports_to_table";
+import TeamRow from "./team_table";
 
 /** Type-only namespace exports for generated type groups. */
 
 /** The schema information for all tables in this module. This is defined the same was as the tables would have been defined in the server. */
 const tablesSchema = __schema({
+  approver: __table({
+    name: 'approver',
+    indexes: [
+      { accessor: 'id', name: 'approver_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'personId', name: 'approver_person_id_idx_btree', algorithm: 'btree', columns: [
+        'personId',
+      ] },
+      { accessor: 'scope', name: 'approver_scope_idx_btree', algorithm: 'btree', columns: [
+        'scope',
+      ] },
+    ],
+    constraints: [
+      { name: 'approver_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ApproverRow),
   config: __table({
     name: 'config',
     indexes: [
@@ -56,11 +91,163 @@ const tablesSchema = __schema({
       { name: 'config_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ConfigRow),
+  harnessEvent: __table({
+    name: 'harness_event',
+    indexes: [
+      { accessor: 'id', name: 'harness_event_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'jobId', name: 'harness_event_job_id_idx_btree', algorithm: 'btree', columns: [
+        'jobId',
+      ] },
+    ],
+    constraints: [
+      { name: 'harness_event_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, HarnessEventRow),
+  harnessJob: __table({
+    name: 'harness_job',
+    indexes: [
+      { accessor: 'id', name: 'harness_job_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'program', name: 'harness_job_program_idx_btree', algorithm: 'btree', columns: [
+        'program',
+      ] },
+      { accessor: 'status', name: 'harness_job_status_idx_btree', algorithm: 'btree', columns: [
+        'status',
+      ] },
+    ],
+    constraints: [
+      { name: 'harness_job_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, HarnessJobRow),
+  identityMatch: __table({
+    name: 'identity_match',
+    indexes: [
+      { accessor: 'id', name: 'identity_match_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'identity_match_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, IdentityMatchRow),
+  outreach: __table({
+    name: 'outreach',
+    indexes: [
+      { accessor: 'digestKey', name: 'outreach_digest_key_idx_btree', algorithm: 'btree', columns: [
+        'digestKey',
+      ] },
+      { accessor: 'id', name: 'outreach_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'questionId', name: 'outreach_question_id_idx_btree', algorithm: 'btree', columns: [
+        'questionId',
+      ] },
+      { accessor: 'recipientPersonId', name: 'outreach_recipient_person_id_idx_btree', algorithm: 'btree', columns: [
+        'recipientPersonId',
+      ] },
+      { accessor: 'status', name: 'outreach_status_idx_btree', algorithm: 'btree', columns: [
+        'status',
+      ] },
+    ],
+    constraints: [
+      { name: 'outreach_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, OutreachRow),
+  ownership: __table({
+    name: 'ownership',
+    indexes: [
+      { accessor: 'id', name: 'ownership_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'personId', name: 'ownership_person_id_idx_btree', algorithm: 'btree', columns: [
+        'personId',
+      ] },
+      { accessor: 'target', name: 'ownership_target_idx_btree', algorithm: 'btree', columns: [
+        'target',
+      ] },
+    ],
+    constraints: [
+      { name: 'ownership_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, OwnershipRow),
+  person: __table({
+    name: 'person',
+    indexes: [
+      { accessor: 'id', name: 'person_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'team', name: 'person_team_idx_btree', algorithm: 'btree', columns: [
+        'team',
+      ] },
+    ],
+    constraints: [
+      { name: 'person_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PersonRow),
+  question: __table({
+    name: 'question',
+    indexes: [
+      { accessor: 'id', name: 'question_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'program', name: 'question_program_idx_btree', algorithm: 'btree', columns: [
+        'program',
+      ] },
+      { accessor: 'routeTo', name: 'question_route_to_idx_btree', algorithm: 'btree', columns: [
+        'routeTo',
+      ] },
+      { accessor: 'status', name: 'question_status_idx_btree', algorithm: 'btree', columns: [
+        'status',
+      ] },
+    ],
+    constraints: [
+      { name: 'question_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, QuestionRow),
+  reportsTo: __table({
+    name: 'reports_to',
+    indexes: [
+      { accessor: 'id', name: 'reports_to_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'managerId', name: 'reports_to_manager_id_idx_btree', algorithm: 'btree', columns: [
+        'managerId',
+      ] },
+      { accessor: 'personId', name: 'reports_to_person_id_idx_btree', algorithm: 'btree', columns: [
+        'personId',
+      ] },
+    ],
+    constraints: [
+      { name: 'reports_to_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, ReportsToRow),
+  team: __table({
+    name: 'team',
+    indexes: [
+      { accessor: 'id', name: 'team_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'team_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, TeamRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("answer_question", AnswerQuestionReducer),
+  __reducerSchema("load_org", LoadOrgReducer),
+  __reducerSchema("load_questions", LoadQuestionsReducer),
+  __reducerSchema("mark_outreach_sent", MarkOutreachSentReducer),
+  __reducerSchema("queue_outreach", QueueOutreachReducer),
+  __reducerSchema("record_event", RecordEventReducer),
+  __reducerSchema("reset_runs", ResetRunsReducer),
   __reducerSchema("set_config", SetConfigReducer),
+  __reducerSchema("upsert_job", UpsertJobReducer),
 );
 
 /** The schema information for all procedures in this module. This is defined the same way as the procedures would have been defined in the server. */

@@ -1,0 +1,9 @@
+{
+  "name": "@theseus/rewrite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Rewrite + shadow: Nemotron writes Java for a batch program, javac compiles it in a Docker sandbox (with fix passes), it runs on the same scenario inputs as the COBOL, and the outputs are diffed line by line",
+  "scripts": { "typecheck": "tsc -p tsconfig.json" },
+  "devDependencies": { "tsx": "^4.20.6", "typescript": "^5.9.3", "vitest": "^4.0.8" }
+}
