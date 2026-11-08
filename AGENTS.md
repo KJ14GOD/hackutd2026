@@ -29,7 +29,7 @@ are not decided. Check `docs/DECISIONS.md` before building past one.
 | `services/agent/` | workers: capture, rewrite, fix, classify, ask | planned (M2) |
 | `services/slackbot/` | Slack Bolt app, buttons call reducers | planned (M2) |
 | `tools/` | CLI that tails events/state (the backend demo until the UI exists) | planned |
-| `web/` | frontend; owned by the frontend teammate | not ours |
+| `web/` | mission-control UI (Vite + React, npm, outside the pnpm workspace); owned by the frontend teammate, see `web/CLAUDE.md` | built (mock data) |
 | `docs/` | design docs (below) | draft |
 | `research/` | background research; read-only | final |
 
@@ -56,6 +56,8 @@ pnpm stdb:stop               # stop the Docker container
 
 pnpm test                    # vitest, all packages
 pnpm typecheck               # tsc in every package
+
+cd web && npm install && npm run dev   # mission-control UI on :5173 (mock data, no backend needed)
 ```
 
 First run: `pnpm install && pnpm legacy:fetch && pnpm stdb:start && pnpm stdb:publish && pnpm config:push`.
