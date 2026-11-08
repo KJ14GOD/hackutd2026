@@ -1,25 +1,14 @@
-// SpacetimeDB module: PLACEHOLDER.
-// This proves the toolchain works (build, publish, generate bindings, push config).
-// It holds only the config table. The real tables and reducers come once the team
-// signs off on docs/DATA_MODEL.md.
+// SpacetimeDB module entry. Built so far: config and the segmentation tables. Everything
+// else in docs/DATA_MODEL.md is still PROPOSED and comes once the team signs off on it.
 //
-// Reducer names come from the export names. SpacetimeDB converts them to snake_case
-// for the CLI and SQL (setConfig becomes set_config).
-import { schema, table, t, SenderError } from 'spacetimedb/server';
-
-const spacetimedb = schema({
-  /** theseus.config.json as last pushed with `pnpm config:push`. Single row, id 0. */
-  config: table(
-    { public: true },
-    {
-      id: t.u32().primaryKey(),
-      json: t.string(),
-      version: t.u32(),
-    },
-  ),
-});
+// Reducers are the named exports of this file; SpacetimeDB converts the names to
+// snake_case for the CLI and SQL (setConfig becomes set_config). Each area keeps its
+// reducers in src/reducers/<area>.ts and re-exports them here.
+import { SenderError, t } from 'spacetimedb/server';
+import spacetimedb from './schema';
 
 export default spacetimedb;
+export * from './reducers/segmentation';
 
 export const init = spacetimedb.init((ctx) => {
   ctx.db.config.insert({ id: 0, json: '', version: 0 });

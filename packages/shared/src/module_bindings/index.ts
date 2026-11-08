@@ -34,12 +34,19 @@ import {
 } from "spacetimedb";
 
 // Import all reducer arg schemas
+import LoadSegmentationReducer from "./load_segmentation_reducer";
 import SetConfigReducer from "./set_config_reducer";
 
 // Import all procedure arg schemas
 
 // Import all table schema definitions
 import ConfigRow from "./config_table";
+import DepEdgeRow from "./dep_edge_table";
+import EndpointRow from "./endpoint_table";
+import GraphNodeRow from "./graph_node_table";
+import PocketRow from "./pocket_table";
+import PocketEdgeRow from "./pocket_edge_table";
+import SegmentationRunRow from "./segmentation_run_table";
 
 /** Type-only namespace exports for generated type groups. */
 
@@ -56,10 +63,95 @@ const tablesSchema = __schema({
       { name: 'config_id_key', constraint: 'unique', columns: ['id'] },
     ],
   }, ConfigRow),
+  depEdge: __table({
+    name: 'dep_edge',
+    indexes: [
+      { accessor: 'dst', name: 'dep_edge_dst_idx_btree', algorithm: 'btree', columns: [
+        'dst',
+      ] },
+      { accessor: 'id', name: 'dep_edge_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'src', name: 'dep_edge_src_idx_btree', algorithm: 'btree', columns: [
+        'src',
+      ] },
+    ],
+    constraints: [
+      { name: 'dep_edge_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, DepEdgeRow),
+  endpoint: __table({
+    name: 'endpoint',
+    indexes: [
+      { accessor: 'id', name: 'endpoint_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'pocketId', name: 'endpoint_pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'pocketId',
+      ] },
+    ],
+    constraints: [
+      { name: 'endpoint_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, EndpointRow),
+  graphNode: __table({
+    name: 'graph_node',
+    indexes: [
+      { accessor: 'id', name: 'graph_node_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'kind', name: 'graph_node_kind_idx_btree', algorithm: 'btree', columns: [
+        'kind',
+      ] },
+      { accessor: 'pocketId', name: 'graph_node_pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'pocketId',
+      ] },
+    ],
+    constraints: [
+      { name: 'graph_node_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, GraphNodeRow),
+  pocket: __table({
+    name: 'pocket',
+    indexes: [
+      { accessor: 'id', name: 'pocket_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+      { accessor: 'parentId', name: 'pocket_parent_id_idx_btree', algorithm: 'btree', columns: [
+        'parentId',
+      ] },
+    ],
+    constraints: [
+      { name: 'pocket_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PocketRow),
+  pocketEdge: __table({
+    name: 'pocket_edge',
+    indexes: [
+      { accessor: 'id', name: 'pocket_edge_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'pocket_edge_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, PocketEdgeRow),
+  segmentationRun: __table({
+    name: 'segmentation_run',
+    indexes: [
+      { accessor: 'id', name: 'segmentation_run_id_idx_btree', algorithm: 'btree', columns: [
+        'id',
+      ] },
+    ],
+    constraints: [
+      { name: 'segmentation_run_id_key', constraint: 'unique', columns: ['id'] },
+    ],
+  }, SegmentationRunRow),
 });
 
 /** The schema information for all reducers in this module. This is defined the same way as the reducers would have been defined in the server, except the body of the reducer is omitted in code generation. */
 const reducersSchema = __reducers(
+  __reducerSchema("load_segmentation", LoadSegmentationReducer),
   __reducerSchema("set_config", SetConfigReducer),
 );
 

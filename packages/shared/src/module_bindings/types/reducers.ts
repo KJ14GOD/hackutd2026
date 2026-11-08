@@ -6,7 +6,9 @@
 import { type Infer as __Infer } from "spacetimedb";
 
 // Import all reducer arg schemas
+import LoadSegmentationReducer from "../load_segmentation_reducer";
 import SetConfigReducer from "../set_config_reducer";
 
+export type LoadSegmentationParams = __Infer<typeof LoadSegmentationReducer>;
 export type SetConfigParams = __Infer<typeof SetConfigReducer>;
 
