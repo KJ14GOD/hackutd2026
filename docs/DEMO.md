@@ -45,4 +45,6 @@
 - Slack: a demo workspace and channel; `config/owners.json` maps CardDemo paths to
   teammates. A `tools` command can answer a question if Slack is down.
 - `pnpm stdb:reset` + reset between runs; sim speed set by script.
-- Until the UI exists, demo with `pnpm tail` (event stream) and a `state` command.
+- The UI (`web/`) already runs the demo story standalone on `MockSource` and a snapshot of the
+  CardDemo graph (`cd web && npm run dev`). Until it reads SpacetimeDB, demo the live backend
+  with `pnpm tail` (event stream) and a `state` command.

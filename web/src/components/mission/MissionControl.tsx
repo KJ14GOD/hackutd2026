@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronRight, Layers, Box, Maximize2, Minus, PanelLeftOpen, Plus, Radio, RotateCcw } from 'lucide-react'
+import { Box, ChevronRight, Expand, Layers, PanelLeftOpen, PanelRightOpen, Radio, RotateCcw, Shrink } from 'lucide-react'
 import {
   selectAgentLog,
   selectComponent,
@@ -17,11 +17,9 @@ import {
   MIGRATION_META,
   MIGRATION_ORDER,
   POCKET,
-  POCKETS,
   PROGRAM,
   PROGRAMS,
   STORE,
-  STORES,
   TEAMS,
   migrationProgress,
   pocketsUsingStore,
@@ -31,9 +29,9 @@ import {
 } from '@/data/carddemo'
 import { MapCanvas, type Lens, type MapHandle, type View } from '@/components/map/MapCanvas'
 import { blastHighlight, flowHighlight, selectionHighlight, type Highlight } from '@/components/map/highlight'
-import { C, MIG_COLOR, TEAM_COLOR, isoWord } from '@/components/map/theme'
+import { C, ISO_LEVELS, MIG_COLOR, TEAM_COLOR, isoWord } from '@/components/map/theme'
 import { Hierarchy } from '@/components/shell/Hierarchy'
-import { Inspector, type InspectorTab, type LiveInfo } from '@/components/shell/Inspector'
+import { INSPECTOR_W, Inspector, type InspectorTab, type LiveInfo } from '@/components/shell/Inspector'
 import { Search, type SearchHandle } from '@/components/shell/Search'
 import { Btn, IconBtn, Segmented } from '@/components/shell/kit'
 import { cn } from '@/lib/cn'
@@ -45,19 +43,54 @@ const LENSES: { id: Lens; label: string; hint: string }[] = [
   { id: 'owners', label: 'Owners', hint: 'Who owns what, who to ask (4)' },
 ]
 
+/** Below this width both panels stop docking: the sidebar collapses and the
+ *  Inspector slides over the map instead (projectors, small laptops). */
+const NARROW = 1440
+
+function useNarrow() {
+  const get = () => typeof window !== 'undefined' && window.innerWidth < NARROW
+  const [narrow, setNarrow] = useState(get)
+  useEffect(() => {
+    const on = () => setNarrow(get())
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  return narrow
+}
+
 export default function MissionControl() {
   const [lens, setLens] = useState<Lens>('migration')
   const [view, setView] = useState<View>('iso')
   const [focus, setFocus] = useState<string | null>(null)
   const [selection, setSelection] = useState<Ref | null>(null)
   const [hover, setHover] = useState<Ref | null>(null)
+  // the camera flies after a pick or Esc while the pointer stays still, so no
+  // leave event fires: drop the hover then, the next pointer move restores it
+  const [seen, setSeen] = useState({ focus, selection })
+  if (seen.focus !== focus || seen.selection !== selection) {
+    setSeen({ focus, selection })
+    setHover(null)
+  }
   const [flowState, setFlowState] = useState<{ id: string; step: number } | null>(null)
   const [tab, setTab] = useState<InspectorTab>('inspect')
-  const [zoom, setZoom] = useState(1)
-  const [treeOpen, setTreeOpen] = useState(true)
   const [auto, setAuto] = useState(false)
   const mapRef = useRef<MapHandle>(null)
   const searchRef = useRef<SearchHandle>(null)
+
+  /* panels: docked when wide; when narrow the sidebar starts hidden and the
+   * Inspector overlays the map. "Map only" hides both without forgetting them. */
+  const narrow = useNarrow()
+  const [treeOpen, setTreeOpen] = useState(!narrow)
+  const [inspOpen, setInspOpen] = useState(!narrow)
+  const [mapOnly, setMapOnly] = useState(false)
+  const [wasNarrow, setWasNarrow] = useState(narrow)
+  if (narrow !== wasNarrow) {
+    setWasNarrow(narrow)
+    setTreeOpen(!narrow)
+    setInspOpen(!narrow)
+  }
+  const showTree = treeOpen && !mapOnly
+  const showInsp = inspOpen && !mapOnly
 
   const controls = useStore(selectControls)
   const component = useStore(selectComponent)
@@ -66,7 +99,8 @@ export default function MissionControl() {
   const decisions = useStore(selectDecisions)
   const agentLog = useStore(selectAgentLog)
   const scenarioId = useStore((s) => s.scenarioId)
-  // pending questions move with every decision; recompute when the store moves
+  // pendingQuestions() reads the store; decisions and scenarioId are what move it
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   const pending = useMemo(() => controls.pendingQuestions(), [controls, decisions, scenarioId])
 
   /* migration state: seeded, with the live component overridden by the shadow run */
@@ -87,7 +121,9 @@ export default function MissionControl() {
     pending: pending.length,
   }
 
-  const flow = flowState ? { flow: FLOWS.find((f) => f.id === flowState.id)!, step: flowState.step } : null
+  const flowDef = flowState ? FLOWS.find((f) => f.id === flowState.id) : undefined
+  const flow = flowDef && flowState ? { flow: flowDef, step: flowState.step } : null
+  const flowStep = flow ? flow.flow.steps[flow.step] : null
 
   const blastSource =
     selection?.kind === 'program'
@@ -99,13 +135,18 @@ export default function MissionControl() {
           : null
 
   const highlight: Highlight | null = useMemo(() => {
-    if (flow) return flowHighlight(flow.flow.steps[flow.step])
+    if (flowStep) return flowHighlight(flowStep)
     if (lens === 'blast' && selection?.kind !== 'store' && selection?.kind !== 'pocket' && blastSource) return blastHighlight(blastSource)
     if (selection && selection.kind !== 'pocket') return selectionHighlight(selection)
     if (hover && hover.kind !== 'pocket') return selectionHighlight(hover, 'soft')
     return null
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [flowState, lens, selection, hover, blastSource])
+  }, [flowStep, lens, selection, hover, blastSource])
+
+  // keep the step's shared store lane in shot while the camera follows the flow
+  const flowFrame = useMemo(
+    () => (flowStep ? [flowStep.from, flowStep.to].filter((r) => r.kind === 'store' && BUS_ORDER.includes(r.id)).map((r) => r.id) : undefined),
+    [flowStep],
+  )
 
   /* ---------------- navigation ---------------- */
   const pick = useCallback(
@@ -126,28 +167,27 @@ export default function MissionControl() {
         if (e) setFocus(PROGRAM[e.program].pocket)
       }
       setSelection(r)
+      if (narrow && !mapOnly) setInspOpen(true)
     },
-    [flowState, selection, focus],
+    [flowState, selection, focus, narrow, mapOnly],
   )
 
-  const goFlow = useCallback((id: string | null, step = 0) => {
-    if (!id) return setFlowState(null)
-    const f = FLOWS.find((x) => x.id === id)!
-    const s = Math.max(0, Math.min(f.steps.length - 1, step))
-    const st = f.steps[s]
-    const prog = [st.from, st.to].find((r) => r.kind === 'program')?.id ?? ENTRIES.find((e) => e.id === st.from.id)?.program
-    if (prog) setFocus(PROGRAM[prog].pocket)
-    setSelection(null)
-    setTab('inspect')
-    setFlowState({ id, step: s })
-  }, [])
-
-  // keep the step's shared store lane in shot while the camera follows the flow
-  const flowFrame = useMemo(() => {
-    if (!flow) return undefined
-    const st = flow.flow.steps[flow.step]
-    return [st.from, st.to].filter((r) => r.kind === 'store' && BUS_ORDER.includes(r.id)).map((r) => r.id)
-  }, [flow?.flow.id, flow?.step]) // eslint-disable-line react-hooks/exhaustive-deps
+  const goFlow = useCallback(
+    (id: string | null, step = 0) => {
+      if (!id) return setFlowState(null)
+      const f = FLOWS.find((x) => x.id === id)
+      if (!f) return
+      const s = Math.max(0, Math.min(f.steps.length - 1, step))
+      const st = f.steps[s]
+      const prog = [st.from, st.to].find((r) => r.kind === 'program')?.id ?? ENTRIES.find((e) => e.id === st.from.id)?.program
+      if (prog) setFocus(PROGRAM[prog].pocket)
+      setSelection(null)
+      setTab('inspect')
+      setFlowState({ id, step: s })
+      if (narrow && !mapOnly) setInspOpen(true)
+    },
+    [narrow, mapOnly],
+  )
 
   const goHome = () => {
     setFlowState(null)
@@ -164,11 +204,13 @@ export default function MissionControl() {
         searchRef.current?.focus()
         return
       }
+      if (e.ctrlKey || e.metaKey || e.altKey) return
       if (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA') return
       if (e.key === 'Escape') pick(null)
       else if (e.key >= '1' && e.key <= '4') setLens(LENSES[Number(e.key) - 1].id)
       else if (e.key.toLowerCase() === 'l') setView((v) => (v === 'iso' ? 'layers' : 'iso'))
       else if (e.key.toLowerCase() === 'f') mapRef.current?.fit()
+      else if (e.key.toLowerCase() === 'm') setMapOnly((v) => !v)
       else if (e.key === '/') {
         e.preventDefault()
         searchRef.current?.focus()
@@ -179,25 +221,22 @@ export default function MissionControl() {
   }, [pick, flowState, goFlow])
 
   const progress = migrationProgress(mig)
-  const onZoom = useCallback((k: number) => setZoom(k), [])
+  const overlayInsp = narrow && showInsp
 
   return (
     <div className="flex h-screen flex-col bg-[var(--color-bg)] text-[var(--color-ink)]">
       {/* ---------------- top bar ---------------- */}
-      <header className="z-30 flex h-[52px] shrink-0 items-center gap-3 overflow-hidden border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-4">
-        <button type="button" onClick={goHome} className="flex items-center gap-2.5" aria-label="Back to the whole system">
+      <header className="z-30 flex h-[52px] shrink-0 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-4">
+        <button type="button" onClick={goHome} className="flex shrink-0 items-center gap-2.5" aria-label="Back to the whole system">
           <Logo />
           <span className="text-[14px] font-semibold tracking-[-0.01em]">Shadow Diff</span>
         </button>
-        <div className="h-5 w-px bg-[var(--color-line-2)]" />
-        <div className="flex items-baseline gap-2">
-          <span className="font-mono text-[12px] font-semibold text-[var(--color-ink)]">CARDDEMO</span>
-          <span className="hidden font-mono text-[11px] text-[var(--color-faint)] xl:inline">
-            {PROGRAMS.length} programs · {POCKETS.length} pockets · {STORES.length} data stores
-          </span>
-        </div>
+        <div className="h-5 w-px shrink-0 bg-[var(--color-line-2)]" />
+        <span className="shrink-0 font-mono text-[12px] font-semibold text-[var(--color-ink)]" title="AWS CardDemo, scanned by the segmenter">
+          CARDDEMO
+        </span>
 
-        <div className="hidden w-[180px] lg:block">
+        <div className="hidden w-[160px] shrink-0 lg:block" title={`${Math.round(progress * 100)}% of the codebase is on Java`}>
           <div className="flex items-baseline justify-between text-[11px]">
             <span className="text-[var(--color-faint)]">On Java</span>
             <span className="tnum font-mono text-[var(--color-good)]">{Math.round(progress * 100)}%</span>
@@ -210,19 +249,19 @@ export default function MissionControl() {
         <button
           type="button"
           onClick={() => PROGRAM[component.id] && pick({ kind: 'program', id: component.id })}
-          className="hidden items-center gap-2 rounded-[8px] border border-[rgba(76,201,240,.3)] px-2.5 py-1 transition-colors hover:border-[var(--color-accent)] md:flex"
+          className="hidden shrink-0 items-center gap-2 rounded-[8px] border border-[rgba(69,199,245,.3)] px-2.5 py-1 transition-colors hover:border-[var(--color-accent)] md:flex"
           title="Fly to the component being shadowed"
         >
           <span className="size-1.5 rounded-full bg-[var(--color-accent)] pulse-soft" />
           <span className="text-[11.5px] text-[var(--color-muted)]">Shadowing</span>
           <span className="font-mono text-[12px] text-[var(--color-ink)]">{component.id}</span>
-          <span className="tnum font-mono text-[12px]" style={{ color: component.matchRate >= threshold ? C.good : C.accent }}>
+          <span className="tnum font-mono text-[12px]" style={{ color: component.matchRate >= threshold ? C.good : C.accent }} aria-live="polite">
             {(component.matchRate * 100).toFixed(1)}%
           </span>
         </button>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Search ref={searchRef} onPick={pick} />
+          <Search ref={searchRef} onPick={pick} compact={narrow} />
           <select
             value={scenarioId}
             onChange={(e) => {
@@ -230,12 +269,14 @@ export default function MissionControl() {
               setAuto(false)
               goHome()
             }}
-            aria-label="Scenario"
-            className="hidden h-8 max-w-[150px] rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2 font-mono text-[11.5px] text-[var(--color-muted)] outline-none hover:border-[var(--color-line-2)] lg:block"
+            aria-label="Demo scenario"
+            title="Demo scenario: which component the agent is shadowing"
+            className="hidden h-8 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2 text-[12px] text-[var(--color-muted)] outline-none hover:border-[var(--color-line-2)] lg:block"
           >
             {controls.scenarios().map((s) => (
               <option key={s.id} value={s.id}>
-                {s.name}
+                {/* the chip beside it already names the program */}
+                {s.name.split(' · ')[0]}
               </option>
             ))}
           </select>
@@ -243,6 +284,7 @@ export default function MissionControl() {
           <Btn
             variant="outline"
             aria-pressed={auto}
+            title="Answer every question automatically, hands-free"
             onClick={() => {
               const n = !auto
               controls.setAutoReplay(n)
@@ -253,7 +295,7 @@ export default function MissionControl() {
             <Radio className={cn('size-3.5', auto && 'pulse-soft')} /> Replay
           </Btn>
           <IconBtn
-            label="Reset scenario"
+            label="Reset the demo"
             onClick={() => {
               controls.reset()
               setAuto(false)
@@ -262,21 +304,26 @@ export default function MissionControl() {
           >
             <RotateCcw className="size-4" />
           </IconBtn>
-          <Btn variant="primary" disabled={!pending.length} onClick={() => controls.simulateSlackAnswer('old')} title="Answer the open Slack question as the owner">
+          <Btn
+            variant="primary"
+            disabled={!pending.length}
+            onClick={() => controls.simulateSlackAnswer('old')}
+            title={pending.length ? 'Answer the open Slack question as its owner' : 'No question is waiting on a person'}
+          >
             Simulate answer
           </Btn>
         </div>
       </header>
 
       {/* ---------------- body ---------------- */}
-      <div className="flex min-h-0 flex-1">
-        {treeOpen && <Hierarchy lens={lens} focus={focus} selection={selection} hl={highlight} mig={mig} onPick={pick} onHover={setHover} onCollapse={() => setTreeOpen(false)} />}
+      <div className="relative flex min-h-0 flex-1">
+        {showTree && <Hierarchy focus={focus} selection={selection} mig={mig} onPick={pick} onHover={setHover} onCollapse={() => setTreeOpen(false)} />}
 
         <main className="flex min-w-0 flex-1 flex-col bg-[var(--color-bg)]">
           {/* canvas toolbar: where you are, how you look at it */}
           <div className="flex h-11 shrink-0 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-2.5">
-            {!treeOpen && (
-              <IconBtn label="Show hierarchy" onClick={() => setTreeOpen(true)}>
+            {!showTree && !mapOnly && (
+              <IconBtn label="Show systems panel" onClick={() => setTreeOpen(true)}>
                 <PanelLeftOpen className="size-4" />
               </IconBtn>
             )}
@@ -292,75 +339,76 @@ export default function MissionControl() {
                 ]}
               />
               <Segmented label="Lens" value={lens} onChange={setLens} items={LENSES} />
+              <div className="mx-0.5 h-5 w-px bg-[var(--color-line-2)]" />
+              <IconBtn label={mapOnly ? 'Show panels (M)' : 'Map only (M)'} aria-pressed={mapOnly} onClick={() => setMapOnly((v) => !v)}>
+                {mapOnly ? <Shrink className="size-4" /> : <Expand className="size-4" />}
+              </IconBtn>
+              {!showInsp && !mapOnly && (
+                <IconBtn label="Show inspector" onClick={() => setInspOpen(true)}>
+                  <PanelRightOpen className="size-4" />
+                </IconBtn>
+              )}
             </div>
           </div>
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
-          <MapCanvas
-            ref={mapRef}
-            lens={lens}
-            view={view}
-            focus={focus}
-            selection={selection}
-            hover={hover}
-            highlight={highlight}
-            mig={mig}
-            live={PROGRAM[component.id] ? { id: component.id, pending: pending.length } : null}
-            frame={flowFrame}
-            onPick={pick}
-            onHover={setHover}
-            onZoom={onZoom}
-            onOpenMessages={() => {
-              if (PROGRAM[component.id]) pick({ kind: 'program', id: component.id })
-              setTab('people')
-            }}
-          />
+            <MapCanvas
+              ref={mapRef}
+              lens={lens}
+              view={view}
+              focus={focus}
+              selection={selection}
+              hover={hover}
+              highlight={highlight}
+              mig={mig}
+              live={PROGRAM[component.id] ? { id: component.id, pending: pending.length } : null}
+              frame={flowFrame}
+              insetRight={overlayInsp ? INSPECTOR_W : 0}
+              onPick={pick}
+              onHover={setHover}
+              onOpenMessages={() => {
+                if (PROGRAM[component.id]) pick({ kind: 'program', id: component.id })
+                setTab('people')
+                setInspOpen(true)
+                setMapOnly(false)
+              }}
+            />
 
-          {/* bottom-left: hover readout */}
-          <div className="pointer-events-none absolute bottom-3 left-3 max-w-[46%]">
-            <Readout r={hover ?? selection} mig={mig} />
-          </div>
+            {/* top-left: what the pointer is on (or the selection) */}
+            <div className="pointer-events-none absolute left-3 top-3" style={{ right: 12 + (overlayInsp ? INSPECTOR_W : 0) }}>
+              <Readout r={hover ?? selection} mig={mig} />
+            </div>
 
-          {/* bottom-center: legend */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-            <Legend lens={lens} blastSource={blastSource} hasHighlight={!!highlight} />
-          </div>
-
-          {/* bottom-right: zoom */}
-          <div className="absolute bottom-3 right-3 flex items-center gap-0.5 rounded-[10px] border border-[var(--color-line)] bg-[var(--color-panel)] p-[3px]">
-            <IconBtn label="Zoom out" onClick={() => mapRef.current?.zoomBy(1 / 1.35)} className="size-7">
-              <Minus className="size-3.5" />
-            </IconBtn>
-            <span className="tnum w-11 text-center font-mono text-[11px] text-[var(--color-muted)]">{Math.round(zoom * 100)}%</span>
-            <IconBtn label="Zoom in" onClick={() => mapRef.current?.zoomBy(1.35)} className="size-7">
-              <Plus className="size-3.5" />
-            </IconBtn>
-            <div className="mx-0.5 h-4 w-px bg-[var(--color-line-2)]" />
-            <Btn onClick={() => mapRef.current?.fit()} className="h-7 px-2 text-[11.5px]" title="Fit to view (F)">
-              <Maximize2 className="size-3.5" /> Fit
-            </Btn>
-          </div>
+            {/* bottom-left: legend */}
+            <div className="pointer-events-none absolute bottom-3 left-3">
+              <Legend lens={lens} blastSource={blastSource} hasHighlight={!!highlight} />
+            </div>
           </div>
         </main>
 
-        <Inspector
-          tab={tab}
-          setTab={setTab}
-          selection={selection}
-          lens={lens}
-          mig={mig}
-          live={live}
-          blastSource={blastSource}
-          agentLog={agentLog}
-          decisions={decisions}
-          pending={pending}
-          onAnswer={(a) => controls.simulateSlackAnswer(a)}
-          flow={flow}
-          onFlow={goFlow}
-          onPick={pick}
-          onHover={setHover}
-          onClose={() => setSelection(null)}
-        />
+        {showInsp && (
+          <div className={cn(overlayInsp && 'absolute bottom-0 right-0 top-11 z-20 shadow-[-24px_0_48px_-24px_rgba(0,0,0,.8)]')}>
+            <Inspector
+              tab={tab}
+              setTab={setTab}
+              selection={selection}
+              lens={lens}
+              mig={mig}
+              live={live}
+              blastSource={blastSource}
+              agentLog={agentLog}
+              decisions={decisions}
+              pending={pending}
+              onAnswer={(a) => controls.simulateSlackAnswer(a)}
+              flow={flow}
+              onFlow={goFlow}
+              onPick={pick}
+              onHover={setHover}
+              onClose={() => setSelection(null)}
+              onHide={() => setInspOpen(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -387,18 +435,20 @@ function Logo() {
 
 function Crumb({ children, onClick, current }: { children: React.ReactNode; onClick?: () => void; current?: boolean }) {
   return onClick ? (
-    <button type="button" onClick={onClick} className="pointer-events-auto rounded-[6px] px-1.5 py-0.5 text-[12px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-panel-2)] hover:text-[var(--color-ink)]">
+    <button type="button" onClick={onClick} className="shrink-0 rounded-[6px] px-1.5 py-0.5 text-[12px] text-[var(--color-muted)] transition-colors hover:bg-[var(--color-panel-2)] hover:text-[var(--color-ink)]">
       {children}
     </button>
   ) : (
-    <span className={cn('truncate px-1.5 text-[12px]', current ? 'font-medium text-[var(--color-ink)]' : 'text-[var(--color-faint)]')}>{children}</span>
+    <span className={cn('shrink-0 px-1.5 text-[12px]', current ? 'font-medium text-[var(--color-ink)]' : 'text-[var(--color-faint)]')}>{children}</span>
   )
 }
 
+/* Where you are. When space runs out the domain step goes first, then the
+ * pocket collapses to its short name; the current item is always whole. */
 function Breadcrumb({ focus, selection, onHome, onPocket }: { focus: string | null; selection: Ref | null; onHome: () => void; onPocket: (id: string) => void }) {
   const pocket = focus ? POCKET[focus] : null
   const leaf = selection && selection.kind !== 'pocket' ? selection : null
-  const sep = <ChevronRight className="size-3 text-[var(--color-faint)]" />
+  const sep = <ChevronRight className="size-3 shrink-0 text-[var(--color-faint)]" />
   return (
     <nav aria-label="Breadcrumb" className="flex min-w-0 items-center overflow-hidden whitespace-nowrap">
       <Crumb onClick={pocket || leaf ? onHome : undefined} current={!pocket && !leaf}>
@@ -406,11 +456,14 @@ function Breadcrumb({ focus, selection, onHome, onPocket }: { focus: string | nu
       </Crumb>
       {pocket && (
         <>
-          {sep}
-          <Crumb>{DOMAIN[pocket.domain].title}</Crumb>
+          <span className="hidden items-center 2xl:flex">
+            {sep}
+            <Crumb>{DOMAIN[pocket.domain].title}</Crumb>
+          </span>
           {sep}
           <Crumb onClick={leaf ? () => onPocket(pocket.id) : undefined} current={!leaf}>
-            {pocket.title}
+            <span className="hidden xl:inline">{pocket.title}</span>
+            <span className="xl:hidden">{pocket.short}</span>
           </Crumb>
         </>
       )}
@@ -427,27 +480,25 @@ function Breadcrumb({ focus, selection, onHome, onPocket }: { focus: string | nu
 }
 
 function Readout({ r, mig }: { r: Ref | null; mig: MigrationMap }) {
-  if (!r) {
-    return <div className="font-mono text-[11px] text-[var(--color-faint)]">click a pocket to open it · drag to pan · scroll to zoom · Esc to go back</div>
-  }
+  if (!r) return null
   let parts: string[] = []
   if (r.kind === 'program') {
     const p = PROGRAM[r.id]
     parts = [r.id, p.title, `${p.mode} ${p.lang}`, `${p.loc.toLocaleString()} lines`, MIGRATION_META[mig[r.id] ?? 'legacy'].label]
   } else if (r.kind === 'store') {
     const s = STORE[r.id]
-    parts = [r.id, s.title, s.kind.toUpperCase(), s.shared ? `shared by ${pocketsUsingStore(r.id).length} pockets` : 'local']
+    parts = [r.id, s.title, s.kind.toUpperCase(), s.shared ? `shared by ${pocketsUsingStore(r.id).length} pockets` : 'used by one pocket']
   } else if (r.kind === 'pocket') {
     const p = POCKET[r.id]
-    parts = [p.title, `${p.programs.length} programs`, `iso ${p.isolation.toFixed(2)} ${isoWord(p.isolation)}`, TEAMS[p.team].owner]
+    parts = [p.title, `${p.programs.length} programs`, isoWord(p.isolation), TEAMS[p.team].owner]
   } else {
     const e = ENTRIES.find((x) => x.id === r.id)
-    parts = [r.id, e?.kind === 'job' ? 'JCL job' : 'CICS transaction', `→ ${e?.program}`]
+    parts = [r.id, e?.kind === 'job' ? 'JCL job' : 'CICS transaction', `starts ${e?.program}`]
   }
   return (
-    <div className="flex items-center gap-2 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 py-1.5 font-mono text-[11.5px]">
+    <div className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-0.5 rounded-[8px] border border-[var(--color-line)] bg-[var(--color-panel)] px-2.5 py-1.5 font-mono text-[11.5px]">
       {parts.map((t, i) => (
-        <span key={i} className={cn('truncate', i === 0 ? 'text-[var(--color-ink)]' : 'text-[var(--color-faint)]')}>
+        <span key={i} className={i === 0 ? 'text-[var(--color-ink)]' : 'text-[var(--color-faint)]'}>
           {i > 0 && <span className="mr-2 text-[var(--color-line-2)]">·</span>}
           {t}
         </span>
@@ -473,13 +524,13 @@ function Swatch({ color, label, pulse, line, dashed }: { color: string; label: s
 
 function Legend({ lens, blastSource, hasHighlight }: { lens: Lens; blastSource: string | null; hasHighlight: boolean }) {
   return (
-    <div className="pointer-events-auto flex items-center gap-3.5 rounded-[10px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5">
+    <div className="pointer-events-auto flex flex-wrap items-center gap-x-3.5 gap-y-1 rounded-[10px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-1.5">
       {lens === 'migration' && MIGRATION_ORDER.map((m: Migration) => <Swatch key={m} color={MIG_COLOR[m]} label={MIGRATION_META[m].label} pulse={m === 'shadowing'} />)}
       {lens === 'coupling' && (
         <>
-          <Swatch color={C.good} label="isolated ≥ .6" />
-          <Swatch color={C.warn} label="coupled" />
-          <Swatch color={C.bad} label="tangled < .3" />
+          {ISO_LEVELS.map((l) => (
+            <Swatch key={l.word} color={l.color} label={l.word} />
+          ))}
           <span className="text-[11px] text-[var(--color-faint)]">thicker = more pockets share it</span>
         </>
       )}

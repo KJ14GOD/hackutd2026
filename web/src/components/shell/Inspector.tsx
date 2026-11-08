@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
-import { ArrowRight, ChevronLeft, ChevronRight, Code2, Play, X } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { ChevronLeft, ChevronRight, Code2, PanelRightClose, Play, X } from 'lucide-react'
 import type { AgentThought, Decision } from '@/types'
 import type { PendingQuestion } from '@/data/source'
 import {
@@ -39,6 +39,9 @@ import { Btn, Chip, Dot, IconBtn, SectionHead, Segmented, Stat } from './kit'
 
 export type InspectorTab = 'inspect' | 'agent' | 'people'
 
+/** fixed width, so the map can keep its camera centred beside it when it overlays */
+export const INSPECTOR_W = 368
+
 export interface LiveInfo {
   id: string
   name: string
@@ -65,12 +68,14 @@ interface Props {
   onPick: (r: Ref) => void
   onHover: (r: Ref | null) => void
   onClose: () => void
+  /** hide the whole panel (the toolbar can bring it back) */
+  onHide?: () => void
 }
 
 export function Inspector(p: Props) {
   return (
-    <aside className="flex h-full w-[368px] shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-bg-2)]">
-      <div className="flex h-11 items-center justify-between border-b border-[var(--color-line)] pl-3 pr-1.5">
+    <aside className="flex h-full shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-bg-2)]" style={{ width: INSPECTOR_W }}>
+      <div className="flex h-11 shrink-0 items-center gap-1 border-b border-[var(--color-line)] pl-3 pr-1.5">
         <Segmented
           size="sm"
           label="Inspector tab"
@@ -82,9 +87,15 @@ export function Inspector(p: Props) {
             { id: 'people', label: <>People <Count n={p.pending.length} warn /></> },
           ]}
         />
+        <span className="flex-1" />
         {p.selection && p.tab === 'inspect' && (
-          <IconBtn label="Clear selection" onClick={p.onClose}>
+          <IconBtn label="Clear selection (Esc)" onClick={p.onClose}>
             <X className="size-4" />
+          </IconBtn>
+        )}
+        {p.onHide && (
+          <IconBtn label="Hide inspector" onClick={p.onHide}>
+            <PanelRightClose className="size-4" />
           </IconBtn>
         )}
       </div>
@@ -136,18 +147,47 @@ function RefLink({ r, onPick, onHover, children }: { r: Ref; onPick: (r: Ref) =>
   )
 }
 
-/** groma-style relationship row: source → verb → destination */
-function RelRow({ from, verb, to, tone }: { from: ReactNode; verb: string; to: ReactNode; tone?: string }) {
+/* Relationships are grouped by what they mean (reads, writes, calls…), one row
+ * per thing on the other end, so the selected item isn't repeated on every row. */
+const CALL_TAG: Record<string, string> = { calls: 'CALL', transfers: 'XCTL', links: 'LINK' }
+
+function RelGroup({ title, n, children }: { title: string; n: number; children: ReactNode }) {
+  if (!n) return null
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 border-b border-[var(--color-line)] px-4 py-2 last:border-b-0">
-      <div className="min-w-0 truncate">{from}</div>
-      <div className="flex flex-col items-center px-1">
-        <span className="text-[10.5px] leading-none" style={{ color: tone ?? 'var(--color-faint)' }}>{verb}</span>
-        <ArrowRight className="mt-0.5 size-3" style={{ color: tone ?? 'var(--color-faint)' }} />
-      </div>
-      <div className="min-w-0 truncate text-right">{to}</div>
+    <div>
+      <SectionHead right={<span className="tnum font-mono text-[10.5px] text-[var(--color-faint)]">{n}</span>}>{title}</SectionHead>
+      <div className="pb-1">{children}</div>
     </div>
   )
+}
+
+function RelItem({ r, label, sub, tag, tone, onPick, onHover }: { r: Ref; label: string; sub?: string; tag?: string; tone?: string } & Pick<Props, 'onPick' | 'onHover'>) {
+  return (
+    <button
+      type="button"
+      onClick={() => onPick(r)}
+      onMouseEnter={() => onHover(r)}
+      onMouseLeave={() => onHover(null)}
+      className="group flex w-full items-baseline gap-2.5 px-4 py-[5px] text-left transition-colors hover:bg-[var(--color-panel)]"
+    >
+      <span className="shrink-0 font-mono text-[12px] text-[var(--color-ink)] group-hover:text-[var(--color-accent)]">{label}</span>
+      <span className="min-w-0 flex-1 text-[11.5px] leading-snug text-[var(--color-faint)]">{sub}</span>
+      {tag && (
+        <span className="shrink-0 font-mono text-[10.5px]" style={{ color: tone ?? 'var(--color-faint)' }}>
+          {tag}
+        </span>
+      )}
+    </button>
+  )
+}
+
+function StoreItem({ id, ...rel }: { id: string } & Pick<Props, 'onPick' | 'onHover'>) {
+  const shared = STORE[id].shared
+  return <RelItem r={{ kind: 'store', id }} label={id} sub={STORE[id].title} tag={shared ? 'shared' : 'this pocket'} tone={shared ? C.copper : undefined} {...rel} />
+}
+
+function ProgramItem({ id, tag, ...rel }: { id: string; tag?: string } & Pick<Props, 'onPick' | 'onHover'>) {
+  return <RelItem r={{ kind: 'program', id }} label={id} sub={PROGRAM[id]?.title} tag={tag} {...rel} />
 }
 
 function InspectBody(p: Props) {
@@ -162,7 +202,57 @@ function InspectBody(p: Props) {
     <div>
       <Header kind={e.kind === 'job' ? 'Entry point · JCL job' : 'Entry point · CICS transaction'} title={e.id} mono sub={e.desc || (e.kind === 'job' ? 'Batch job submitted by the scheduler.' : 'Started from a 3270 terminal.')} />
       <Hr />
-      <RelRow from={<span className="font-mono text-[12px]">{e.id}</span>} verb={e.kind === 'job' ? 'runs' : 'starts'} to={<RefLink r={{ kind: 'program', id: e.program }} onPick={p.onPick} onHover={p.onHover}>{e.program}</RefLink>} />
+      <RelGroup title={e.kind === 'job' ? 'Runs' : 'Starts'} n={1}>
+        <ProgramItem id={e.program} onPick={p.onPick} onHover={p.onHover} />
+      </RelGroup>
+    </div>
+  )
+}
+
+/* A short, dismissible "start here" for first-time viewers. Stays out of the
+ * way: three lines in the Inspector, gone for good once dismissed. */
+const HINT_KEY = 'shadow-diff:start-here-dismissed'
+function StartHere() {
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(HINT_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  if (hidden) return null
+  const steps = [
+    <>Click a <span className="text-[var(--color-ink)]">pocket</span> (a group of programs that move to Java together) to fly in.</>,
+    <>Click a <span className="text-[var(--color-ink)]">program</span> to see what it reads, writes and calls.</>,
+    <>Press <span className="font-mono text-[var(--color-ink)]">3</span> for Blast radius: what to retest if it changes.</>,
+  ]
+  return (
+    <div className="mx-4 mb-3 rounded-[10px] border border-[var(--color-line)] px-3 py-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[11.5px] font-medium text-[var(--color-muted)]">Start here</span>
+        <button
+          type="button"
+          className="text-[11px] text-[var(--color-faint)] hover:text-[var(--color-ink)]"
+          onClick={() => {
+            setHidden(true)
+            try {
+              localStorage.setItem(HINT_KEY, '1')
+            } catch {
+              /* private mode: just hide it for this session */
+            }
+          }}
+        >
+          Got it
+        </button>
+      </div>
+      <ol className="mt-1.5 space-y-1">
+        {steps.map((s, i) => (
+          <li key={i} className="flex gap-2 text-[11.5px] leading-snug text-[var(--color-faint)]">
+            <span className="tnum font-mono text-[var(--color-muted)]">{i + 1}</span>
+            <span>{s}</span>
+          </li>
+        ))}
+      </ol>
     </div>
   )
 }
@@ -181,6 +271,7 @@ function SystemView(p: Props) {
   return (
     <div>
       <Header kind="System · observed" title="AWS CardDemo" sub={`${PROGRAMS.length} programs in ${POCKETS.length} pockets, ${BUS_ORDER.length} shared data stores. Scanned at ${SOURCE.ref?.slice(0, 7)}.`} />
+      <StartHere />
       <div className="px-4 pb-4 text-[12.5px] leading-relaxed text-[var(--color-muted)]">{LENS_HELP[p.lens]}</div>
       <Hr />
       {p.lens === 'migration' && (
@@ -207,7 +298,16 @@ function SystemView(p: Props) {
         <div>
           <SectionHead>Most tangled pockets</SectionHead>
           {tangled.map((t) => (
-            <PocketRow key={t.id} id={t.id} {...p} right={<span className="font-mono text-[11.5px]" style={{ color: isoColor(t.isolation) }}>{t.isolation.toFixed(2)} {isoWord(t.isolation)}</span>} />
+            <PocketRow
+              key={t.id}
+              id={t.id}
+              {...p}
+              right={
+                <span className="text-[11.5px]" style={{ color: isoColor(t.isolation) }}>
+                  {isoWord(t.isolation)} <span className="tnum font-mono text-[10.5px] text-[var(--color-faint)]">{t.isolation.toFixed(2)}</span>
+                </span>
+              }
+            />
           ))}
           <SectionHead>Busiest shared stores</SectionHead>
           {[...BUS_ORDER]
@@ -297,7 +397,8 @@ function BlastSummary({ id, onPick, onHover }: { id: string } & Pick<Props, 'onP
       {[...byStore.entries()].map(([s, progs]) => (
         <div key={s}>
           <SectionHead right={<span className="font-mono text-[10.5px] text-[var(--color-faint)]">{progs.length}</span>}>
-            via {s} {STORE[s].shared ? '' : '(local)'}
+            via {s} · {STORE[s].title}
+            {STORE[s].shared ? '' : ' (this pocket)'}
           </SectionHead>
           <div className="flex flex-wrap gap-1.5 px-4">
             {progs.map((x) => (
@@ -333,10 +434,16 @@ function PocketDetail({ id, ...p }: { id: string } & Props) {
   return (
     <div>
       <Header kind={<>Pocket · {DOMAIN[pk.domain].title}</>} title={pk.title} sub={`${pk.programs.length} programs · ${pk.loc.toLocaleString()} lines · owned by ${TEAMS[pk.team].owner} (${TEAMS[pk.team].name})`} />
+      <div className="flex items-center gap-1.5 px-4 pb-3">
+        <Chip color={isoColor(pk.isolation)}>{isoWord(pk.isolation)}</Chip>
+        <span className="tnum font-mono text-[11px] text-[var(--color-faint)]" title="Isolation score from the segmenter, 0 (tangled) to 1 (self-contained)">
+          isolation {pk.isolation.toFixed(2)}
+        </span>
+      </div>
       <div className="grid grid-cols-3 gap-3 px-4 pb-4">
         <Stat label="On Java" value={`${Math.round(prog * 100)}%`} color={p.lens === 'migration' ? C.good : undefined} />
-        <Stat label="Isolation" value={pk.isolation.toFixed(2)} color={p.lens === 'coupling' ? isoColor(pk.isolation) : undefined} sub={isoWord(pk.isolation)} />
-        <Stat label="Bus taps" value={cutCost(id)} sub="cut cost" />
+        <Stat label="Programs" value={pk.programs.length} />
+        <Stat label="Links out" value={cutCost(id)} sub="cut cost" />
       </div>
       <Hr />
       <SectionHead>Programs</SectionHead>
@@ -352,20 +459,16 @@ function PocketDetail({ id, ...p }: { id: string } & Props) {
           </button>
         )
       })}
-      <SectionHead>Data</SectionHead>
-      <div className="flex flex-wrap gap-1.5 px-4">
+      <RelGroup title="Shared data (on the bus)" n={shared.length}>
         {shared.map((s) => (
-          <button key={s} type="button" onClick={() => p.onPick({ kind: 'store', id: s })} onMouseEnter={() => p.onHover({ kind: 'store', id: s })} onMouseLeave={() => p.onHover(null)} className="rounded-[6px] border border-[rgba(176,141,87,.45)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-copper)] hover:border-[var(--color-copper)]">
-            {s}
-          </button>
+          <StoreItem key={s} id={s} onPick={p.onPick} onHover={p.onHover} />
         ))}
+      </RelGroup>
+      <RelGroup title="Data only this pocket uses" n={locals.length}>
         {locals.map((s) => (
-          <button key={s} type="button" onClick={() => p.onPick({ kind: 'store', id: s })} onMouseEnter={() => p.onHover({ kind: 'store', id: s })} onMouseLeave={() => p.onHover(null)} className="rounded-[6px] border border-[var(--color-line-2)] px-1.5 py-0.5 font-mono text-[11px] text-[var(--color-muted)] hover:border-[var(--color-faint)]">
-            {s}
-          </button>
+          <StoreItem key={s} id={s} onPick={p.onPick} onHover={p.onHover} />
         ))}
-      </div>
-      <div className="px-4 pt-2 text-[11px] text-[var(--color-faint)]">Copper = on the shared bus. Grey = only this pocket uses it.</div>
+      </RelGroup>
       <div className="h-4" />
     </div>
   )
@@ -378,12 +481,11 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
   const isLive = p.live.id === id
   const io = ioOf(id)
   const b = blastRadius(id)
-  const L = (r: Ref, label: string) => (
-    <RefLink r={r} onPick={p.onPick} onHover={p.onHover}>
-      {label}
-    </RefLink>
-  )
-  const self = <span className="font-mono text-[12px] text-[var(--color-ink)]">{id}</span>
+  const rel = { onPick: p.onPick, onHover: p.onHover }
+  const ents = entriesOf(id)
+  const byMode = (m: string) => io.filter((r) => r.mode === m)
+  const out = callsFrom(id)
+  const inc = callsTo(id)
   return (
     <div>
       <Header
@@ -402,7 +504,7 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
       />
       <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3">
         <Chip color={m === 'legacy' ? undefined : MIG_COLOR[m]}>{MIGRATION_META[m].label}</Chip>
-        <Chip color={isoColor(pk.isolation)}>pocket {pk.isolation.toFixed(2)} {isoWord(pk.isolation)}</Chip>
+        <Chip color={isoColor(pk.isolation)}>Pocket: {isoWord(pk.isolation)}</Chip>
         {entriesOf(id).map((e) => (
           <Chip key={e.id} mono>
             {e.kind === 'job' ? 'job' : 'cics'} {e.id}
@@ -456,25 +558,37 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
       )}
 
       <Hr />
-      <SectionHead>Relationships</SectionHead>
-      {entriesOf(id).map((e) => (
-        <RelRow key={e.id} from={L({ kind: 'entry', id: e.id }, e.id)} verb={e.kind === 'job' ? 'runs' : 'starts'} to={self} />
-      ))}
-      {io.map((r) => (
-        <RelRow
-          key={r.store}
-          from={self}
-          verb={r.mode === 'readwrite' ? 'reads + writes' : r.mode === 'write' ? 'writes' : 'reads'}
-          to={L({ kind: 'store', id: r.store }, r.store)}
-          tone={STORE[r.store].shared ? C.copper : undefined}
-        />
-      ))}
-      {callsFrom(id).map((c) => (
-        <RelRow key={`f-${c.to}`} from={self} verb={c.kind === 'transfers' ? 'XCTL to' : c.kind} to={L({ kind: 'program', id: c.to }, c.to)} />
-      ))}
-      {callsTo(id).map((c) => (
-        <RelRow key={`t-${c.from}`} from={L({ kind: 'program', id: c.from }, c.from)} verb={c.kind === 'transfers' ? 'XCTL to' : c.kind} to={self} />
-      ))}
+      <RelGroup title="Started by" n={ents.length}>
+        {ents.map((e) => (
+          <RelItem key={e.id} r={{ kind: 'entry', id: e.id }} label={e.id} sub={e.kind === 'job' ? 'JCL batch job' : 'CICS transaction'} {...rel} />
+        ))}
+      </RelGroup>
+      <RelGroup title="Reads and writes" n={byMode('readwrite').length}>
+        {byMode('readwrite').map((r) => (
+          <StoreItem key={r.store} id={r.store} {...rel} />
+        ))}
+      </RelGroup>
+      <RelGroup title="Writes" n={byMode('write').length}>
+        {byMode('write').map((r) => (
+          <StoreItem key={r.store} id={r.store} {...rel} />
+        ))}
+      </RelGroup>
+      <RelGroup title="Reads" n={byMode('read').length}>
+        {byMode('read').map((r) => (
+          <StoreItem key={r.store} id={r.store} {...rel} />
+        ))}
+      </RelGroup>
+      <RelGroup title="Calls" n={out.length}>
+        {out.map((c) => (
+          <ProgramItem key={c.to} id={c.to} tag={CALL_TAG[c.kind]} {...rel} />
+        ))}
+      </RelGroup>
+      <RelGroup title="Called by" n={inc.length}>
+        {inc.map((c) => (
+          <ProgramItem key={c.from} id={c.from} tag={CALL_TAG[c.kind]} {...rel} />
+        ))}
+      </RelGroup>
+      {!ents.length && !io.length && !out.length && !inc.length && <div className="px-4 py-3 text-[12px] text-[var(--color-faint)]">The scan found no links for this program.</div>}
       <div className="h-4" />
     </div>
   )
@@ -498,24 +612,19 @@ function StoreDetail({ id, ...p }: { id: string } & Props) {
         </div>
       )}
       <Hr />
-      <SectionHead>Who touches it</SectionHead>
-      {[...new Set([...sb.writers, ...sb.readers])].map((x) => {
-        const w = sb.writers.includes(x)
-        const r = sb.readers.includes(x)
+      {(() => {
+        const both = sb.writers.filter((x) => sb.readers.includes(x))
+        const onlyW = sb.writers.filter((x) => !both.includes(x))
+        const onlyR = sb.readers.filter((x) => !both.includes(x))
+        const item = (x: string) => <ProgramItem key={x} id={x} tag={POCKET[PROGRAM[x].pocket].short} onPick={p.onPick} onHover={p.onHover} />
         return (
-          <RelRow
-            key={x}
-            from={
-              <RefLink r={{ kind: 'program', id: x }} onPick={p.onPick} onHover={p.onHover}>
-                {x}
-              </RefLink>
-            }
-            verb={w && r ? 'reads + writes' : w ? 'writes' : 'reads'}
-            to={<span className="font-mono text-[12px] text-[var(--color-ink)]">{id}</span>}
-            tone={w ? C.copper : undefined}
-          />
+          <>
+            <RelGroup title="Reads and writes it" n={both.length}>{both.map(item)}</RelGroup>
+            <RelGroup title="Writes it" n={onlyW.length}>{onlyW.map(item)}</RelGroup>
+            <RelGroup title="Reads it" n={onlyR.length}>{onlyR.map(item)}</RelGroup>
+          </>
         )
-      })}
+      })()}
       <SectionHead>Physical datasets</SectionHead>
       <div className="space-y-0.5 px-4 pb-4">
         {st.datasets.map((d) => (

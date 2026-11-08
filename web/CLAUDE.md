@@ -1,6 +1,6 @@
 # Shadow-Diff — Legacy Rewrite Communication Layer
 
-HackUTD 2026. This repo is the **UI layer** (the product). Everything else (map/capture/rewrite/shadow backend) is plumbing. The demo is **tomorrow** and must run **fully standalone — no backend required**.
+HackUTD 2026. `web/` is the **UI layer** (the product) of the Theseus repo; everything else in the repo (map/capture/rewrite/shadow backend) is plumbing. It is its own npm project outside the pnpm workspace (D-027): `cd web && npm install && npm run dev` → http://localhost:5173. The demo must run **fully standalone — no backend required**. See [README.md](README.md) for what is on screen and where it lives.
 
 ## What the system does
 
@@ -17,7 +17,9 @@ Never mix roles: Jev generates nothing; Nemotron makes no typed decisions.
 
 ## Tech stack
 
-Vite + React + TypeScript + Tailwind v4 · Zustand (state) · React Flow (graph) · Recharts · Framer Motion (count-up + layout). Path alias `@/` → `src/`.
+Vite + React 19 + TypeScript + Tailwind v4 · Zustand (state) · lucide-react (icons) · clsx + tailwind-merge (`cn`). Nothing else at runtime. The map is **hand-drawn SVG** (custom isometric projection, camera and tweens in `src/components/map/`), not React Flow; don't add a graph or chart library for it. Lint with `npx oxlint src`. Path alias `@/` → `src/`. Typecheck with `npx tsc -b`.
+
+Look: dark, near-black (`#000` map, `#0b0b0e`/`#121216` panels), Inter + JetBrains Mono, one cyan accent (`#45c7f5`) for selection and the live component; green = on Java / safe, amber = cutting over / retest, red = tangled. Copper (`#cb9d5f`) is reserved for data wires. Map colors live in `src/components/map/theme.ts` and must stay in step with the CSS tokens in `src/index.css`.
 
 ## Architecture — the realtime seam (do NOT break this)
 
@@ -28,17 +30,25 @@ The UI **never** talks to a backend directly. It reads a Zustand store (`@/store
 
 Swapping backends is a **one-line change** in `src/data/factory.ts`. No UI component imports a source directly. Source emits `SourceEvent`s → store reducer applies them → components read granular selectors.
 
+The codebase graph is separate from the live stream: `src/data/carddemo.graph.json` is a committed snapshot of the segmenter output (`out/segmentation.json`), made by `node scripts/snapshot-graph.mjs <path>`. `src/data/carddemo.ts` adds curation (pocket titles, rows, teams, seed migration states, flows) and pure queries (`blastRadius`, `cutCost`, `migrationProgress`, …). Never hand-edit the JSON; re-run the script.
+
 ### File ownership (keep disjoint for parallel work)
-- Foundation (shared, read-only to screens): `src/types.ts`, `src/data/**`, `src/store/**`, `App.tsx`, `src/index.css` theme tokens.
-- Screens (one owner each): `src/components/dashboard/**`, `src/components/graph/**`, `src/components/inspect/**`.
+- Foundation (shared): `src/types.ts`, `src/data/**`, `src/store/**`, `App.tsx`, `src/index.css` theme tokens.
+- Map: `src/components/map/**` (floorplan in `layout.ts`, renderer + camera in `MapCanvas.tsx`, highlight rules in `highlight.ts`).
+- Shell: `src/components/shell/**` (Systems sidebar, Inspector, Search, kit) and `src/components/mission/MissionControl.tsx` (screen state, keyboard, layout).
 
-## Screens (priority order)
+## The screen: mission control (one screen, three columns)
 
-1. **Shadow-diff dashboard (hero)** — animated match-rate (82%→99%), live match-% chart, mismatches by category (formatting/rounding/logic/noise) + root cause, locked cutover slider (unlocks at 99%). Money moment: Slack answer lands → number jumps <1s.
-2. **Dependency graph** — nodes=programs, edges=calls/shared-files, colored by isolation, chosen component highlighted (React Flow, precomputed layout — no live force sim on stage).
-3. **Mismatch detail** — input / old / new diff + COBOL-vs-rewrite snippet; evidence widget chosen by Jev.
-4. **Decision log** — question → answer → who → test → # mismatches resolved.
-5. **Nemotron reasoning panel** + **Jev decisions tab** beside it.
+1. **Map (centre, hero)** — CardDemo as a chip floorplan: 6 shared data files are copper bus lanes, 15 pockets sit in two rows and tap into the lanes they use; clicking a pocket flies in and raises its programs, local files and entry points (semantic zoom). Views: **Iso** / **Layers** (data, programs, entry points as stacked planes). Lenses: **Migration / Coupling / Blast radius / Owners**. Named **flows** step through a business process. Precomputed layout; no live force sim on stage.
+2. **Systems sidebar (left)** — business domains as an accordion with % on Java, pockets with isolation in words, filter box, shared data stores (id + name).
+3. **Inspector (right)** — **Inspect** (system, pocket, program with live shadow card + "View source" link, data file, flow), **Agent** (Nemotron log rows), **People** (Slack questions with COBOL vs Java values and Keep COBOL / Use rewrite; answered list).
+4. **Top bar** — on-Java progress, shadowing chip with live match rate, search, scenario, Replay, Reset, **Simulate answer**. Money moment: Simulate answer → match rate jumps in <1s and the question moves to Answered.
+
+Keyboard: `1`–`4` lenses, `L` view, `M` map only, `F` fit, `/` or `Ctrl K` search, `Esc` back, `←`/`→` flow steps.
+
+Layout rules: the map-only toggle hides both panels; below 1440 px the sidebar starts hidden and the Inspector overlays the map (MapCanvas gets `insetRight` so fits stay clear of it). Map labels are screen-facing billboards shown only when they fit. The camera is imperative (a ref written straight to the SVG transform and a `--k` CSS variable, plus a coarse `kR` state for label fitting), so panning never re-renders React. One noun: **pocket**; one isolation scale: `ISO_LEVELS` in `theme.ts`.
+
+Still to build (the deleted earlier screens had versions in git history): mismatch detail with the Jev-chosen evidence widget, decision log, cutover 1/10/100 control, Jev decisions tab.
 
 ## Data contracts (`src/types.ts`)
 

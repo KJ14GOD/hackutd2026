@@ -1,6 +1,6 @@
 # How this project is built — step by step
 
-A map of how the Shadow Diff dashboard is constructed, in the order it was built and the order you'd rebuild it. Each step names the files it owns and the one idea that makes it work.
+A map of how the Shadow Diff mission-control UI is constructed, in the order you'd rebuild it. Each step names the files it owns and the one idea that makes it work.
 
 > Rule that holds the whole thing together: **the UI never talks to a backend.** It reads a store that is fed by a swappable source. Today that source is a scripted mock; tomorrow it's the real backend — one line changes.
 
@@ -8,15 +8,15 @@ A map of how the Shadow Diff dashboard is constructed, in the order it was built
 
 ## 1 · Scaffold & tooling
 
-- **Vite + React + TypeScript**, **Tailwind v4** (via `@tailwindcss/vite`), path alias `@/ → src/`.
-- Files: `vite.config.ts`, `tsconfig.app.json` (paths), `package.json`.
-- Libraries: `zustand` (state), `recharts` (chart), `motion` (animation), `lucide-react` (icons). (React Flow was tried for the graph, then dropped — the graph is hand-drawn.)
+- **Vite + React 19 + TypeScript**, **Tailwind v4** (via `@tailwindcss/vite`), path alias `@/ → src/`, `resolveJsonModule` on for the graph snapshot.
+- Files: `vite.config.ts`, `tsconfig.app.json`, `package.json`. Lives in `web/`, outside the root pnpm workspace (D-027).
+- Libraries: `zustand` (state), `lucide-react` (icons), `clsx` + `tailwind-merge` (`cn`). Nothing else at runtime. Lint: `npx oxlint src`.
 
 ## 2 · Design system (theme tokens)
 
-- One place defines every color/spacing as CSS variables — flip them and the whole app re-skins.
-- File: `src/index.css` — light "Apple" tokens (`--color-page`, `--color-ink`, `--color-accent`, …), plus small transition classes for the graph.
-- Shared primitives: `src/components/ui/primitives.tsx` — `Panel`, `Chip`, `ModelBadge`, `JevChip`.
+- `src/index.css` — Tailwind v4 `@theme` tokens: near-black surfaces (`--color-bg`, `--color-panel`, `--color-line`), ink/muted/faint text, one cyan accent, good/warn/bad, copper for data wires, Inter + JetBrains Mono.
+- `src/components/map/theme.ts` — the same palette as hex for the SVG map (faces are shaded in code), plus `MIG_COLOR`, `TEAM_COLOR`, and the one isolation scale `ISO_LEVELS` (`isoColor`, `isoWord`).
+- `src/components/shell/kit.tsx` — `Segmented`, `Btn`, `IconBtn`, `Chip`, `Dot`, `SectionHead`, `Stat`, `Kbd`.
 
 ## 3 · Data contracts (the shared shapes)
 
@@ -42,41 +42,46 @@ A map of how the Shadow Diff dashboard is constructed, in the order it was built
 
 ## 6 · Scenario mock data
 
-- File: `src/data/scenarios.ts`. Two self-contained scenarios (Transaction Poster, Interest Calculator): the component, its mismatches (with triage + evidence widget), a **scripted decision sequence** (each Slack answer → match-rate jump + generated test), and seed Nemotron reasoning.
+- File: `src/data/scenarios.ts`. Two self-contained scenarios (Transaction Poster · CBTRN02C, Interest Calculator · CBACT04C): the component, its mismatches (with triage + evidence widget), a **scripted decision sequence** (each Slack answer → match-rate jump + generated test), and seed Nemotron reasoning.
 
-## 7 · App shell
+## 7 · The codebase graph (real CardDemo structure)
 
-- File: `src/App.tsx` — left sidebar nav (Overview / Architecture / Decisions), the model badges footer, and the page header.
-- File: `src/components/shell/DemoBar.tsx` — the demo controls: scenario switch, **Simulate Slack answer** (the hero moment), Live/Pause, **Replay recorded run** (hands-free safety net), Reset.
+- `scripts/snapshot-graph.mjs` reads the segmenter output (`out/segmentation.json`) and writes `src/data/carddemo.graph.json`: programs, pockets, domains, stores, read/write links, calls, entry points. Dataset names are collapsed to short ids (ACCTDATA, TRANSACT, …). Run: `node scripts/snapshot-graph.mjs <path to segmentation.json>`.
+- `src/data/carddemo.ts` adds curation (pocket titles and row order, program/store titles, teams, seed migration states, flows) and pure queries: `ioOf`, `callsFrom/To`, `sharedStoresOfPocket`, `cutCost`, `migrationProgress`, `blastRadius` (readers of what X writes + transitive callers), GitHub source links.
 
-## 8 · Screen — Overview (the hero)
+## 8 · The floorplan (layout, computed once)
 
-- Folder: `src/components/dashboard/**`.
-- Animated match-rate that counts up and flashes on a jump (`MatchRateHero` + `AnimatedNumber`), live match-% chart with the 99% threshold line (`MatchChart`), mismatch breakdown by category + triage (`MismatchBreakdown`), and the cutover 1/10/100 control locked until 99% (`CutoverControl`).
+- `src/components/map/layout.ts` turns the graph into a chip floorplan in world units: shared stores become **bus lanes** (with registers at the left end), pockets sit in two rows facing the bus, programs are staggered so wires pass between them, local stores are tiles on the outer edge, cross-pocket calls run in a control channel. Every wire is orthogonal. Exported once as `LAYOUT`.
+- `src/components/map/iso.ts` — the isometric projection (`proj`), box faces, floor-engraved text, shading helpers.
 
-## 9 · Screen — Decisions
+## 9 · The map renderer (SVG + camera)
 
-- Folder: `src/components/inspect/**`.
-- Mismatch list grouped by triage bucket, a detail pane (input / old vs new diff, COBOL-vs-Java snippets, a **Jev-chosen evidence widget**, and the Slack-style [Old][New][Neither] card), the **decision log** (Proposed → Accepted, "resolves N mismatches"), and the **Nemotron reasoning / Jev decisions** tabbed panel.
+- `src/components/map/MapCanvas.tsx` draws the die, grid, domain regions, lanes, taps, pockets, programs, local tiles and entry points as SVG.
+- **Camera:** translate/scale with tweened `flyTo` (log-space zoom), wheel zoom about the cursor, drag to pan vs click to pick (4 px threshold), fit-to-box for the overview, a focused pocket, or a flow step (pocket + the data lane it touches). The camera lives in a ref: `setCamera` writes the `<g>` transform, a `--k` CSS variable, the zoom % and the mini-map directly, so panning never re-renders React. A coarse `kR` state changes only when zoom moves ~20%, to refit labels. `insetRight` keeps fits clear of an overlaid Inspector.
+- **Labels:** names you navigate by are `Billboard`s (screen-facing, constant size via `scale(1/var(--k))`, dark halo) and show only when they fit (`fitName`); faint background labels stay engraved on the floor.
+- **Mini-map** (bottom right, with zoom controls): appears past the overview zoom; click or drag to move the camera.
+- **Semantic zoom:** each pocket has an "open" tween; opening flattens it to a slab and raises its programs, swapping pocket-level taps for program-level ones. **Layers** lifts programs and entry points onto their own planes.
+- `src/components/map/highlight.ts` — one `Highlight` model (programs/stores/links/pockets with roles) built from a selection, the blast radius, or a flow step; the renderer dims everything else (never hides it).
+- `src/components/map/useTween.ts` — rAF tweens that respect reduced motion.
 
-## 10 · Screen — Architecture (the dependency graph)
+## 10 · The shell
 
-- Folder: `src/components/graph/` (`GraphScreen.tsx`).
-- **groma.md-style C4 blueprint**: dark, monospace, nested **System → Container → Component** boxes drawn as thin lines, with **orthogonal wires** between components (dashed = writes). Data = CardDemo (13 programs / 10 files / 6 segments) "scanned with groma.md".
-- Views: **2D** (flat C4), **Iso** (CSS-isometric tilt), **Layers** (stacked bands).
-- **Multi-select**: click multiple components and every wire touching any of them lights up (so two or more can be connected at once); the rest dims. Click canvas to clear. Pan + zoom + Fit.
+- `src/components/mission/MissionControl.tsx` — the one screen: lens/view/focus/selection/flow state, highlight precedence (flow → blast → selection → hover), keyboard, top bar, toolbar (breadcrumb, view + lens switches, map-only toggle), canvas overlays (readout, legend). Below 1440 px the sidebar starts hidden and the Inspector overlays the map.
+- `src/components/shell/ErrorBoundary.tsx` — wraps the screen in `App.tsx`; Reset view remounts it.
+- `src/components/shell/Hierarchy.tsx` — **Systems** sidebar: domain accordion, % on Java, areas with isolation in words, filter, shared data list.
+- `src/components/shell/Inspector.tsx` — **Inspect / Agent / People** tabs: lens-aware system view with a dismissible Start here note, pocket/program/store/entry details with relationships grouped by kind, live shadow card, blast summary, flow stepper, Nemotron log, Slack questions.
+- `src/components/shell/Search.tsx` — search programs, pockets, data and jobs.
 
 ## 11 · Demo safety net
 
-- Everything runs offline from the mock. `Replay recorded run` auto-fires the scripted answers hands-free, and two scenario presets prove it isn't hardcoded to one component.
+- Everything runs offline from the mock and the graph snapshot. **Simulate answer** fires the next scripted Slack answer (match rate jumps, question moves to Answered); **Replay** auto-answers hands-free; two scenario presets prove it isn't hardcoded to one component.
 
-## 12 · Config & running
+## 12 · Running
 
-- `.claude/settings.local.json` grants edit/build permissions (for agent-assisted work).
-- Run: `npm install` then `npm run dev` → http://localhost:5173. Build check: `npm run build`.
+- `npm install` then `npm run dev` → http://localhost:5173. Typecheck: `npx tsc -b`. Build: `npm run build`.
 
 ---
 
 ## The one-paragraph version
 
-Scaffold Vite/React/TS/Tailwind → define theme tokens and shared primitives → write the data contracts → build the **store + swappable source** (mock now, real backend later) and the **Jev decision seam** → load scripted scenario data → assemble the sidebar shell + demo controls → build the three screens (Overview hero, Decisions log, Architecture C4 graph) → everything reads the store, so a single scripted "Slack answer" ripples through every screen with no backend.
+Scaffold Vite/React/TS/Tailwind → define dark theme tokens and a small kit → write the data contracts → build the **store + swappable source** (mock now, real backend later) and the **Jev decision seam** → load scripted scenarios → snapshot the real CardDemo graph from the segmenter → compute a chip floorplan once → render it as an isometric SVG with a flying camera, semantic zoom, layers, lenses and flows → wrap it in the Systems sidebar, Inspector and top bar. Everything reads the store, so a single scripted "Slack answer" ripples through the map, the Inspector and the top bar with no backend.
