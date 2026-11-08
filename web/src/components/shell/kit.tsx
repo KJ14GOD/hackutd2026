@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { ArrowDownRight, ArrowUpRight, ChevronRight, Minus } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 /* Small dark-silicon primitives for the mission-control shell. */
@@ -96,14 +97,66 @@ export function SectionHead({ children, right }: { children: ReactNode; right?: 
   )
 }
 
-export function Stat({ label, value, sub, color }: { label: string; value: ReactNode; sub?: ReactNode; color?: string }) {
+/* A trend delta, SnowUI-style: arrow + value, green rising / red falling.
+ * `trend` is the direction of movement; `good` says which direction is positive
+ * (defaults to up = good, so rising reads green). Kept small and tabular. */
+export function Delta({ value, trend, good = 'up' }: { value: string; trend: 'up' | 'down' | 'flat'; good?: 'up' | 'down' }) {
+  const positive = trend === 'flat' ? null : trend === good
+  const color = positive === null ? 'var(--color-faint)' : positive ? 'var(--color-good)' : 'var(--color-bad)'
+  const Icon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : Minus
   return (
-    <div className="min-w-0">
+    <span className="tnum inline-flex items-center gap-0.5 text-[11px] font-medium" style={{ color }}>
+      {value}
+      <Icon className="size-3" strokeWidth={2.5} />
+    </span>
+  )
+}
+
+export function Stat({ label, value, sub, color, delta, card }: {
+  label: string
+  value: ReactNode
+  sub?: ReactNode
+  color?: string
+  delta?: { value: string; trend: 'up' | 'down' | 'flat'; good?: 'up' | 'down' }
+  card?: boolean
+}) {
+  return (
+    <div className={cn('min-w-0', card && 'rounded-[10px] border border-[var(--color-line)] bg-[var(--color-panel)] px-3 py-2.5')}>
       <div className="text-[11.5px] text-[var(--color-faint)]">{label}</div>
-      <div className="tnum mt-0.5 text-[22px] font-semibold tracking-[-0.02em]" style={{ color: color ?? 'var(--color-ink)' }}>
-        {value}
+      <div className="mt-0.5 flex items-baseline gap-2">
+        <span className="tnum text-[22px] font-semibold tracking-[-0.02em]" style={{ color: color ?? 'var(--color-ink)' }}>
+          {value}
+        </span>
+        {delta && <Delta {...delta} />}
       </div>
       {sub && <div className="mt-0.5 text-[11.5px] text-[var(--color-faint)]">{sub}</div>}
+    </div>
+  )
+}
+
+/* Collapsible section: an eyebrow header with a chevron that abstracts
+ * secondary detail behind a dropdown so the main view stays uncluttered.
+ * `right` shows a count or summary even while collapsed. */
+export function Disclosure({ title, right, defaultOpen = false, children }: {
+  title: string
+  right?: ReactNode
+  defaultOpen?: boolean
+  children: ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-1.5 px-4 pb-2 pt-4 text-left"
+      >
+        <ChevronRight className={cn('size-3.5 shrink-0 text-[var(--color-faint)] transition-transform duration-200', open && 'rotate-90')} />
+        <span className="eyebrow">{title}</span>
+        {right != null && <span className="ml-auto text-[11px] text-[var(--color-faint)]">{right}</span>}
+      </button>
+      {open && <div className="pb-1">{children}</div>}
     </div>
   )
 }

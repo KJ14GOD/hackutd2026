@@ -1,10 +1,10 @@
 @import 'tailwindcss';
 
 /* ------------------------------------------------------------------ *
- * Shadow Diff — "dark silicon".
- * Graphite die, copper traces, one cyan accent for live/selected.
+ * Argus Labs — "dark silicon".
+ * Graphite die, copper traces, one blue accent for live/selected.
  * Status colors are muted and always paired with a word.
- * Inter for UI, JetBrains Mono for anything that is code or data.
+ * Geist for UI, Geist Mono for anything that is code or data.
  * Map colors live in src/components/map/theme.ts; keep them in step.
  * ------------------------------------------------------------------ */
 @theme {
@@ -19,9 +19,9 @@
   --color-muted: #a9afba;
   --color-faint: #73737e;
 
-  --color-accent: #45c7f5;
-  --color-accent-bright: #88ddf8;
-  --color-accent-dim: rgba(69, 199, 245, 0.16);
+  --color-accent: #7fb2ff;
+  --color-accent-bright: #a9cbff;
+  --color-accent-dim: rgba(127, 178, 255, 0.16);
   --color-copper: #cb9d5f;
 
   --color-good: #37ca95;
@@ -30,8 +30,8 @@
   --color-agent: #b4a8f8;
 
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * {
@@ -47,8 +47,8 @@ body {
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.006em;
   text-rendering: optimizeLegibility;
   overflow: hidden;
 }
