@@ -36,6 +36,8 @@ controls.setCutover(1 | 10 | 100)     // guarded: no-op below threshold
 controls.scenarios()                  // {id,name}[]
 ```
 
+Requirements actions live on `controls.req` (`useStore(selectReqActions)`), the world on `useStore(selectReqs)`. Every action takes `as` (the viewer id from `useUi`); rules live in `@/data/requirements` and are enforced in the mock too, never only in the UI.
+
 ## Types (`@/types`) — the shapes you render
 
 - `Component { id, name, isolation, coverage, status, matchRate, whyPicked, language }`

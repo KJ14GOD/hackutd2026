@@ -16,12 +16,14 @@ import {
 } from '@/data/carddemo'
 import { G, LAYOUT, type PocketGeo, type TraceGeo } from './layout'
 import { box, clamp, floorText, lerp, mix, path, poly, proj, rect, shade, wrap, ZS, type P3 } from './iso'
-import { C, MIG_COLOR, TEAM_COLOR, inkOn, isoColor, isoWord } from './theme'
+import { C, GATE_COLOR, MIG_COLOR, TEAM_COLOR, inkOn, isoColor, isoWord, type GateState } from './theme'
 import { useTweenMap, easeInOut } from './useTween'
 import type { Highlight } from './highlight'
 import { Btn, IconBtn } from '@/components/shell/kit'
 
-export type Lens = 'migration' | 'coupling' | 'blast' | 'owners'
+export type Lens = 'migration' | 'coupling' | 'blast' | 'owners' | 'gate'
+/** the requirements gate per pocket, for the Requirements lens ('locked' = restricted and the viewer has no access) */
+export type PocketGate = { state: GateState; blockers: number }
 export type View = 'iso' | 'layers'
 
 export interface MapHandle {
@@ -37,6 +39,8 @@ interface Props {
   hover: Ref | null
   highlight: Highlight | null
   mig: MigrationMap
+  /** per pocket, for the Requirements lens */
+  gate?: Record<string, PocketGate>
   live: { id: string; pending: number } | null
   /** shared stores the camera must also keep in frame (flow steps) */
   frame?: string[]
@@ -96,7 +100,7 @@ function focusBox(id: string, frame: string[] = []) {
 }
 
 export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, ref) {
-  const { lens, view, focus, selection, hover, highlight: hl, mig, live, frame, onPick, onHover, onOpenMessages } = props
+  const { lens, view, focus, selection, hover, highlight: hl, mig, gate, live, frame, onPick, onHover, onOpenMessages } = props
   const inset = props.insetRight ?? 0
   const frameKey = (frame ?? []).join(',')
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -341,6 +345,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
     if (lens === 'migration') return MIG_COLOR[mig[id] ?? 'legacy']
     if (lens === 'coupling') return mix(C.block, isoColor(POCKET[p.pocket].isolation), 0.62)
     if (lens === 'owners') return mix(C.block, TEAM_COLOR[POCKET[p.pocket].team], 0.72)
+    if (lens === 'gate' && !hl) return mix(C.block, GATE_COLOR[gate?.[p.pocket]?.state ?? 'none'], 0.5)
     const role = hl?.programs.get(id)
     if (role === 'source') return C.accent
     if (role === 'hit') return C.warn
@@ -351,6 +356,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
     const p = POCKET[id]
     if (lens === 'coupling') return mix(C.block, isoColor(p.isolation), 0.58)
     if (lens === 'owners') return mix(C.block, TEAM_COLOR[p.team], 0.68)
+    if (lens === 'gate') return mix(C.block, GATE_COLOR[gate?.[id]?.state ?? 'none'], 0.55)
     if (lens === 'blast' && hl) {
       const roles = p.programs.map((x) => hl.programs.get(x))
       if (roles.includes('source')) return mix(C.block, C.accent, 0.66)
@@ -360,10 +366,23 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
   }
 
   const pocketMetric = (id: string): string => {
+    const m = lensMetric(id)
+    // restricted pockets say so in every lens (the viewer can't see their requirements)
+    return gate?.[id]?.state === 'locked' && lens !== 'gate' ? `restricted · ${m}` : m
+  }
+  const lensMetric = (id: string): string => {
     const p = POCKET[id]
     if (lens === 'migration') return `${Math.round(migrationProgress(mig, p.programs) * 100)}% on Java`
     if (lens === 'coupling') return isoWord(p.isolation)
     if (lens === 'owners') return TEAMS[p.team].owner
+    if (lens === 'gate' && !hl) {
+      const g = gate?.[id]
+      if (!g || g.state === 'none') return 'no requirements'
+      if (g.state === 'locked') return 'restricted'
+      if (g.state === 'done') return 'migrated'
+      if (g.state === 'open') return 'gate open'
+      return `${g.blockers} blocking`
+    }
     if (hl) {
       const n = p.programs.filter((x) => hl.programs.get(x) === 'hit').length
       if (p.programs.some((x) => hl.programs.get(x) === 'source')) return 'changing'
@@ -609,6 +628,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
               live={live}
               top={pocketTop(pid)}
               metric={pocketMetric(pid)}
+              metricColor={lens === 'gate' && gate?.[pid] && !hl ? GATE_COLOR[gate[pid].state] : undefined}
               progColor={progColor}
               dim={dimFor(pocketLit(pid)) * focusDim(pid)}
               progDim={(id) => dimFor(progLit(id))}
@@ -767,6 +787,7 @@ function PocketView(p: {
   live: { id: string; pending: number } | null
   top: string
   metric: string
+  metricColor?: string
   progColor: (id: string) => string
   dim: number
   progDim: (id: string) => number
@@ -789,7 +810,7 @@ function PocketView(p: {
   // on-screen width (one block unit along x is TW/2 = 32 px before the camera)
   const blockPx = (pg.x1 - pg.x0) * 32 * kR * 1.15
   const name = fitName(pocket.title, pocket.short, blockPx)
-  const metricColor = lens === 'coupling' ? isoColor(pocket.isolation) : C.sub
+  const metricColor = p.metricColor ?? (lens === 'coupling' ? isoColor(pocket.isolation) : C.sub)
   const overview = name.length
     ? [...name.map((t) => ({ text: t, weight: 600 })), ...(blockPx > 60 ? [{ text: p.metric, size: 10.5, color: metricColor }] : [])]
     : []

@@ -39,16 +39,19 @@ The codebase graph is separate from the live stream: `src/data/carddemo.graph.js
 
 ## The screen: mission control (one screen, three columns)
 
-1. **Map (centre, hero)** — CardDemo as a chip floorplan: 6 shared data files are copper bus lanes, 15 pockets sit in two rows and tap into the lanes they use; clicking a pocket flies in and raises its programs, local files and entry points (semantic zoom). Views: **Iso** / **Layers** (data, programs, entry points as stacked planes). Lenses: **Migration / Coupling / Blast radius / Owners**. Named **flows** step through a business process. Precomputed layout; no live force sim on stage.
+1. **Map (centre, hero)** — CardDemo as a chip floorplan: 6 shared data files are copper bus lanes, 15 pockets sit in two rows and tap into the lanes they use; clicking a pocket flies in and raises its programs, local files and entry points (semantic zoom). Views: **Iso** / **Layers** (data, programs, entry points as stacked planes). Lenses: **Migration / Coupling / Blast radius / Owners / Requirements**. Named **flows** step through a business process. Precomputed layout; no live force sim on stage.
 2. **Systems sidebar (left)** — business domains as an accordion with % on Java, pockets with isolation in words, filter box, shared data stores (id + name).
 3. **Inspector (right)** — **Inspect** (system, pocket, program with live shadow card + "View source" link, data file, flow), **Agent** (Nemotron log rows), **People** (Slack questions with COBOL vs Java values and Keep COBOL / Use rewrite; answered list).
-4. **Top bar** — on-Java progress, shadowing chip with live match rate, search, scenario, Replay, Reset, **Simulate answer**. Money moment: Simulate answer → match rate jumps in <1s and the question moves to Answered.
+4. **Top bar** — on-Java progress (2xl and wider), shadowing chip with live match rate, **Viewing as** (stands in for sign-in), search, scenario, Replay, Reset, **Simulate answer**. Money moment: Simulate answer → match rate jumps in <1s and the question moves to Answered.
+5. **Rail (far left)** — Map plus four requirements workspaces (D-028, `REQUIREMENTS_ANALYSIS.md` §12): **Requirements** (review list, detail with History and Checks tabs, conflicts side by side, change request with impact preview and "Show on map"), **Questions** (evidence, context hits, one-click answers, escalation timeline on the sim clock), **Inbox** (what waits on the viewer, grouped by pocket) and **People** (org, ownership with signal and source, corrections, approver list and sign-off). Every screen has loading / empty / error / restricted states and a Business / Engineer toggle remembered per viewer. The pocket Inspector gains **Requirements and progress** (job state, the gate and what blocks it, harness attempts, cutover 1/10/100 for the live pocket).
 
-Keyboard: `1`–`4` lenses, `L` view, `M` map only, `F` fit, `/` or `Ctrl K` search, `Esc` back, `←`/`→` flow steps.
+Requirements data: `src/data/requirements.ts` (pure rules: lint, access, quorum, gate, impact, escalation ladder, inbox), `reqEvents.ts` (events + reducer), `reqSeed.ts` (seed world), `reqMock.ts` (the actions, sim clock +1 min per second). Screen state shared across workspaces (workspace, viewer, mode, open ids, impact on map) lives in `src/store/useUi.ts`.
+
+Keyboard: `1`–`5` lenses (5 = Requirements gate), `L` view, `M` map only, `F` fit, `/` or `Ctrl K` search, `Esc` back, `←`/`→` flow steps.
 
 Layout rules: the map-only toggle hides both panels; below 1440 px the sidebar starts hidden and the Inspector overlays the map (MapCanvas gets `insetRight` so fits stay clear of it). Map labels are screen-facing billboards shown only when they fit. The camera is imperative (a ref written straight to the SVG transform and a `--k` CSS variable, plus a coarse `kR` state for label fitting), so panning never re-renders React. One noun: **pocket**; one isolation scale: `ISO_LEVELS` in `theme.ts`.
 
-Still to build (the deleted earlier screens had versions in git history): mismatch detail with the Jev-chosen evidence widget, decision log, cutover 1/10/100 control, Jev decisions tab.
+Still to build (the deleted earlier screens had versions in git history): mismatch detail with the Jev-chosen evidence widget, decision log, Jev decisions tab. Map keys only act when the Map workspace is showing.
 
 ## Data contracts (`src/types.ts`)
 

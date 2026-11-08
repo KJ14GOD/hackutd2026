@@ -2,7 +2,22 @@
 
 Compressed summary of where the UI is right now, to pass along. Latest first.
 
-## Now (uncommitted): professional pass
+## Now (uncommitted): requirements layer (D-028)
+- **Rail + four workspaces:** Requirements, Questions, Inbox, People, plus **Viewing as**
+  and a Business / Engineer toggle remembered per viewer.
+- **Requirements:** review list, detail, History (word diff, restore), Checks, conflicts
+  side by side, change request with impact preview and **Show on map**.
+- **Questions:** evidence, context hits, answers that write a new version, reassign,
+  snooze, escalation timeline on the sim clock.
+- **Inbox**, **People and ownership** (signal, source, confidence, corrections, mark as
+  left), **Approver list** with admin sign-off.
+- **Map:** Requirements lens (`5`), restricted pockets, impact highlight with a banner;
+  pocket Inspector gets Requirements and progress (gate, blockers, harness attempts,
+  cutover 1/10/100). The mock now holds cutover while the gate is closed (Replay stops).
+- Data behind `RealtimeSource.req` (`requirements.ts`, `reqEvents.ts`, `reqSeed.ts`,
+  `reqMock.ts`), so a SpacetimeDB source can replace it.
+
+## Earlier (uncommitted): professional pass
 - **Nothing truncates:** header, sidebar, breadcrumb and readouts wrap or shorten on
   purpose (search goes compact below 1440 px).
 - **One vocabulary:** "pocket" everywhere, and one isolation scale (`ISO_LEVELS`: Easy to
