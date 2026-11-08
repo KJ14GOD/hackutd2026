@@ -1,0 +1,89 @@
+{
+  "sim": {
+    "startIso": "2026-01-05T08:00:00Z",
+    "defaultSpeed": 60
+  },
+  "ports": {
+    "router": 8080,
+    "legacyPrimary": 7001,
+    "legacySecondary": 7002,
+    "target": 7101
+  },
+  "traffic": {
+    "bucketSimMinutes": 1,
+    "windowSimMinutes": 60,
+    "thresholdShare": 0.35,
+    "minWindowRequests": 50,
+    "maxParallelJobs": 3,
+    "flushMs": 1000,
+    "maxRealRps": 40,
+    "seed": 42,
+    "ratesPerSimHour": {
+      "GET /accounts/:id": 240,
+      "GET /accounts/:id/interest": 300,
+      "GET /accounts/:id/statement": 180,
+      "POST /payments": 150,
+      "POST /purchases": 250,
+      "POST /refunds": 30,
+      "POST /admin/purge": 0
+    },
+    "scenario": [
+      { "fromSimMinute": 240, "toSimMinute": 600, "endpointId": "POST /purchases", "multiplier": 3 }
+    ],
+    "accounts": {
+      "ids": [100001, 100002, 100003, 100004, 100006, 100007, 100008, 100009, 100010, 100011, 100012, 100005, 999999],
+      "weights": [10, 8, 6, 1, 8, 6, 8, 4, 6, 8, 1, 1, 1]
+    },
+    "amountRange": [5, 400]
+  },
+  "ranking": {
+    "trafficWeight": 0.6,
+    "isolationWeight": 0.4,
+    "minIsolation": 0.3
+  },
+  "segmentation": {
+    "seed": 7,
+    "resolution": { "pocket": 1.0, "domain": 1.0 },
+    "edgeWeights": {
+      "call": 1.0,
+      "file": 6.0,
+      "table": 6.0,
+      "copybook": 2.0,
+      "cochange": 0.5
+    },
+    "hubDampening": true,
+    "omnipresentThreshold": 0.5,
+    "cochange": { "maxFilesPerCommit": 10, "minCount": 2 }
+  },
+  "shadow": {
+    "mismatchCapPerFlush": 20,
+    "maxStoredMismatchesPerJob": 500,
+    "matchRateEventDelta": 0.01,
+    "noiseMinHits": 1
+  },
+  "cutover": {
+    "steps": [1, 10, 100],
+    "minMatchRate": 0.99,
+    "criticalMinMatchRate": 1.0,
+    "minSamplesPerStep": 200
+  },
+  "selfHeal": {
+    "samplePercent": 5,
+    "windowSamples": 100,
+    "rollbackMismatchRate": 0.05
+  },
+  "deadCode": {
+    "simDays": 7
+  },
+  "humanLoop": {
+    "maxQuestionsPerPersonPerSimDay": 3,
+    "escalation": {
+      "backupAfterSimMinutes": 240,
+      "channelAfterSimMinutes": 720
+    }
+  },
+  "llm": {
+    "cacheDir": ".cache/llm",
+    "maxFixAttempts": 3
+  }
+}
