@@ -5,6 +5,9 @@
 //
 //   pnpm legacy:fetch          fetch if missing
 //   pnpm legacy:fetch --force  delete and fetch again
+//
+// The fetch is a blobless partial clone: full commit history (the segmenter reads it for
+// co-change), but file contents only for the pinned checkout.
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -22,12 +25,14 @@ function git(...args) {
 
 if (process.argv.includes('--force')) rmSync(DEST, { recursive: true, force: true });
 if (existsSync(resolve(DEST, '.git'))) {
-  console.log(`legacy/carddemo already present (use --force to refetch)`);
+  const shallow = spawnSync('git', ['rev-parse', '--is-shallow-repository'], { cwd: DEST, encoding: 'utf8' });
+  const note = shallow.stdout?.trim() === 'true' ? ' (shallow: run with --force to get history for co-change)' : '';
+  console.log(`legacy/carddemo already present${note} (use --force to refetch)`);
   process.exit(0);
 }
 mkdirSync(DEST, { recursive: true });
 git('init', '--quiet');
 git('remote', 'add', 'origin', REPO);
-git('fetch', '--quiet', '--depth', '1', 'origin', CARDDEMO_SHA);
+git('fetch', '--quiet', '--filter=blob:none', 'origin', CARDDEMO_SHA);
 git('checkout', '--quiet', 'FETCH_HEAD');
 console.log(`CardDemo ${CARDDEMO_SHA.slice(0, 7)} -> legacy/carddemo`);
