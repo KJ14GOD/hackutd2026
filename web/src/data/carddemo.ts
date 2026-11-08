@@ -28,7 +28,7 @@ export const TEAMS: Record<string, Team> = {
   operations: { id: 'operations', name: 'Operations', owner: '@marcus' },
 }
 
-export interface Domain { id: string; title: string; team: string; isolation: number; pockets: string[] }
+export interface Domain { id: string; title: string; team: string; isolation: number; pockets: string[]; desc: string }
 export interface Pocket {
   id: string
   title: string
@@ -58,12 +58,12 @@ export interface Entry { id: string; kind: 'job' | 'cics'; program: string; desc
 
 /* ----------------------------- curation ---------------------------- */
 
-const DOMAIN_INFO: Record<string, { title: string; team: string }> = {
-  'dom-cotrn00c': { title: 'Posting & transactions', team: 'finance' },
-  'dom-coactupc': { title: 'Accounts & authorizations', team: 'customer' },
-  'dom-cocrdlic': { title: 'Cards & administration', team: 'platform' },
-  'dom-cobswait': { title: 'Batch utilities', team: 'operations' },
-  'dom-shared': { title: 'Shared hub', team: 'platform' },
+const DOMAIN_INFO: Record<string, { title: string; team: string; desc: string }> = {
+  'dom-cotrn00c': { title: 'Posting & transactions', team: 'finance', desc: 'Posts the day’s card transactions and keeps every account balance correct.' },
+  'dom-coactupc': { title: 'Accounts & authorizations', team: 'customer', desc: 'Opens, views and updates customer accounts and their pending authorizations.' },
+  'dom-cocrdlic': { title: 'Cards & administration', team: 'platform', desc: 'Issues and maintains cards, plus admin and user management.' },
+  'dom-cobswait': { title: 'Batch utilities', team: 'operations', desc: 'Scheduling, waits and shared plumbing that the nightly batch cycle runs on.' },
+  'dom-shared': { title: 'Shared hub', team: 'platform', desc: 'Sign-on and the main menu every screen starts from.' },
 }
 
 /** title, short label for the overview, row on the die (order = left→right) */
@@ -71,13 +71,13 @@ const POCKET_INFO: Record<string, { title: string; short: string; row: 0 | 1; te
   'pkt-cbtrn02c': { title: 'Transaction posting & interest', short: 'Posting', row: 0 },
   'pkt-cotrn00c': { title: 'Bill pay & transaction views', short: 'Bill pay', row: 0 },
   'pkt-csutldtc': { title: 'Reports & date checks', short: 'Reports', row: 0 },
-  'pkt-cbact01c': { title: 'Account file reader', short: 'Acct reader', row: 0 },
-  'pkt-coacct01': { title: 'MQ account services', short: 'MQ services', row: 0 },
+  'pkt-cbact01c': { title: 'Account file reader', short: 'Account reader', row: 0 },
+  'pkt-coacct01': { title: 'MQ account services', short: 'Account messaging', row: 0 },
   'pkt-cobswait': { title: 'Batch wait', short: 'Wait', row: 0 },
   'pkt-shared': { title: 'Sign-on & main menu', short: 'Sign-on', row: 0, team: 'platform' },
   'pkt-coactupc': { title: 'Account view & update', short: 'Accounts', row: 1 },
   'pkt-cbstm03a': { title: 'Statements', short: 'Statements', row: 1 },
-  'pkt-cbact03c': { title: 'Xref & transaction report', short: 'Txn report', row: 1 },
+  'pkt-cbact03c': { title: 'Card lookup & report', short: 'Card lookup', row: 1 },
   'pkt-paudblod': { title: 'Pending authorizations', short: 'Auths', row: 1, team: 'operations' },
   'pkt-cocrdlic': { title: 'Card management', short: 'Cards', row: 1 },
   'pkt-cotrtlic': { title: 'Transaction types (DB2)', short: 'Txn types', row: 1 },
@@ -235,10 +235,21 @@ export const DOMAINS: Domain[] = g.domains.map((d) => ({
   team: DOMAIN_INFO[d.id]?.team ?? 'platform',
   isolation: d.isolation,
   pockets: POCKETS.filter((p) => p.domain === d.id).map((p) => p.id),
+  desc: DOMAIN_INFO[d.id]?.desc ?? '',
 }))
 export const DOMAIN: Record<string, Domain> = Object.fromEntries(DOMAINS.map((d) => [d.id, d]))
 
 export const SOURCE = g.source
+
+/* Link a program node to its real source on the AWS CardDemo repo.
+ * COBOL lives in app/cbl, assembler in app/asm. */
+export const SOURCE_REPO = 'aws-samples/aws-mainframe-modernization-carddemo'
+export function sourceUrl(id: string): string {
+  const p = PROGRAM[id]
+  const dir = p?.lang === 'Assembler' ? 'asm' : 'cbl'
+  const ext = p?.lang === 'Assembler' ? 'asm' : 'cbl'
+  return `https://github.com/${SOURCE_REPO}/blob/main/app/${dir}/${id}.${ext}`
+}
 
 /* ---------------------------- queries ------------------------------ */
 
