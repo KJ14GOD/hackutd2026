@@ -1,0 +1,33 @@
+#!/usr/bin/env node
+// Downloads AWS CardDemo (Apache-2.0) at a pinned commit into legacy/carddemo/ (gitignored).
+// CardDemo is the real legacy codebase we segment and modernize (docs/DECISIONS.md D-014).
+// Bump CARDDEMO_SHA deliberately; segmentation output and demo seeds depend on it.
+//
+//   pnpm legacy:fetch          fetch if missing
+//   pnpm legacy:fetch --force  delete and fetch again
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, rmSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const REPO = 'https://github.com/aws-samples/aws-mainframe-modernization-carddemo.git';
+const CARDDEMO_SHA = '59cc6c2fd7ebd7ef7925cad552a01a4b8b6e4d5e'; // main on 2026-11-07
+const DEST = resolve(ROOT, 'legacy/carddemo');
+
+function git(...args) {
+  const r = spawnSync('git', args, { cwd: DEST, stdio: 'inherit' });
+  if (r.status !== 0) process.exit(r.status ?? 1);
+}
+
+if (process.argv.includes('--force')) rmSync(DEST, { recursive: true, force: true });
+if (existsSync(resolve(DEST, '.git'))) {
+  console.log(`legacy/carddemo already present (use --force to refetch)`);
+  process.exit(0);
+}
+mkdirSync(DEST, { recursive: true });
+git('init', '--quiet');
+git('remote', 'add', 'origin', REPO);
+git('fetch', '--quiet', '--depth', '1', 'origin', CARDDEMO_SHA);
+git('checkout', '--quiet', 'FETCH_HEAD');
+console.log(`CardDemo ${CARDDEMO_SHA.slice(0, 7)} -> legacy/carddemo`);
