@@ -1,0 +1,13 @@
+{
+  "name": "@theseus/segmenter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Part 1 static map: reads a legacy codebase and writes pass1.json (docs/SPEC_DEPENDENCY_PASSES.md)",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
