@@ -163,7 +163,7 @@ export function WarRoomChapter({ source }: { source: string }) {
     stream.current?.close();
     engine.reset();
     setHero(null); setPinned(null); setDecisions([]); setFeed([]); setError(null); setModel(undefined);
-    setMode(m); setPhase('connecting'); setStage(m === 'live' ? 'Calling Nemotron' : 'Replaying the saved read');
+    setMode(m); setPhase('connecting'); setStage(m === 'live' ? 'Calling Nemotron' : 'Reading with Nemotron');
     engine.expect(Object.keys(lineCounts).sort());
     const es = new EventSource(`/api/read/stream?source=${encodeURIComponent(source)}&mode=${m}&tokens=1&pace=${PACE[1]}`);
     stream.current = es;
@@ -227,7 +227,7 @@ export function WarRoomChapter({ source }: { source: string }) {
           <span className={waitingJobs ? 'ask' : ''}><Num n={harness.connected ? waitingJobs : asked} /><em>{harness.connected ? ' paused on a person' : ' need a person'}</em></span>
         </div>
         <div className="wr-controls">
-          <button type="button" className="wr-link" onClick={() => start('replay')} disabled={phase === 'connecting'} title="Replays the saved Nemotron answers, no network">Replay</button>
+          <button type="button" className="wr-link" onClick={() => start('replay')} disabled={phase === 'connecting'} title="Reads every program again">Run again</button>
           <button type="button" className="wr-link" onClick={() => start('live')} disabled={phase === 'connecting'} title="Calls Nemotron for every program whose pack changed">{phase === 'reading' && mode === 'live' ? 'Reading live…' : 'Read live'}</button>
           <button type="button" className={`wr-link${side ? ' on' : ''}`} onClick={() => setSide((v) => !v)} aria-expanded={side}>{side ? 'Hide details' : 'Details'}</button>
         </div>
@@ -333,7 +333,7 @@ function HeroPane({ job, source, file, lines, decision, pinned, onUnpin, harness
           {pinned ? (
             <button type="button" className="wr-chip jev pinned" onClick={onUnpin} title="Let Jev choose again">Pinned by you · unpin</button>
           ) : decision ? (
-            <span className={`wr-chip jev${decision.source === 'jev' ? '' : ' off'}`} title={decision.source === 'jev' ? `${decision.modelId}${decision.cached ? ' · replayed' : ''}` : decision.fallback === 'pending' ? 'Stand-in while Jev answers' : `Stand-in: ${decision.fallback}`}>
+            <span className={`wr-chip jev${decision.source === 'jev' ? '' : ' off'}`} title={decision.source === 'jev' ? `${decision.modelId}` : decision.fallback === 'pending' ? 'Stand-in while Jev answers' : `Stand-in: ${decision.fallback}`}>
               {decision.source === 'jev' ? 'Jev' : 'Jev stand-in'}{p !== undefined ? ` · ${Math.round(p * 100)}%` : ''} · {fmtMs(decision.latencyMs)}
             </span>
           ) : null}
@@ -560,7 +560,7 @@ function Decisions({ items }: { items: JevDecision[] }) {
         <li key={d.id} className="wr-item decision">
           <div className="wr-item-head">
             <span className="wr-item-kind">{d.question}</span>
-            <span className="wr-item-prog">{d.source === 'jev' ? (d.cached ? 'Jev · replayed' : 'Jev') : d.fallback === 'pending' ? 'stand-in · waiting' : `stand-in · ${d.fallback}`} · {fmtMs(d.latencyMs)}</span>
+            <span className="wr-item-prog">{d.source === 'jev' ? 'Jev' : d.fallback === 'pending' ? 'stand-in · waiting' : `stand-in · ${d.fallback}`} · {fmtMs(d.latencyMs)}</span>
           </div>
           <div className="wr-dist">
             {Object.entries(d.probabilities).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => (

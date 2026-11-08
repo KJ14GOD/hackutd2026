@@ -95,6 +95,7 @@ export function slackApi(env: Record<string, string>): Plugin {
         const env = JSON.parse(String(e.data)) as { type: string; envelope_id?: string; payload?: BlockActions }
         if (env.envelope_id) ws?.send(JSON.stringify({ envelope_id: env.envelope_id }))
         if (env.type === 'interactive' && env.payload?.type === 'block_actions') onClick(env.payload, log).catch((err: unknown) => warn(`[slack] ${String(err)}`))
+        if (env.type === 'hello') log('socket mode connected; listening for button clicks')
         if (env.type === 'disconnect') ws?.close()
       }
       ws.onclose = () => {
@@ -144,7 +145,8 @@ export function slackApi(env: Record<string, string>): Plugin {
             const { text, blocks } = JSON.parse(body) as { text?: string; blocks?: object[] }
             if (!text) throw new Error('text is required')
             const out = await slack('chat.postMessage', { channel, text, blocks })
-            if (!out.ok) warn(`[slack] post: ${out.error ?? 'failed'}`)
+            if (out.ok) log(`posted: ${text.slice(0, 80)}`)
+            else warn(`[slack] post: ${out.error ?? 'failed'}`)
             res.statusCode = out.ok ? 200 : 502
             res.setHeader('Content-Type', 'application/json')
             res.end(JSON.stringify(out))

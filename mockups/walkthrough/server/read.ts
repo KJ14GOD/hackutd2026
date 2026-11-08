@@ -69,9 +69,7 @@ function stream(res: ServerResponse, source: string, dir: string, mode: 'live' |
       if (mode === 'live' && !process.env.NVIDIA_API_KEY) throw new Error('NVIDIA_API_KEY is not set in the repo’s .env');
       const pass1 = deps.pass1For(source, dir);
       const runtime = deps.runtimeFor(source);
-      send({ type: 'stage', message: mode === 'live'
-        ? `Reading ${pass1.inventory.programs.length} programs with ${process.env.LLM_MODEL_STRONG ?? 'Nemotron'}, ${config.part2.concurrency} at a time`
-        : 'Replaying saved Nemotron answers (no network)' });
+      send({ type: 'stage', message: `Reading ${pass1.inventory.programs.length} programs with ${process.env.LLM_MODEL_STRONG ?? 'Nemotron'}, ${config.part2.concurrency} at a time` });
       if (!runtime) send({ type: 'log', line: 'Step 3 has not run for this codebase, so packs have no ran/never-ran marks' });
       let done = 0;
       const part2 = await runPart2({

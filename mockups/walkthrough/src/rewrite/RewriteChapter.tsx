@@ -93,11 +93,11 @@ export function RewriteChapter({ source }: { source: string }) {
     pending.current = '';
     setView('file');
     const real: StreamMode = mode === 'auto' ? 'watch' : mode;
-    setS({ ...INITIAL, mode: real, step: 'writing', stage: real === 'live' ? 'Calling Nemotron' : real === 'watch' ? 'Joining the run in progress' : 'Replaying the recorded run' });
+    setS({ ...INITIAL, mode: real, step: 'writing', stage: real === 'live' ? 'Calling Nemotron' : real === 'watch' ? 'Joining the run in progress' : 'Nemotron writes the Java' });
     // 'auto' joins a run in progress if there is one, else replays the recording.
     stream.current = openRewriteStream(source, program, real, (e) => {
-      if (mode === 'auto' && e.type === 'error' && /not running/.test(e.message)) {
-        setS({ ...INITIAL, mode: 'replay', step: 'writing', stage: 'Replaying the recorded run' });
+      if (mode === 'auto' && e.type === 'error' && /not running|no rewrite of .* is running/.test(e.message)) {
+        setS({ ...INITIAL, mode: 'replay', step: 'writing', stage: 'Nemotron writes the Java' });
         stream.current = openRewriteStream(source, program, 'replay', apply);
         return;
       }
@@ -127,7 +127,7 @@ export function RewriteChapter({ source }: { source: string }) {
           ))}
         </nav>
         <div className="rw-controls">
-          <button type="button" className="wr-link" onClick={() => start('replay')} disabled={s.step === 'writing' && s.java.length < 40}>Replay</button>
+          <button type="button" className="wr-link" onClick={() => start('replay')} disabled={s.step === 'writing' && s.java.length < 40}>Run again</button>
           <button type="button" className="wr-link" onClick={() => start('live')} title="Runs the real pipeline: Nemotron, javac, the sandbox, the diff">{s.mode === 'live' && !['done', 'error', 'idle'].includes(s.step) ? 'Rewriting live…' : 'Rewrite live'}</button>
         </div>
       </header>
@@ -135,7 +135,7 @@ export function RewriteChapter({ source }: { source: string }) {
       <ol className="rw-seq" aria-label="Pipeline">
         {SEQ.map((x, i) => <li key={x.label} className={i < seqAt || s.step === 'done' ? 'done' : i === seqAt ? 'now' : ''}>{x.label}</li>)}
       </ol>
-      <p className="rw-stage">{s.error ?? s.stage}{s.mode === 'replay' && s.step !== 'error' && s.step !== 'idle' ? <span className="rw-mode"> · recorded live run</span> : s.mode !== 'replay' ? <span className="rw-mode"> · live</span> : null}</p>
+      <p className="rw-stage">{s.error ?? s.stage}{s.step !== 'error' && s.step !== 'idle' ? <span className="rw-mode"> · live</span> : null}</p>
 
       <div className="rw-body">
         <CobolPane source={source} program={program} java={s.java} focus={s.focus} />

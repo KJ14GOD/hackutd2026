@@ -27,6 +27,7 @@ The UI **never** talks to a backend directly. It reads a Zustand store (`@/store
 
 - today: **`MockSource`** — scripted scenario replay, 100% offline (demo-safe)
 - live: **`SpacetimeSource`** (`src/data/spacetimeSource.ts`), opt-in with `?source=spacetime` or `VITE_SOURCE=spacetime` (`VITE_STDB_URI`, default `ws://localhost:3000`; `VITE_STDB_DB`, default `theseus`). It wraps MockSource and overlays the tables the backend has today: people, teams, reports-to, ownership, approvers, questions and Slack outreach. Requirements, conflicts, approvals, checks and the shadow run still come from the mock until their tables exist. Answering a live question calls the `answerQuestion` reducer. If SpacetimeDB is unreachable it logs a warning and stays on mock data.
+- Slack (dev only): `MockSource` posts question cards to real Slack and takes button answers back through the Vite dev server (`server/slack.ts`, `src/data/slackOut.ts`); components never see it. See README "Real Slack".
 
 Swapping backends is a **one-line change** in `src/data/factory.ts`. No UI component imports a source directly. Source emits `SourceEvent`s → store reducer applies them → components read granular selectors.
 

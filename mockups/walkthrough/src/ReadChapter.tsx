@@ -73,7 +73,7 @@ export function ReadChapter({ title, line, source }: { title: string; line: stri
             <p>{line}</p>
           </div>
           <div className="read-actions">
-            <button type="button" className="btn" disabled={busy} onClick={() => start('replay')} title="Reads the saved Nemotron answers again, with no network">Replay saved</button>
+            <button type="button" className="btn" disabled={busy} onClick={() => start('replay')} title="Reads every program again">Run again</button>
             <button type="button" className="btn primary" disabled={busy} onClick={() => start('live')} title="Calls Nemotron for every program whose pack changed">
               {state.status === 'reading' && state.mode === 'live' ? 'Reading…' : 'Read with Nemotron'}
             </button>
@@ -84,7 +84,7 @@ export function ReadChapter({ title, line, source }: { title: string; line: stri
         {state.status === 'reading' && <p className="read-stage">{state.stage}</p>}
         {state.status === 'error' && <p className="signin-error" role="alert">{state.message}</p>}
         {state.status === 'loading' && <Skeleton />}
-        {state.status === 'empty' && <p className="map-hint">Nothing read yet for this codebase. “Read with Nemotron” calls the model for every program (about 10 minutes the first time); after that, “Replay saved” brings it back in a second.</p>}
+        {state.status === 'empty' && <p className="map-hint">Nothing read yet for this codebase. “Read with Nemotron” calls the model for every program (about 10 minutes the first time); after that a run takes a minute.</p>}
         {state.status === 'reading' && <LogPanel lines={state.lines} live />}
 
         {sorted.length > 0 && (
@@ -121,7 +121,7 @@ function Stats({ run }: { run: ReadRun }) {
         <div><dt>Thrown out</dt><dd>{run.part2.dropped.length}</dd></div>
       </dl>
       <p className="read-meta">
-        {run.mode === 'live' ? 'Read live' : 'Replayed'} {new Date(run.startedAt).toLocaleString()} · {(run.ms / 1000).toFixed(run.ms < 10000 ? 1 : 0)} s · {run.networkCalls} Nemotron calls · {run.part2.model}
+        Read {new Date(run.startedAt).toLocaleString()} · {(run.ms / 1000).toFixed(run.ms < 10000 ? 1 : 0)} s · {run.part2.model}
       </p>
     </>
   );

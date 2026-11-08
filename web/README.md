@@ -18,6 +18,20 @@ npx tsc -b           # typecheck only
 This is its own npm project, outside the root pnpm workspace (see D-027 in
 `../docs/DECISIONS.md`).
 
+### Real Slack (optional, dev server only)
+
+With `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN` and `SLACK_DEMO_USER` in the repo-root `.env`,
+`npm run dev` posts a Block Kit card to that Slack user whenever a question is asked,
+reassigned or escalated by hand (`docs/HUMAN_LOOP.md`, "Wording"): the question in the
+recipient's wording, the evidence, up to five cited COBOL lines, why they were asked, and
+one button per answer. Escalations fired by the sim clock stay in the app. A button click
+comes back over Socket Mode to the dev server and on to every open tab over SSE
+(`/api/slack/events`), and the question closes as answered by that person. The dev server
+also answers clicks on the harness worker's digests (same Slack app, so Slack can hand a
+click to either connection) by calling `answer_question` on SpacetimeDB. Without the
+tokens nothing is sent and the app runs offline as before. Code: `server/slack.ts`,
+`src/data/{slackCard,slackOut}.ts`.
+
 ## What's on screen
 
 - **Top bar:** codebase-on-Java progress, the component being shadowed and its live match
@@ -84,6 +98,7 @@ Keys (map only): `1`–`5` lenses, `L` Iso/Layers, `M` map only, `F` fit, `/` or
 | `src/data/carddemo.graph.json` | snapshot of the segmenter output; regenerate with `node scripts/snapshot-graph.mjs <path to segmentation.json>` |
 | `src/data/{source,mockSource,factory,scenarios,jev}.ts`, `src/store/useStore.ts` | the realtime seam: store fed by a swappable source (mock today) |
 | `src/data/{requirements,reqEvents,reqSeed,reqMock}.ts` | requirements layer: pure rules, events + reducer, seed world, mock actions |
+| `src/data/{slackCard,slackOut}.ts`, `server/slack.ts` | real Slack in dev: the question card, the browser bridge, and the dev-server endpoint + Socket Mode listener |
 | `src/store/useUi.ts` | workspace, viewing as, Business / Engineer, cross-links |
 | `src/components/{requirements,questions,approvals,people}/` | the requirements workspaces; `shell/reqKit.tsx` holds their shared pieces, `shell/Rail.tsx` the nav |
 | `src/index.css` | theme tokens (Tailwind v4 `@theme`) |
