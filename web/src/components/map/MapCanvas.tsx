@@ -418,6 +418,22 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
     return d
   }, [])
 
+  /* point-cloud scan: faint jittered dots across the die floor (Norrvik look).
+   * drawn as zero-length round-capped strokes so each is a 1px dot at any zoom. */
+  const cloud = useMemo(() => {
+    const bb = L.bounds
+    let s = 2166136261
+    const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647)
+    const step = 0.82
+    let d = ''
+    for (let x = bb.x0; x <= bb.x1; x += step)
+      for (let y = bb.y0; y <= bb.y1; y += step) {
+        const p = proj(x + (rnd() - 0.5) * step, y + (rnd() - 0.5) * step, 0)
+        d += `M${p.X.toFixed(1)} ${p.Y.toFixed(1)}l.1 0`
+      }
+    return d
+  }, [])
+
   const showCalls = hl ? hl.calls : []
   const b = L.bounds
 
@@ -458,6 +474,7 @@ export const MapCanvas = forwardRef<MapHandle, Props>(function MapCanvas(props, 
           <polygon points={rect(b.x0, b.x1, b.y0, b.y1)} fill={C.die} stroke={C.dieEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" />
           <path d={grid} stroke={C.grid} strokeWidth={1} vectorEffect="non-scaling-stroke" opacity={0.9} />
           <polygon points={rect(b.x0 + 0.25, b.x1 - 0.25, b.y0 + 0.25, b.y1 - 0.25)} fill="none" stroke={C.dieEdge} strokeWidth={1} vectorEffect="non-scaling-stroke" strokeDasharray="2 4" />
+          <path d={cloud} stroke="#aab0bb" strokeWidth={1.1} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.16} />
           <DieMarks />
 
           {/* domain regions */}
@@ -839,11 +856,13 @@ function PocketView(p: {
         <polygon
           points={faces.top}
           fill={topCol}
-          stroke={isSel || hasLive && o < 0.5 ? C.accent : isHover ? C.sub : C.slabEdge}
-          strokeWidth={isSel ? 1.8 : 1}
+          stroke={hasLive && o < 0.5 ? C.accentBright : isSel ? C.accent : isHover ? C.sub : C.slabEdge}
+          strokeWidth={isSel || (hasLive && o < 0.5) ? 1.8 : 1}
           vectorEffect="non-scaling-stroke"
           className={hasLive && !isSel && o < 0.5 ? 'pulse-stroke' : undefined}
         />
+        {/* the pocket being shadowed glows so it stands out when zoomed out */}
+        {hasLive && o < 0.5 && <polygon points={faces.top} fill={C.accentBright} className="pulse-soft" opacity={0.22} />}
         {/* migration fill: the block "fills" toward Java from the left */}
         {lens === 'migration' && o < 0.98 && progress > 0 && (
           <polygon
@@ -876,8 +895,13 @@ function PocketView(p: {
               <g key={g.id} data-hit={`program:${g.id}`} opacity={p.progDim(g.id)} style={{ transition: 'opacity 300ms' }}>
                 <polygon points={fb.left} fill={shade(col, 0.5)} />
                 <polygon points={fb.right} fill={shade(col, 0.66)} />
-                <polygon points={fb.top} fill={col} stroke={sel ? C.ink : hov ? C.sub : 'rgba(0,0,0,0.35)'} strokeWidth={sel ? 1.8 : 1} vectorEffect="non-scaling-stroke" />
-                {lens === 'migration' && shadowing && <polygon points={fb.top} fill={C.accent} className="pulse-soft" opacity={0.35} />}
+                <polygon points={fb.top} fill={col} stroke={isLive ? C.accentBright : sel ? C.ink : hov ? C.sub : 'rgba(0,0,0,0.35)'} strokeWidth={isLive || sel ? 1.8 : 1} vectorEffect="non-scaling-stroke" />
+                {/* the live/shadowing program glows brightly in any lens so it's easy to spot */}
+                {isLive ? (
+                  <polygon points={fb.top} fill={C.accentBright} className="pulse-soft" opacity={0.5} />
+                ) : (
+                  lens === 'migration' && shadowing && <polygon points={fb.top} fill={C.accent} className="pulse-soft" opacity={0.35} />
+                )}
                 {(progLabels || sel || hov) && <Billboard at={proj(g.cx, g.cy, z1)} lines={[{ text: g.id, size: 10.5, weight: 600 }]} opacity={clamp((o - 0.5) * 2, 0, 1)} />}
                 {!p.hideEntriesInline && g.entries.length > 0 && (
                   <polygon
@@ -1020,7 +1044,6 @@ function Pin({ x, y, z, n, onOpen }: { x: number; y: number; z: number; n: numbe
       <g style={{ transform: 'scale(clamp(0.65, calc(1 / var(--k)), 1.76))' }}>
         <title>{`${n} question${n > 1 ? 's' : ''} waiting · click to open`}</title>
         <line x1={0} y1={0} x2={0} y2={-h} stroke={C.warn} strokeWidth={1.2} />
-        {onOpen && <circle cx={0} cy={-h} r={r * 1.9} fill={C.warn} opacity={0.14} />}
         <polygon points={`0,${-h - r} ${r},${-h} 0,${-h + r} ${-r},${-h}`} fill={C.warn} />
         <text x={0} y={-h + 0.5} fontFamily={MONO} fontSize={r * 1.15} fontWeight={700} fill={C.dark} textAnchor="middle" dominantBaseline="middle">
           {n}

@@ -131,7 +131,7 @@ export function RequirementDetail({ id }: { id: string }) {
         </button>
       )}
       {cr && (
-        <div className="mx-4 mb-3 rounded-[10px] border border-[rgba(69,199,245,.3)] bg-[var(--color-accent-dim)] px-3 py-2.5">
+        <div className="mx-4 mb-3 rounded-[10px] border border-[rgba(127,178,255,.3)] bg-[var(--color-accent-dim)] px-3 py-2.5">
           <div className="flex items-center gap-2 text-[12.5px] font-medium text-[var(--color-accent-bright)]">
             <GitPullRequestArrow className="size-3.5" /> Change requested by {personName(w, cr.byPersonId)}
           </div>

@@ -16,16 +16,18 @@ export const C = {
   faint: '#73737E',
   copper: '#CB9D5F',
   copperHi: '#E6C288',
-  accent: '#45C7F5',
+  accent: '#7FB2FF',
+  accentBright: '#A9CBFF',
   good: '#37CA95',
   warn: '#EFB24A',
   bad: '#EE6D69',
+  agent: '#B4A8F8',
   dark: '#000000',
 }
 
 export const MIG_COLOR: Record<Migration, string> = {
   legacy: '#4C4C57',
-  shadowing: '#45C7F5',
+  shadowing: '#7FB2FF',
   cutover: '#EFB24A',
   done: '#37CA95',
 }

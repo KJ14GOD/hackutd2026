@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Box, ChevronRight, Expand, Layers, PanelLeftOpen, PanelRightOpen, Radio, RotateCcw, Shrink, X } from 'lucide-react'
+import { Box, ChevronRight, Expand, Layers, PanelLeftOpen, PanelRightOpen, RotateCcw, Shrink, X } from 'lucide-react'
 import {
   selectAgentLog,
   selectComponent,
   selectControls,
   selectCutover,
   selectDecisions,
+  selectHistory,
   selectThreshold,
   useStore,
 } from '@/store/useStore'
@@ -31,6 +32,7 @@ import {
   type Ref,
 } from '@/data/carddemo'
 import { MapCanvas, type Lens, type MapHandle, type PocketGate, type View } from '@/components/map/MapCanvas'
+import { MapHud, StatStrip } from '@/components/map/MapHud'
 import { blastHighlight, flowHighlight, impactHighlight, selectionHighlight, type Highlight } from '@/components/map/highlight'
 import { C, GATE_COLOR, ISO_LEVELS, MIG_COLOR, TEAM_COLOR, isoWord } from '@/components/map/theme'
 import { Hierarchy } from '@/components/shell/Hierarchy'
@@ -82,7 +84,6 @@ export default function MissionControl() {
   }
   const [flowState, setFlowState] = useState<{ id: string; step: number } | null>(null)
   const [tab, setTab] = useState<InspectorTab>('inspect')
-  const [auto, setAuto] = useState(false)
   const mapRef = useRef<MapHandle>(null)
   const searchRef = useRef<SearchHandle>(null)
 
@@ -136,6 +137,17 @@ export default function MissionControl() {
   const controls = useStore(selectControls)
   const component = useStore(selectComponent)
   const threshold = useStore(selectThreshold)
+  const history = useStore(selectHistory)
+
+  /* real movement: compare the latest shadow rate against the one before it
+   * (from the store's history), so the trend badge reflects the actual run. */
+  const matchDelta = useMemo((): LiveInfo['matchDelta'] => {
+    if (history.length < 2) return undefined
+    const pts = history.slice(-2).map((h) => h.rate)
+    const diff = (pts[1] - pts[0]) * 100
+    if (Math.abs(diff) < 0.05) return { value: '0.0pt', trend: 'flat' }
+    return { value: `${diff > 0 ? '+' : ''}${diff.toFixed(1)}pt`, trend: diff > 0 ? 'up' : 'down' }
+  }, [history])
   const cutover = useStore(selectCutover)
   const decisions = useStore(selectDecisions)
   const agentLog = useStore(selectAgentLog)
@@ -157,6 +169,7 @@ export default function MissionControl() {
     id: component.id,
     name: component.name,
     matchRate: component.matchRate,
+    matchDelta,
     threshold,
     status: component.status,
     pending: pending.length,
@@ -276,7 +289,7 @@ export default function MissionControl() {
       <header className="z-30 flex h-[52px] shrink-0 items-center gap-3 border-b border-[var(--color-line)] bg-[var(--color-bg-2)] px-4">
         <button type="button" onClick={goHome} className="flex shrink-0 items-center gap-2.5" aria-label="Back to the whole system">
           <Logo />
-          <span className="text-[14px] font-semibold tracking-[-0.01em]">Shadow Diff</span>
+          <span className="text-[14px] font-semibold tracking-[-0.01em]">Argus Labs</span>
         </button>
         <div className="h-5 w-px shrink-0 bg-[var(--color-line-2)]" />
         <span className="shrink-0 font-mono text-[12px] font-semibold text-[var(--color-ink)]" title="AWS CardDemo, scanned by the segmenter">
@@ -296,7 +309,7 @@ export default function MissionControl() {
         <button
           type="button"
           onClick={() => PROGRAM[component.id] && pick({ kind: 'program', id: component.id })}
-          className="hidden shrink-0 items-center gap-2 rounded-[8px] border border-[rgba(69,199,245,.3)] px-2.5 py-1 transition-colors hover:border-[var(--color-accent)] md:flex"
+          className="hidden shrink-0 items-center gap-2 rounded-[8px] border border-[rgba(127,178,255,.3)] px-2.5 py-1 transition-colors hover:border-[var(--color-accent)] md:flex"
           title="Fly to the component being shadowed"
         >
           <span className="size-1.5 rounded-full bg-[var(--color-accent)] pulse-soft" />
@@ -314,7 +327,6 @@ export default function MissionControl() {
             value={scenarioId}
             onChange={(e) => {
               controls.loadScenario(e.target.value)
-              setAuto(false)
               goHome()
             }}
             aria-label="Demo scenario"
@@ -329,24 +341,10 @@ export default function MissionControl() {
             ))}
           </select>
           <div className="mx-0.5 h-5 w-px bg-[var(--color-line-2)]" />
-          <Btn
-            variant="outline"
-            aria-pressed={auto}
-            title="Answer every question automatically, hands-free"
-            onClick={() => {
-              const n = !auto
-              controls.setAutoReplay(n)
-              setAuto(n)
-            }}
-            className={cn(auto && 'border-[var(--color-accent)] text-[var(--color-accent)]')}
-          >
-            <Radio className={cn('size-3.5', auto && 'pulse-soft')} /> Replay
-          </Btn>
           <IconBtn
             label="Reset the demo"
             onClick={() => {
               controls.reset()
-              setAuto(false)
               goHome()
             }}
           >
@@ -433,8 +431,11 @@ export default function MissionControl() {
               }}
             />
 
-            {/* top-left: what the pointer is on (or the selection) */}
-            <div className="pointer-events-none absolute left-3 top-3" style={{ right: 12 + (overlayInsp ? INSPECTOR_W : 0) }}>
+            {/* Norrvik instrument frame: corner readouts, left ruler, radar */}
+            <MapHud progress={progress} insetRight={overlayInsp ? INSPECTOR_W : 0} />
+
+            {/* what the pointer is on (or the selection) — below the FIG caption */}
+            <div className="pointer-events-none absolute left-3 top-[52px]" style={{ right: 12 + (overlayInsp ? INSPECTOR_W : 0) }}>
               <Readout r={hover ?? selection} mig={mig} />
             </div>
 
@@ -483,6 +484,7 @@ export default function MissionControl() {
           </div>
         )}
       </div>
+      <StatStrip progress={progress} />
     </div>
   )
 }

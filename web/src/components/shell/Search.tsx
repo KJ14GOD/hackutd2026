@@ -2,7 +2,6 @@ import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from 'reac
 import { Search as SearchIcon } from 'lucide-react'
 import { ENTRIES, POCKETS, PROGRAMS, STORES, type Ref } from '@/data/carddemo'
 import { cn } from '@/lib/cn'
-import { Kbd } from './kit'
 
 interface Item { ref: Ref; label: string; sub: string; kind: string }
 
@@ -68,9 +67,6 @@ export const Search = forwardRef<SearchHandle, { onPick: (r: Ref) => void; compa
           aria-label="Search the map"
           className="min-w-0 flex-1 bg-transparent text-[12.5px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-faint)]"
         />
-        <span className="shrink-0">
-          <Kbd>Ctrl K</Kbd>
-        </span>
       </div>
       {open && results.length > 0 && (
         <div role="listbox" className="absolute right-0 top-10 w-[360px] z-50 overflow-hidden rounded-[10px] border border-[var(--color-line-2)] bg-[var(--color-panel)] py-1 shadow-[0_18px_40px_-12px_rgba(0,0,0,.6)]">

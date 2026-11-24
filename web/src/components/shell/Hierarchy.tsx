@@ -86,7 +86,7 @@ export function Hierarchy({ focus, selection, mig, onPick, onHover, onCollapse }
                 className="group w-full rounded-[8px] px-2 py-1.5 text-left transition-colors hover:bg-[var(--color-panel)]"
               >
                 <div className="flex items-start gap-2">
-                  <span className="mt-[5px] size-2 shrink-0 rounded-full" style={{ background: TEAM_COLOR[d.team] }} />
+                  <span className="mt-[5px] h-3 w-[3px] shrink-0 rounded-[1px]" style={{ background: TEAM_COLOR[d.team] }} />
                   <span className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-[var(--color-ink)]">{d.title}</span>
                   <ChevronRight
                     className={cn(

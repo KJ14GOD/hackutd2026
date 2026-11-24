@@ -35,7 +35,7 @@ import {
 import { C, MIG_COLOR, TEAM_COLOR, isoColor, isoWord } from '@/components/map/theme'
 import type { Lens } from '@/components/map/MapCanvas'
 import { cn } from '@/lib/cn'
-import { Btn, Chip, Dot, IconBtn, SectionHead, Segmented, Stat } from './kit'
+import { Btn, Chip, Delta, Disclosure, Dot, IconBtn, SectionHead, Stat } from './kit'
 import { PocketProgress } from '@/components/requirements/PocketProgress'
 
 export type InspectorTab = 'inspect' | 'agent' | 'people'
@@ -47,6 +47,7 @@ export interface LiveInfo {
   id: string
   name: string
   matchRate: number
+  matchDelta?: { value: string; trend: 'up' | 'down' | 'flat' }
   threshold: number
   status: string
   pending: number
@@ -76,29 +77,25 @@ interface Props {
 export function Inspector(p: Props) {
   return (
     <aside className="flex h-full shrink-0 flex-col border-l border-[var(--color-line)] bg-[var(--color-bg-2)]" style={{ width: INSPECTOR_W }}>
-      <div className="flex h-11 shrink-0 items-center gap-1 border-b border-[var(--color-line)] pl-3 pr-1.5">
-        <Segmented
-          size="sm"
-          label="Inspector tab"
-          value={p.tab}
-          onChange={p.setTab}
-          items={[
-            { id: 'inspect', label: 'Inspect' },
-            { id: 'agent', label: <>Agent <Count n={p.agentLog.length} /></> },
-            { id: 'people', label: <>People <Count n={p.pending.length} warn /></> },
-          ]}
-        />
+      <div className="flex h-11 shrink-0 items-stretch border-b border-[var(--color-line)] pl-1 pr-1.5">
+        <nav role="tablist" aria-label="Inspector" className="flex items-stretch">
+          <Tab id="inspect" label="Inspect" tab={p.tab} setTab={p.setTab} />
+          <Tab id="agent" label="Agent" count={p.agentLog.length} tab={p.tab} setTab={p.setTab} />
+          <Tab id="people" label="People" count={p.pending.length} warn tab={p.tab} setTab={p.setTab} />
+        </nav>
         <span className="flex-1" />
-        {p.selection && p.tab === 'inspect' && (
-          <IconBtn label="Clear selection (Esc)" onClick={p.onClose}>
-            <X className="size-4" />
-          </IconBtn>
-        )}
-        {p.onHide && (
-          <IconBtn label="Hide inspector" onClick={p.onHide}>
-            <PanelRightClose className="size-4" />
-          </IconBtn>
-        )}
+        <div className="flex items-center">
+          {p.selection && p.tab === 'inspect' && (
+            <IconBtn label="Clear selection (Esc)" onClick={p.onClose}>
+              <X className="size-4" />
+            </IconBtn>
+          )}
+          {p.onHide && (
+            <IconBtn label="Hide inspector" onClick={p.onHide}>
+              <PanelRightClose className="size-4" />
+            </IconBtn>
+          )}
+        </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
         {p.tab === 'inspect' && (p.flow ? <FlowPanel {...p} flow={p.flow} /> : <InspectBody {...p} />)}
@@ -109,12 +106,39 @@ export function Inspector(p: Props) {
   )
 }
 
-function Count({ n, warn }: { n: number; warn?: boolean }) {
-  if (!n) return null
+/* Inspector tab: text with an accent underline when active, a subtle count
+ * badge, no pill chrome — reads cleaner in a panel header than the segmented. */
+function Tab({ id, label, count, warn, tab, setTab }: {
+  id: InspectorTab
+  label: string
+  count?: number
+  warn?: boolean
+  tab: InspectorTab
+  setTab: (t: InspectorTab) => void
+}) {
+  const on = tab === id
   return (
-    <span className="tnum rounded-[4px] px-1 font-mono text-[10px]" style={{ background: warn ? 'rgba(217,164,65,.16)' : 'var(--color-panel-2)', color: warn ? C.warn : 'var(--color-faint)' }}>
-      {n}
-    </span>
+    <button
+      type="button"
+      role="tab"
+      aria-selected={on}
+      onClick={() => setTab(id)}
+      className={cn(
+        'relative flex items-center gap-1.5 px-3 text-[13px] font-medium transition-colors duration-200',
+        on ? 'text-[var(--color-ink)]' : 'text-[var(--color-faint)] hover:text-[var(--color-muted)]',
+      )}
+    >
+      {label}
+      {count ? (
+        <span
+          className="tnum rounded-full px-1.5 py-px text-[10px] font-semibold leading-none"
+          style={{ background: warn ? 'rgba(239,178,74,.16)' : 'var(--color-panel-2)', color: warn ? C.warn : 'var(--color-muted)' }}
+        >
+          {count}
+        </span>
+      ) : null}
+      {on && <span className="absolute inset-x-2.5 -bottom-px h-[2px] rounded-full bg-[var(--color-accent)]" />}
+    </button>
   )
 }
 
@@ -259,7 +283,7 @@ function StartHere() {
 }
 
 const LENS_HELP: Record<Lens, string> = {
-  migration: 'Blocks fill green as their programs move to Java. Cyan pulses are being shadowed right now.',
+  migration: 'Blocks fill green as their programs move to Java. The component being shadowed pulses blue right now.',
   coupling: 'Shared data is the coupling. Thicker taps and lanes mean more programs depend on that store. Tangled pockets are risky to cut first.',
   blast: 'Pick a program. Everything that reads what it writes, or calls it, lights up amber: that is what you retest.',
   owners: 'Each pocket is tinted by the team that owns it. Pins mark open questions waiting on a person.',
@@ -274,7 +298,9 @@ function SystemView(p: Props) {
     <div>
       <Header kind="System · observed" title="AWS CardDemo" sub={`${PROGRAMS.length} programs in ${POCKETS.length} pockets, ${BUS_ORDER.length} shared data stores. Scanned at ${SOURCE.ref?.slice(0, 7)}.`} />
       <StartHere />
-      <div className="px-4 pb-4 text-[12.5px] leading-relaxed text-[var(--color-muted)]">{LENS_HELP[p.lens]}</div>
+      <Disclosure title="What am I looking at?">
+        <p className="px-4 pb-1 text-[12.5px] leading-relaxed text-[var(--color-muted)]">{LENS_HELP[p.lens]}</p>
+      </Disclosure>
       <Hr />
       {p.lens === 'migration' && (
         <div className="px-4 py-3">
@@ -349,18 +375,19 @@ function SystemView(p: Props) {
         </div>
       )}
       <Hr />
-      <SectionHead>Flows</SectionHead>
-      {FLOWS.map((f) => (
-        <button key={f.id} type="button" onClick={() => p.onFlow(f.id, 0)} className="group flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-[var(--color-panel)]">
-          <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-[6px] border border-[var(--color-line-2)] text-[var(--color-muted)] group-hover:border-[var(--color-accent)] group-hover:text-[var(--color-accent)]">
-            <Play className="size-3" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[12.5px] font-medium text-[var(--color-ink)]">{f.title}</span>
-            <span className="block text-[11.5px] text-[var(--color-faint)]">{f.summary} · {f.steps.length} steps</span>
-          </span>
-        </button>
-      ))}
+      <Disclosure title="Flows" right={`${FLOWS.length}`}>
+        {FLOWS.map((f) => (
+          <button key={f.id} type="button" onClick={() => p.onFlow(f.id, 0)} className="group flex w-full items-start gap-3 px-4 py-2 text-left hover:bg-[var(--color-panel)]">
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-[6px] border border-[var(--color-line-2)] text-[var(--color-muted)] group-hover:border-[var(--color-accent)] group-hover:text-[var(--color-accent)]">
+              <Play className="size-3" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[12.5px] font-medium text-[var(--color-ink)]">{f.title}</span>
+              <span className="block text-[11.5px] text-[var(--color-faint)]">{f.summary} · {f.steps.length} steps</span>
+            </span>
+          </button>
+        ))}
+      </Disclosure>
       <div className="h-4" />
     </div>
   )
@@ -442,10 +469,10 @@ function PocketDetail({ id, ...p }: { id: string } & Props) {
           isolation {pk.isolation.toFixed(2)}
         </span>
       </div>
-      <div className="grid grid-cols-3 gap-3 px-4 pb-4">
-        <Stat label="On Java" value={`${Math.round(prog * 100)}%`} color={p.lens === 'migration' ? C.good : undefined} />
-        <Stat label="Programs" value={pk.programs.length} />
-        <Stat label="Links out" value={cutCost(id)} sub="cut cost" />
+      <div className="grid grid-cols-3 gap-2 px-4 pb-4">
+        <Stat card label="On Java" value={`${Math.round(prog * 100)}%`} color={p.lens === 'migration' ? C.good : undefined} />
+        <Stat card label="Programs" value={pk.programs.length} />
+        <Stat card label="Links out" value={cutCost(id)} sub="cut cost" />
       </div>
       <Hr />
       <PocketProgress pocketId={id} isolation={pk.isolation} liveProgram={p.live.id} threshold={p.live.threshold} />
@@ -526,16 +553,19 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
       </div>
 
       {isLive && (
-        <div className="mx-4 mb-3 rounded-[10px] border border-[rgba(76,201,240,.28)] bg-[rgba(76,201,240,.05)] px-3.5 py-3">
+        <div className="mx-4 mb-3 rounded-[10px] border border-[rgba(127,178,255,.28)] bg-[rgba(127,178,255,.05)] px-3.5 py-3">
           <div className="flex items-center gap-2 text-[11.5px] text-[var(--color-accent)]">
-            <Dot color={C.accent} pulse /> Shadowing now · {p.live.status}
+            <Dot color={C.accent} pulse /> Shadowing now
+            <span className="ml-auto font-mono text-[11px] text-[var(--color-faint)]">{p.live.id}</span>
           </div>
-          <div className="mt-1.5 flex items-baseline gap-3">
+          <div className="mt-1.5 flex items-baseline gap-2.5">
             <span className="tnum text-[30px] font-semibold tracking-[-0.03em]" style={{ color: p.live.matchRate >= p.live.threshold ? C.good : C.ink }}>
               {(p.live.matchRate * 100).toFixed(1)}%
             </span>
-            <span className="text-[12px] text-[var(--color-muted)]">old vs new agree · cutover at {(p.live.threshold * 100).toFixed(0)}%</span>
+            {p.live.matchDelta && <Delta value={p.live.matchDelta.value} trend={p.live.matchDelta.trend} />}
+            <span className="ml-auto text-[11.5px] text-[var(--color-faint)]">cutover at {(p.live.threshold * 100).toFixed(0)}%</span>
           </div>
+          <div className="mt-0.5 text-[11.5px] text-[var(--color-muted)]">old vs new agree</div>
           <div className="relative mt-2 h-1 rounded-full bg-[var(--color-panel-2)]">
             <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${p.live.matchRate * 100}%`, background: p.live.matchRate >= p.live.threshold ? C.good : C.accent }} />
             <div className="absolute -top-1 h-3 w-px bg-[var(--color-ink)]" style={{ left: `${p.live.threshold * 100}%` }} />
@@ -554,10 +584,10 @@ function ProgramDetail({ id, ...p }: { id: string } & Props) {
           <BlastSummary id={id} onPick={p.onPick} onHover={p.onHover} />
         </>
       ) : (
-        <div className="grid grid-cols-3 gap-3 px-4 pb-3">
-          <Stat label="Reads" value={io.filter((r) => r.mode !== 'write').length} />
-          <Stat label="Writes" value={io.filter((r) => r.mode !== 'read').length} />
-          <Stat label="Retest if changed" value={b.hits.length} color={b.hits.length > 8 ? C.warn : undefined} />
+        <div className="grid grid-cols-3 gap-2 px-4 pb-3">
+          <Stat card label="Reads" value={io.filter((r) => r.mode !== 'write').length} />
+          <Stat card label="Writes" value={io.filter((r) => r.mode !== 'read').length} />
+          <Stat card label="Retest if changed" value={b.hits.length} color={b.hits.length > 8 ? C.warn : undefined} />
         </div>
       )}
 
@@ -605,10 +635,10 @@ function StoreDetail({ id, ...p }: { id: string } & Props) {
   return (
     <div>
       <Header kind={<>Data store · {kind} · {st.shared ? 'shared bus' : 'local'}</>} title={id} mono sub={st.title} />
-      <div className="grid grid-cols-3 gap-3 px-4 pb-3">
-        <Stat label="Writers" value={sb.writers.length} />
-        <Stat label="Readers" value={sb.readers.length} />
-        <Stat label="Pockets" value={sb.pockets.length} color={sb.pockets.length > 4 ? C.warn : undefined} />
+      <div className="grid grid-cols-3 gap-2 px-4 pb-3">
+        <Stat card label="Writers" value={sb.writers.length} />
+        <Stat card label="Readers" value={sb.readers.length} />
+        <Stat card label="Pockets" value={sb.pockets.length} color={sb.pockets.length > 4 ? C.warn : undefined} />
       </div>
       {st.shared && sb.pockets.length > 1 && (
         <div className="px-4 pb-3 text-[12px] leading-relaxed text-[var(--color-muted)]">
@@ -674,7 +704,7 @@ function FlowPanel({ flow, onFlow, onPick, onHover }: Props & { flow: { flow: Fl
               <button
                 type="button"
                 onClick={() => onFlow(f.id, i)}
-                className={cn('flex w-full gap-3 px-4 py-2 text-left transition-colors', on ? 'bg-[rgba(76,201,240,.07)]' : 'hover:bg-[var(--color-panel)]')}
+                className={cn('flex w-full gap-3 px-4 py-2 text-left transition-colors', on ? 'bg-[rgba(127,178,255,.07)]' : 'hover:bg-[var(--color-panel)]')}
               >
                 <span className={cn('tnum mt-[1px] w-4 shrink-0 font-mono text-[11.5px]', on ? 'text-[var(--color-accent)]' : 'text-[var(--color-faint)]')}>{i + 1}</span>
                 <span className="min-w-0">
@@ -700,26 +730,45 @@ function FlowPanel({ flow, onFlow, onPick, onHover }: Props & { flow: { flow: Fl
 
 /* --------------------------- agent / people ------------------------ */
 
+const PHASE_COLOR: Record<AgentThought['phase'], string> = {
+  rewrite: C.agent,
+  shadow: C.accent,
+  triage: C.faint,
+  ask: C.warn,
+  test: C.good,
+}
+
 function AgentPanel({ log, live }: { log: AgentThought[]; live: LiveInfo }) {
   return (
     <div>
-      <div className="flex items-center gap-2 px-4 pb-2 pt-4">
-        <Dot color={C.accent} pulse />
-        <span className="text-[12.5px] text-[var(--color-ink)]">Nemotron</span>
+      <div className="flex items-center gap-2 px-4 pb-3 pt-4">
+        <Dot color={C.agent} pulse />
+        <span className="text-[12.5px] font-medium text-[var(--color-ink)]">Nemotron</span>
         <span className="text-[12px] text-[var(--color-faint)]">working on</span>
         <span className="font-mono text-[12px] text-[var(--color-accent)]">{live.id}</span>
+        <span className="ml-auto text-[10.5px] uppercase tracking-[0.1em] text-[var(--color-faint)]">{log.length} steps</span>
       </div>
-      {log.length === 0 && <div className="px-4 py-8 text-center text-[12px] text-[var(--color-faint)]">No agent activity yet. Press Replay.</div>}
-      <ol>
-        {log.map((t) => (
-          <li key={t.id} className="grid grid-cols-[52px_1fr] gap-x-3 border-b border-[var(--color-line)] px-4 py-2.5">
-            <span className="pt-[1px] font-mono text-[10.5px] text-[var(--color-faint)]">{t.at.slice(11, 19) || t.at}</span>
-            <div className="min-w-0">
-              <span className="font-mono text-[10.5px] text-[var(--color-accent)]">{t.phase}</span>
-              <p className="mt-0.5 text-[12.5px] leading-snug text-[var(--color-muted)]">{t.text}</p>
-            </div>
-          </li>
-        ))}
+      {log.length === 0 && <div className="px-4 py-8 text-center text-[12px] text-[var(--color-faint)]">No agent activity yet.</div>}
+      <ol className="px-4 pb-3">
+        {log.map((t, i) => {
+          const color = PHASE_COLOR[t.phase]
+          return (
+            <li key={t.id} className="grid grid-cols-[14px_1fr] gap-x-3">
+              {/* timeline rail: a phase-colored node and a connector to the next step */}
+              <div className="flex flex-col items-center">
+                <span className="mt-[5px] size-2 shrink-0 rounded-full" style={{ background: color, boxShadow: `0 0 0 3px ${color}22` }} />
+                {i < log.length - 1 && <span className="w-px flex-1 bg-[var(--color-line)]" />}
+              </div>
+              <div className="min-w-0 pb-3.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[10.5px] font-medium uppercase tracking-[0.06em]" style={{ color }}>{t.phase}</span>
+                  <span className="ml-auto font-mono text-[10.5px] text-[var(--color-faint)]">{t.at.slice(11, 19) || t.at}</span>
+                </div>
+                <p className="mt-1 text-[12.5px] leading-snug text-[var(--color-muted)]">{t.text}</p>
+              </div>
+            </li>
+          )
+        })}
       </ol>
     </div>
   )
